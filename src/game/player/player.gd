@@ -44,6 +44,8 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if not GameSession.is_running():
+		return # level over (or not started): the evaluation screen has the stage
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		_pitch = clampf(_pitch - event.relative.y * mouse_sensitivity, -1.4, 1.4)
@@ -60,6 +62,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if not GameSession.is_running():
+		return
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
 	elif Input.is_action_just_pressed("jump"):

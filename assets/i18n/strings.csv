@@ -111,3 +111,9 @@ ui.hud.take_out,[E] Tag %s ud,[E] Take out %s
 ui.hud.place_slot,[E] Læg %s på plads %d,[E] Put %s in spot %d
 ui.container_packed,%s – pakket,%s – packed
 ui.hud.fell_in_water,Pløjt! Du faldt i vandet,Splash! You fell in the lake
+ui.eval.points,%d point,%d points
+ui.eval.seed,Ø-kode: %d,Island code: %d
+ui.eval.again,Igen (samme ø),Again (same island)
+ui.eval.new,Ny rodebutik,Fresh mess
+ui.eval.skip,Klik for at springe over,Click to skip
+ui.eval.percent,%d %%,%d %%

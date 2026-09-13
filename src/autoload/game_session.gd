@@ -59,6 +59,12 @@ func stop_level() -> void:
 	_running = false
 
 
+## False once the level is over (or before one starts): nothing may act on the
+## world, and the simulation clock no longer advances.
+func is_running() -> bool:
+	return _running
+
+
 func local_player_id() -> int:
 	return transport.local_player_id() if transport != null else 1
 

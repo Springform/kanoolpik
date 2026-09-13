@@ -92,6 +92,15 @@ static func time_factor(elapsed_seconds: float, par_seconds: float, max_seconds:
 	return 1.0 - (elapsed_seconds - par_seconds) / (max_seconds - par_seconds)
 
 
+## i18n key for a grade letter, e.g. "S" -> "grade.s". The table above already
+## carries the keys; this just exposes them so presentation never builds them.
+static func grade_key(grade: String) -> String:
+	for g in GRADES:
+		if g["grade"] == grade:
+			return g["key"]
+	return "grade.d"
+
+
 static func grade_for(points: int) -> String:
 	for g in GRADES:
 		if points >= g["min"]:

@@ -79,3 +79,11 @@ func _place_all_correctly() -> void:
 	state.set_placed("peg_1", "tent_bag", 3)
 	state.set_placed("peg_2", "tent_bag", 4)
 	state.set_placed("food_bread", "cooler", 0)
+
+
+func test_grade_key_maps_every_grade_to_its_string() -> void:
+	assert_str(Evaluation.grade_key("S")).is_equal("grade.s")
+	assert_str(Evaluation.grade_key("D")).is_equal("grade.d")
+	assert_str(Evaluation.grade_key("nonsense")).is_equal("grade.d")
+	for g in Evaluation.GRADES:
+		assert_str(Evaluation.grade_key(g["grade"])).is_equal(g["key"])
