@@ -73,6 +73,8 @@ func _spawn_items() -> void:
 		var node: PickupItem = PICKUP_ITEM.instantiate()
 		node.setup(GameSession.catalog.get_item(id))
 		node.name = "Item_" + id
+		# Placed and carried items have no meaningful ground position; PickupItem
+		# hides them on _ready, so only the position of loose items matters.
 		var pos: Vector3 = GameSession.state.location(id)["position"]
 		node.position = pos + Vector3(0, 0.15, 0)
 		items_root.add_child(node)

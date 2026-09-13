@@ -8,6 +8,8 @@ extends CanvasLayer
 
 ## Emitted when the player wants to play. [param seed] < 0 means "level default".
 signal start_requested(seed: int)
+## Emitted when the player wants to resume the autosave.
+signal continue_requested()
 
 const LEVEL_DEFAULT_SEED := -1
 const LOCALES: Array[String] = ["da", "en"]
@@ -16,17 +18,24 @@ const LOCALES: Array[String] = ["da", "en"]
 @onready var tagline_label: Label = $Root/Panel/VBox/Tagline
 @onready var seed_label: Label = $Root/Panel/VBox/SeedRow/SeedLabel
 @onready var seed_input: LineEdit = $Root/Panel/VBox/SeedRow/SeedInput
+@onready var continue_button: Button = $Root/Panel/VBox/Continue
 @onready var start_button: Button = $Root/Panel/VBox/Start
 @onready var language_button: Button = $Root/Panel/VBox/Language
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# Only offer to continue when there is something to continue.
+	continue_button.visible = GameSession.has_save()
 	apply_texts()
+	continue_button.pressed.connect(continue_requested.emit)
 	start_button.pressed.connect(_on_start)
 	seed_input.text_submitted.connect(func(_t: String) -> void: _on_start())
 	language_button.pressed.connect(toggle_language)
-	start_button.grab_focus()
+	if continue_button.visible:
+		continue_button.grab_focus()
+	else:
+		start_button.grab_focus()
 
 
 func _notification(what: int) -> void:
@@ -52,6 +61,7 @@ func apply_texts() -> void:
 	tagline_label.text = tr("ui.title.tagline")
 	seed_label.text = tr("ui.title.seed")
 	seed_input.placeholder_text = tr("ui.title.seed_hint")
+	continue_button.text = tr("ui.title.continue")
 	start_button.text = tr("ui.title.start")
 	language_button.text = "%s: %s" % [tr("ui.title.language"), TranslationServer.get_locale().to_upper()]
 

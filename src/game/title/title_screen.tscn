@@ -65,6 +65,11 @@ layout_mode = 2
 alignment = 2
 max_length = 9
 
+[node name="Continue" type="Button" parent="Root/Panel/VBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Fortsæt"
+
 [node name="Start" type="Button" parent="Root/Panel/VBox"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2

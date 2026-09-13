@@ -33,29 +33,32 @@ func _ready() -> void:
 	GameEvents.item_dropped.connect(_on_dropped)
 	GameEvents.item_placed.connect(_on_placed)
 	GameEvents.item_taken_out.connect(_on_taken_out)
+	# A level built from a save starts with items already carried or packed.
+	set_in_world(GameSession.state.kind_of(item_id) == WorldState.Kind.GROUND)
 
 
 func _on_picked_up(id: String, _player_id: int) -> void:
 	if id == item_id:
-		_set_in_world(false)
+		set_in_world(false)
 
 
 func _on_dropped(id: String, _player_id: int, position: Vector3) -> void:
 	if id == item_id:
 		global_position = position + Vector3(0, mesh.mesh.size.y * 0.5, 0)
-		_set_in_world(true)
+		set_in_world(true)
 
 
 func _on_placed(id: String, _player_id: int, _container_id: String, _slot: int, _verdict: int) -> void:
 	if id == item_id:
-		_set_in_world(false) # ContainerNode renders placed items itself.
+		set_in_world(false) # ContainerNode renders placed items itself.
 
 
 func _on_taken_out(id: String, _player_id: int, _container_id: String) -> void:
 	if id == item_id:
-		_set_in_world(false)
+		set_in_world(false)
 
 
-func _set_in_world(in_world: bool) -> void:
+## Visible and pickable, or tucked away because it is carried or packed.
+func set_in_world(in_world: bool) -> void:
 	visible = in_world
 	$Collision.disabled = not in_world
