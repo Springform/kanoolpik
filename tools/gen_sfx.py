@@ -28,4 +28,44 @@ write("place_wrong", 0.6 * np.sin(2 * np.pi * (110 * np.exp(-6 * t)) * t) * np.e
       + 0.15 * np.random.default_rng(1).normal(size=len(t)) * np.exp(-25 * t))
 write("container_complete", seq([523.25, 659.25, 783.99, 1046.5], 0.11, 0.7, decay=4, harmonics=(1, 0.5, 0.25, 0.12)))
 write("island_clean", seq([523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98], 0.16, 1.6, decay=2.2, harmonics=(1, 0.5, 0.3, 0.15)))
-print("wrote 4 files to", OUT)
+
+# --- Snore (WP-2.7) ------------------------------------------------------------
+# A seamless loop, for the mate who never made it into his tent. Built the same
+# way as the ambience beds: every component completes a whole number of cycles
+# over DURATION, so the end of the buffer is the same point on the same
+# continuous waveform as the start. See tools/gen_ambience.py for why that is a
+# guarantee rather than luck — and tests/integration/test_dressing.gd checks the
+# seam rather than trusting anyone's ears.
+SNORE_DURATION = 6.0  # one slow breath in, one out, twice
+SNORE_N = int(SR * SNORE_DURATION)
+
+
+def periodic_noise(rng, low_hz, high_hz, slope=-1.0):
+    freqs = np.fft.rfftfreq(SNORE_N, 1.0 / SR)
+    mag = np.zeros_like(freqs)
+    band = (freqs >= low_hz) & (freqs <= high_hz)
+    with np.errstate(divide="ignore"):
+        mag[band] = np.where(freqs[band] > 0, freqs[band] ** slope, 0.0)
+    phase = rng.uniform(0, 2 * np.pi, size=freqs.shape)
+    sig = np.fft.irfft(mag * np.exp(1j * phase), n=SNORE_N)
+    return sig / (np.max(np.abs(sig)) + 1e-9)
+
+
+def snore():
+    rng = np.random.default_rng(7)
+    t = np.linspace(0, SNORE_DURATION, SNORE_N, endpoint=False)
+    breaths = 2  # whole cycles over the loop, so the seam lands mid-silence
+    phase = 2 * np.pi * breaths * t / SNORE_DURATION
+    # In: long, loud, rattling. Out: shorter, softer, further down.
+    inhale = np.clip(np.sin(phase), 0, None) ** 2.2
+    exhale = np.clip(-np.sin(phase), 0, None) ** 3.0
+    rattle = 0.5 + 0.5 * np.sin(2 * np.pi * 34 * breaths * t / SNORE_DURATION)
+    body = periodic_noise(rng, 90, 1400, slope=-1.4)
+    sig = body * (inhale * (0.55 + 0.45 * rattle) + 0.35 * exhale)
+    # A little chest tone under the inhale so it reads as a person, not wind.
+    sig += 0.25 * inhale * np.sin(2 * np.pi * 15 * breaths * t / SNORE_DURATION)
+    return sig
+
+
+write("snore", snore())
+print("wrote 5 files to", OUT)

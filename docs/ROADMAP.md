@@ -43,7 +43,7 @@ Parallel-safe sets: {1.1, 1.2, 1.4, 1.6, 1.7, 1.8} can all start at once. 1.3 af
 
 *Exit criterion: the island looks like a place; 150+ items; it still loads in < 10 s on a normal connection.*
 
-**Wave 1 done (2.1, 2.4, 2.6), built in parallel by three agents in isolated worktrees. Wave 2: 2.5, 2.2 and 2.3 done — 262 tests, 162 items, 14 containers.** Assets are generated in code (ADR 0008) except hand-sourced `.glb` models (ADR 0009), which `ItemVisual` loads, auto-fits and falls back from. Remaining: dressing (2.7) and the performance pass (2.8); the model kit itself fills up one file at a time.
+**Wave 1 done (2.1, 2.4, 2.6), built in parallel by three agents in isolated worktrees. Wave 2: 2.5, 2.2, 2.3 and 2.7 done — 272 tests, 162 items, 14 containers.** Assets are generated in code (ADR 0008) except hand-sourced `.glb` models (ADR 0009), which `ItemVisual` loads, auto-fits and falls back from. Remaining: the web performance pass (2.8); the item model kit fills up one file at a time.
 
 | WP | Title | Owns |
 |---|---|---|
@@ -53,7 +53,7 @@ Parallel-safe sets: {1.1, 1.2, 1.4, 1.6, 1.7, 1.8} can all start at once. 1.3 af
 | [2.4](roadmap/phase-2/WP-2.4-content.md) ✅ | Content: 162 items, 14 containers, two canoes with crews, sleeping bags ordered, unopened beer in two coolers | `data/`, `assets/i18n/` |
 | [2.5](roadmap/phase-2/WP-2.5-environment.md) ✅ | Environment: trees, grass, reeds, bigger water (sky/water shaders and wind still open) | `src/game/island/environment/` |
 | [2.6](roadmap/phase-2/WP-2.6-audio.md) ✅ | Audio: ambient lake, birds, music layers that rise with completion | `src/game/audio/`, `assets/audio/` |
-| 2.7 | Mess dressing: non-interactive props (dead bonfire, collapsed tent, a snoring mate) | `src/game/island/dressing/` |
+| [2.7](roadmap/phase-2/WP-2.7-mess-dressing.md) ✅ | Mess dressing: collapsed tent, a mate still asleep and snoring, trampled ground — no colliders | `src/game/island/dressing/` |
 | 2.8 | Web performance pass: texture budgets, LOD, load-time measurement in CI | `tools/`, `export_presets.cfg` |
 
 Wave 2 dependencies: 2.3 uses the loader from 2.2, so 2.2 goes first. 2.5 and 2.7 both place things on the terrain via `Island.height_at()` and can run alongside. 2.8 goes last, once there is something to measure.

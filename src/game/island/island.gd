@@ -69,6 +69,7 @@ func _ready() -> void:
 	_build_terrain()
 	_scatter_rocks()
 	_grow_scenery()
+	_dress_the_camp()
 	_spawn_containers()
 	_spawn_items()
 
@@ -275,6 +276,15 @@ func _grow_scenery() -> void:
 	scenery.name = "Scenery"
 	scenery.setup(self)
 	add_child(scenery)
+
+
+## The evidence of last night: a collapsed tent, a mate still asleep, trampled
+## ground. Non-interactive, no colliders — see [Dressing] (WP-2.7).
+func _dress_the_camp() -> void:
+	var dressing := Dressing.new()
+	dressing.name = "Dressing"
+	dressing.setup(self)
+	add_child(dressing)
 
 
 func _scatter_rocks() -> void:

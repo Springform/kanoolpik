@@ -55,7 +55,7 @@ still draws the translucent box. Re-add the row together with the file.
 
 | File | Title | Author | Source | Licence | Changes |
 |---|---|---|---|---|---|
-| `scenary/tent.glb` | Tent | Quaternius | https://poly.pizza/m/5Q7qIrfDxA | CC0 | Not wired up yet — for the mess dressing (WP-2.7). Folder is spelled "scenary"; rename to "scenery" when 2.7 picks it up |
+| `scenary/tent.glb` | Tent | Quaternius | https://poly.pizza/m/5Q7qIrfDxA | CC0 | The collapsed tent in the camp (WP-2.7). Folder is spelled "scenary"; rename when convenient |
 
 ## Generated in this repo
 
