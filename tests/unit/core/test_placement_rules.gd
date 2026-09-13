@@ -76,20 +76,47 @@ func test_order_only_applies_within_same_series() -> void:
 	assert_int(PlacementRules.evaluate(cat, state, "peg_2", "tent_bag", 2)).is_equal(V.CORRECT)
 
 
-func test_container_complete_requires_all_series_members() -> void:
+func test_container_complete_requires_every_item_that_belongs_there() -> void:
 	state.set_placed("can_a1", "pant_bag", 0)
 	assert_bool(PlacementRules.is_container_complete(cat, state, "pant_bag")).is_false()
 	state.set_placed("can_a2", "pant_bag", 1)
-	# brand_a complete, but brand_b's can is still on the ground → still complete?
-	# No: completion is about series PRESENT in the container, so yes it is complete
-	# for brand_a. can_b1 is not present, so it imposes nothing.
-	assert_bool(PlacementRules.is_container_complete(cat, state, "pant_bag")).is_true()
+	# brand_a is whole, but can_b1 is still on the ground and pant_bag is the only
+	# place a can can go — so the bag is not packed.
+	assert_bool(PlacementRules.is_container_complete(cat, state, "pant_bag")).is_false()
 	state.set_placed("can_b1", "pant_bag", 2)
 	assert_bool(PlacementRules.is_container_complete(cat, state, "pant_bag")).is_true()
 
 
+func test_a_lone_item_without_a_series_does_not_complete_its_container() -> void:
+	# Regression: the tent canvas has no series, and used to declare the tent bag
+	# packed the moment it was dropped in by itself.
+	var cat2 := Catalog.from_dicts([
+		{"id": "canvas", "category": "canvas", "size": 3},
+		{"id": "pole_1", "category": "pole", "series": "poles", "sequence": 1},
+		{"id": "pole_2", "category": "pole", "series": "poles", "sequence": 2},
+	], [{"id": "tent_bag", "accepts": ["canvas", "pole"], "slot_count": 6, "ordered": true}])
+	var s := TestFixtures.ground_state(cat2)
+	s.set_placed("canvas", "tent_bag", 0)
+	assert_bool(PlacementRules.is_container_complete(cat2, s, "tent_bag")).is_false()
+	s.set_placed("pole_1", "tent_bag", 1)
+	assert_bool(PlacementRules.is_container_complete(cat2, s, "tent_bag")).is_false()
+	s.set_placed("pole_2", "tent_bag", 2)
+	assert_bool(PlacementRules.is_container_complete(cat2, s, "tent_bag")).is_true()
+
+
+func test_required_items_are_those_with_only_one_possible_home() -> void:
+	assert_array(PlacementRules.required_items(cat, "pant_bag")).contains_exactly(["can_a1", "can_a2", "can_b1"])
+	assert_array(PlacementRules.required_items(cat, "cooler")).contains_exactly(["food_bread"])
+	assert_array(PlacementRules.required_items(cat, "ghost")).is_empty()
+	# A category two containers accept is required in neither of them.
+	var cat2 := Catalog.from_dicts(
+		[{"id": "can_x", "category": "can"}],
+		[{"id": "bag_1", "accepts": ["can"]}, {"id": "bag_2", "accepts": ["can"]}])
+	assert_array(PlacementRules.required_items(cat2, "bag_1")).is_empty()
+
+
 func test_container_complete_fails_on_wrong_item() -> void:
-	state.set_placed("food_bread", "cooler", 0)
+	state.set_placed("food_bread", "cooler", 0) # the only food in the fixture
 	assert_bool(PlacementRules.is_container_complete(cat, state, "cooler")).is_true()
 	state.set_placed("can_a1", "cooler", 1)
 	assert_bool(PlacementRules.is_container_complete(cat, state, "cooler")).is_false()

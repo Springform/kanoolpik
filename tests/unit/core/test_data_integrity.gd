@@ -64,3 +64,47 @@ func test_i18n_has_a_key_for_every_item_and_container() -> void:
 	for cid in cat.container_ids():
 		var k: String = cat.get_container(cid).name_key
 		assert_bool(keys.has(k)).override_failure_message("missing i18n key '%s'" % k).is_true()
+
+
+func test_a_container_is_only_packed_when_everything_that_belongs_is_there() -> void:
+	# Regression against the real catalog: dropping the tent canvas into the tent
+	# bag as the first item used to announce the bag as packed.
+	var cat := Catalog.load_from_files(ITEMS, CONTAINERS)
+	var state := WorldState.new()
+	for id in cat.item_ids():
+		state.set_on_ground(id, Vector3.ZERO)
+
+	state.set_placed("tent_canvas", "tent_bag", 11)
+	assert_bool(PlacementRules.is_container_complete(cat, state, "tent_bag")).override_failure_message(
+		"the canvas alone must not pack the tent bag").is_false()
+	for i in range(1, 5):
+		state.set_placed("tent_pole_%d" % i, "tent_bag", i - 1)
+	assert_bool(PlacementRules.is_container_complete(cat, state, "tent_bag")).is_false()
+	for i in range(1, 7):
+		state.set_placed("tent_peg_%d" % i, "tent_bag", 3 + i)
+	assert_bool(PlacementRules.is_container_complete(cat, state, "tent_bag")).is_true()
+
+
+func test_no_lone_item_in_the_real_catalog_can_pack_a_container() -> void:
+	# The canvas was not the only one: the schnapps bottle and the napkins have
+	# no series either. Nothing may complete a container by itself.
+	var cat := Catalog.load_from_files(ITEMS, CONTAINERS)
+	for item_id in cat.item_ids():
+		var item := cat.get_item(item_id)
+		for container in cat.containers_accepting(item.category):
+			var state := WorldState.new()
+			for id in cat.item_ids():
+				state.set_on_ground(id, Vector3.ZERO)
+			state.set_placed(item_id, container.id, 0)
+			var alone_is_enough := PlacementRules.required_items(cat, container.id).size() <= 1
+			assert_bool(PlacementRules.is_container_complete(cat, state, container.id)).override_failure_message(
+				"'%s' alone packs '%s'" % [item_id, container.id]).is_equal(alone_is_enough)
+
+
+func test_every_container_has_room_for_everything_that_belongs_in_it() -> void:
+	var cat := Catalog.load_from_files(ITEMS, CONTAINERS)
+	for cid in cat.container_ids():
+		var required := PlacementRules.required_items(cat, cid).size()
+		assert_int(cat.get_container(cid).slot_count).override_failure_message(
+			"'%s' has %d slots but %d items must fit" % [cid, cat.get_container(cid).slot_count, required]
+		).is_greater_equal(required)

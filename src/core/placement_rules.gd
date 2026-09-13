@@ -75,8 +75,30 @@ static func verdicts_in_container(catalog: Catalog, state: WorldState, container
 	return out
 
 
-## A container is complete when it holds at least one item, every item in it is
-## CORRECT, and no series present in it is missing a member.
+## Every item that has nowhere else to go: this container is the only one that
+## accepts its category, so it cannot be packed until they are all here.
+##
+## Items whose category several containers accept are not required anywhere in
+## particular — for those, the series rule in [method is_container_complete]
+## still keeps a series from being split.
+static func required_items(catalog: Catalog, container_id: String) -> Array[String]:
+	var container := catalog.get_container(container_id)
+	var out: Array[String] = []
+	if container == null:
+		return out
+	for id in catalog.item_ids():
+		var item := catalog.get_item(id)
+		if container.accepts_category(item.category) and catalog.containers_accepting(item.category).size() == 1:
+			out.append(id)
+	return out
+
+
+## A container is complete when every item that belongs in it is in it, and
+## every item in it is CORRECT.
+##
+## "Belongs in it" is [method required_items] — NOT merely "the series present
+## are whole". An item without a series (the tent canvas, the schnapps bottle,
+## the napkins) would otherwise declare its container packed all by itself.
 static func is_container_complete(catalog: Catalog, state: WorldState, container_id: String) -> bool:
 	var entries := state.items_in_container(container_id)
 	if entries.is_empty():
@@ -87,6 +109,10 @@ static func is_container_complete(catalog: Catalog, state: WorldState, container
 		if evaluate(catalog, state, id, container_id, entry["slot"]) != Verdict.CORRECT:
 			return false
 		present[id] = true
+	for id in required_items(catalog, container_id):
+		if not present.has(id):
+			return false
+	# Items that could live in several containers still may not be split up.
 	for entry in entries:
 		var item := catalog.get_item(entry["item_id"])
 		if item.series.is_empty():
