@@ -129,18 +129,29 @@ func test_layer_can_be_muted_independently() -> void:
 
 # --- Seamless loops (assert the seam, don't trust ears) ------------------------
 
-func _decode_range(stream: AudioStreamWAV, start_frame: int, count: int) -> PackedFloat32Array:
+## PCM read from the SOURCE .wav rather than the imported AudioStreamWAV.
+##
+## The import compresses to QOA (compress/mode=2), so `stream.data` is codec
+## bytes. Decoding those as 16-bit PCM reads noise — noise whose wrap-around
+## delta always looks like its typical delta, so the seam tests below passed on
+## anything at all until this was noticed in WP-2.7. Measure the signal that was
+## generated, not the compressed representation of it.
+const WAV_HEADER_BYTES := 44
+
+
+func _decode_range(bytes: PackedByteArray, start_frame: int, count: int) -> PackedFloat32Array:
 	var out := PackedFloat32Array()
 	out.resize(count)
 	for i in range(count):
-		out[i] = float(stream.data.decode_s16((start_frame + i) * 2)) / 32768.0
+		out[i] = float(bytes.decode_s16(WAV_HEADER_BYTES + (start_frame + i) * 2)) / 32768.0
 	return out
 
 
-func _max_seam_jump(stream: AudioStreamWAV, edge := 4000) -> Dictionary:
-	var total_frames := stream.data.size() / 2
-	var head := _decode_range(stream, 0, edge)
-	var tail := _decode_range(stream, total_frames - edge, edge)
+func _max_seam_jump(path: String, edge := 4000) -> Dictionary:
+	var bytes := FileAccess.get_file_as_bytes(path)
+	var total_frames := (bytes.size() - WAV_HEADER_BYTES) / 2
+	var head := _decode_range(bytes, 0, edge)
+	var tail := _decode_range(bytes, total_frames - edge, edge)
 	var wrap_delta := absf(head[0] - tail[tail.size() - 1])
 	var internal: Array[float] = []
 	for i in range(1, edge):
@@ -152,8 +163,7 @@ func _max_seam_jump(stream: AudioStreamWAV, edge := 4000) -> Dictionary:
 
 
 func test_ambience_loops_without_an_audible_seam() -> void:
-	var stream: AudioStreamWAV = load("res://assets/audio/ambience/lake_morning.wav")
-	var seam := _max_seam_jump(stream)
+	var seam := _max_seam_jump("res://assets/audio/ambience/lake_morning.wav")
 	assert_float(seam["wrap"]).override_failure_message(
 		"ambience seam jump %.5f is much larger than a typical sample delta %.5f — it will click" %
 		[seam["wrap"], seam["typical"]]
@@ -163,8 +173,7 @@ func test_ambience_loops_without_an_audible_seam() -> void:
 func test_music_stems_loop_without_an_audible_seam() -> void:
 	for path in ["res://assets/audio/music/stem_pad.wav", "res://assets/audio/music/stem_melody.wav",
 			"res://assets/audio/music/stem_shimmer.wav"]:
-		var stream: AudioStreamWAV = load(path)
-		var seam := _max_seam_jump(stream)
+		var seam := _max_seam_jump(path)
 		assert_float(seam["wrap"]).override_failure_message(
 			"%s seam jump %.5f exceeds typical sample delta %.5f" % [path, seam["wrap"], seam["typical"]]
 		).is_less_equal(float(seam["typical"]) * 2.0 + 0.001)
