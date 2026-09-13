@@ -129,29 +129,14 @@ func test_layer_can_be_muted_independently() -> void:
 
 # --- Seamless loops (assert the seam, don't trust ears) ------------------------
 
-## PCM read from the SOURCE .wav rather than the imported AudioStreamWAV.
-##
-## The import compresses to QOA (compress/mode=2), so `stream.data` is codec
-## bytes. Decoding those as 16-bit PCM reads noise — noise whose wrap-around
-## delta always looks like its typical delta, so the seam tests below passed on
-## anything at all until this was noticed in WP-2.7. Measure the signal that was
-## generated, not the compressed representation of it.
-const WAV_HEADER_BYTES := 44
-
-
-func _decode_range(bytes: PackedByteArray, start_frame: int, count: int) -> PackedFloat32Array:
-	var out := PackedFloat32Array()
-	out.resize(count)
-	for i in range(count):
-		out[i] = float(bytes.decode_s16(WAV_HEADER_BYTES + (start_frame + i) * 2)) / 32768.0
-	return out
-
-
+## Seam measured on the SOURCE .wav via [WavPcm] — see that class for why the
+## imported AudioStreamWAV and a hard-coded 44-byte offset are both wrong.
 func _max_seam_jump(path: String, edge := 4000) -> Dictionary:
-	var bytes := FileAccess.get_file_as_bytes(path)
-	var total_frames := (bytes.size() - WAV_HEADER_BYTES) / 2
-	var head := _decode_range(bytes, 0, edge)
-	var tail := _decode_range(bytes, total_frames - edge, edge)
+	var pcm := WavPcm.samples(path)
+	assert_int(pcm.size()).override_failure_message(
+		"no PCM found in '%s' — is the data chunk there?" % path).is_greater(edge * 2)
+	var head := pcm.slice(0, edge)
+	var tail := pcm.slice(pcm.size() - edge)
 	var wrap_delta := absf(head[0] - tail[tail.size() - 1])
 	var internal: Array[float] = []
 	for i in range(1, edge):

@@ -76,8 +76,22 @@ Exit criterion — "the island looks like a place; 150+ items; loads in < 10 s o
 | 3.6 | Autopilot: proximity auto-place | `src/game/abilities/auto_place/` |
 | 3.7 | Hidden collectibles (4 per island) | `data/`, `src/game/collectibles/` |
 | 3.8 | Evaluation tuning: par times from playtests, grade copy | `data/levels/`, `assets/i18n/` |
+| 3.9 | **Hvalen** — timed beer-bong call (see below) | `src/core/` (new command + consumed state), `src/game/events/` |
 
-3.1 first (others plug into it); 3.4 needs a core change → do it first in the core lane.
+3.1 first (others plug into it); 3.4 and 3.9 both need core changes → do those first in the core lane.
+
+### WP-3.9 — Hvalen (captured, not yet designed)
+
+KA's idea, noted as-is: **a sound plays; the crew then has ~30 s to find "Hvalen" (a beer bong) which spawns somewhere random on the island, plus an unopened beer. A player holding both before the timer runs out drinks a beer bong.** Reward: possibly a skill unlock. Failure: a random container empties back out onto the island.
+
+Worth thinking about before this gets written up properly:
+
+- **The penalty is the first mechanic that can undo work.** The pant bag holds 34 items; dumping it could erase ten minutes. Scaling it — the smallest packed container, or N items rather than a whole one — is probably the difference between tension and a rage quit.
+- **30 s for something you have never seen** is tight on a 32 m island at 4.5 m/s. Either the Hvalen announces itself (glow, sound), or the window is longer, or both.
+- **The beer has to come from somewhere.** All twelve unopened beers live in the two coolers. Late in a run, answering the call means taking one back out and un-completing a cooler — an interesting trade, or an annoying one. Worth deciding deliberately rather than discovering.
+- **Drinking removes an item from the world**, which breaks "the island is clean when every item is placed". Cleanest fix is a `CONSUMED` state in `WorldState` that counts as cleared; the alternative (the empty can it leaves behind becomes a new item to tidy) is more fun and more work.
+- **It must be deterministic and go through a command**, like everything else in `src/core/` — the call time and the Hvalen's spawn come from the seed, or six browsers will disagree about whether anyone made it.
+- **Frequency:** two or three calls in a 20-minute run, never in the first few minutes, never in the last.
 
 ## Phase 4 — Multiplayer (≤ 6, host-authoritative WebRTC)
 

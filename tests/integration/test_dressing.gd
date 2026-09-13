@@ -140,13 +140,26 @@ func test_the_snore_loop_has_no_seam() -> void:
 	# trusting it: a click every six seconds is the kind of thing you stop
 	# hearing after an hour of work and a player hears immediately.
 	#
-	# Read the SOURCE .wav, not the imported AudioStreamWAV: the import
-	# compresses to QOA (compress/mode=2), so `stream.data` is codec bytes and
-	# decoding them as PCM measures nothing at all.
+	# Read the SOURCE .wav through WavPcm, which finds the `data` chunk rather
+	# than assuming the audio is everything after byte 44 — see that class.
+	var pcm := WavPcm.samples("res://assets/audio/sfx/snore.wav")
+	assert_int(pcm.size()).is_greater(0)
+	var jump: float = absf(pcm[pcm.size() - 1] - pcm[0])
+	assert_float(jump).override_failure_message(
+		"loop seam jumps by %.4f of 1.0 — that is a click" % jump).is_less(0.04)
+
+
+func test_the_wav_reader_ignores_trailing_metadata_chunks() -> void:
+	# A Windows machine in this project appends a C2PA (Content Credentials)
+	# chunk after the audio. Playback does not care; a reader that assumes the
+	# samples run to the end of the file reads metadata as audio and reports a
+	# click that is not there. This is the regression guard for that.
 	var bytes := FileAccess.get_file_as_bytes("res://assets/audio/sfx/snore.wav")
-	assert_int(bytes.size()).is_greater(44)
-	var samples := (bytes.size() - 44) / 2 # 44-byte canonical WAV header
-	var first := bytes.decode_s16(44)
-	var last := bytes.decode_s16(44 + (samples - 1) * 2)
-	assert_int(absi(last - first)).override_failure_message(
-		"loop seam jumps by %d of 32767 — that is a click" % absi(last - first)).is_less(1200)
+	var clean := WavPcm.data_span(bytes)
+	var padded := bytes.duplicate()
+	padded.append_array("C2PA".to_ascii_buffer())
+	padded.resize(padded.size() + 4)
+	padded.encode_u32(padded.size() - 4, 64)
+	padded.resize(padded.size() + 64)
+	assert_dict(WavPcm.data_span(padded)).override_failure_message(
+		"a trailing chunk moved where the audio is thought to be").is_equal(clean)

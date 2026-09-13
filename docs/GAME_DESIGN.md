@@ -103,4 +103,5 @@ Growth plan (phase 2): two canoes with crews (paddles A/B as series), sleeping b
 
 - Should items be physics bodies you can throw (like books over the railing)? Fun, but non-deterministic. Proposal: throwing is presentation-only; the item's *logical* position updates on landing via a `drop` command from the thrower's client (host validates range).
 - Should wrong placements be visible to other players? Yes — red slot indicators are shared; it creates conversation.
+- **Hvalen** (WP-3.9, captured not designed): a horn sounds, the crew has ~30 s to find a beer bong that spawns at random plus an unopened beer; holding both drinks a bong. Reward possibly a skill unlock, failure possibly a container emptying back onto the island. Open: how hard the penalty bites, where the beer comes from once the coolers are packed, and what happens to a beer that gets drunk — see the notes under phase 3 in ROADMAP.md.
 - Hangover "blur" at start that clears as you tidy? Nice tone device; cheap with a screen shader. Phase 5.
