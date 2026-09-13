@@ -51,7 +51,7 @@ Parallel-safe sets: {1.1, 1.2, 1.4, 1.6, 1.7, 1.8} can all start at once. 1.3 af
 | [2.2](roadmap/phase-2/WP-2.2-item-models.md) | Item model kit: loader + hand-sourced `.glb` models via `ItemDef.model`; fallback box stays | `assets/models/items/`, `src/game/items/` |
 | [2.3](roadmap/phase-2/WP-2.3-container-models.md) | Container models with visible slots (bag opening, cooler lid, canoe hull) | `assets/models/containers/`, `src/game/containers/` |
 | [2.4](roadmap/phase-2/WP-2.4-content.md) ✅ | Content expansion to 150 items, 12 containers, two canoes with crews, sleeping bags ordered | `data/`, `assets/i18n/` |
-| 2.5 | Environment: water shader, trees, rocks, morning light, skybox | `src/game/island/environment/` |
+| [2.5](roadmap/phase-2/WP-2.5-environment.md) ✅ | Environment: trees, grass, reeds, bigger water (sky/water shaders and wind still open) | `src/game/island/environment/` |
 | [2.6](roadmap/phase-2/WP-2.6-audio.md) ✅ | Audio: ambient lake, birds, music layers that rise with completion | `src/game/audio/`, `assets/audio/` |
 | 2.7 | Mess dressing: non-interactive props (dead bonfire, collapsed tent, a snoring mate) | `src/game/island/dressing/` |
 | 2.8 | Web performance pass: texture budgets, LOD, load-time measurement in CI | `tools/`, `export_presets.cfg` |

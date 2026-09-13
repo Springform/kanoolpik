@@ -25,13 +25,14 @@ Every `.glb` under `assets/models/` must have a row here **before or in the same
 
 | File | Title | Author | Source | Licence | Changes |
 |---|---|---|---|---|---|
-| _(example — delete when the first real row lands)_ | | | | | |
-| `items/can.glb` | Soda Can | Poly by Google | https://poly.pizza/m/EXAMPLE | CC-BY-3.0 | Rescaled to 0.12 m, recentred on its base |
+| items/firewood_1 | Log | J-Toastie | https://poly.pizza/m/ncDQNqeOFj | CC-BY | |
 
 ## Containers
 
 | File | Title | Author | Source | Licence | Changes |
 |---|---|---|---|---|---|
+| containers/fire_pit.glb | Bonfire | Quaternius | https://poly.pizza/m/Azj9hJwwwG | CC0 | |
+
 
 ## Island and scenery
 
