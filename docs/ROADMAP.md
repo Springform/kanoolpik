@@ -43,18 +43,22 @@ Parallel-safe sets: {1.1, 1.2, 1.4, 1.6, 1.7, 1.8} can all start at once. 1.3 af
 
 *Exit criterion: the island looks like a place; 150 items; it still loads in < 10 s on a normal connection.*
 
+**Wave 1 done (2.1, 2.4, 2.6), built in parallel by three agents in isolated worktrees — 218 tests.** All assets are generated in code (ADR 0008). Wave 2 is the model kits (2.2, 2.3), which depend on the terrain's `height_at()`, plus environment (2.5), dressing (2.7) and the performance pass (2.8).
+
 | WP | Title | Owns |
 |---|---|---|
-| 2.1 | Real island terrain mesh (low-poly, Blender→glTF) replacing the gray-box cylinder, with navmesh-free walkable zones | `src/game/island/`, `assets/models/island/` |
-| 2.2 | Item model kit: ~20 low-poly CC0 models mapped via `ItemDef.model`; fallback box stays | `assets/models/items/`, `src/game/items/` |
-| 2.3 | Container models with visible slots (bag opening, cooler lid, canoe hull) | `assets/models/containers/`, `src/game/containers/` |
-| 2.4 | Content expansion to ~150 items, 12 containers, two canoes with crews, sleeping bags ordered | `data/`, `assets/i18n/` |
+| [2.1](roadmap/phase-2/WP-2.1-terrain.md) ✅ | Procedural island terrain replacing the gray-box cylinder | `src/game/island/` |
+| [2.2](roadmap/phase-2/WP-2.2-item-models.md) | Item model kit: loader + hand-sourced `.glb` models via `ItemDef.model`; fallback box stays | `assets/models/items/`, `src/game/items/` |
+| [2.3](roadmap/phase-2/WP-2.3-container-models.md) | Container models with visible slots (bag opening, cooler lid, canoe hull) | `assets/models/containers/`, `src/game/containers/` |
+| [2.4](roadmap/phase-2/WP-2.4-content.md) ✅ | Content expansion to 150 items, 12 containers, two canoes with crews, sleeping bags ordered | `data/`, `assets/i18n/` |
 | 2.5 | Environment: water shader, trees, rocks, morning light, skybox | `src/game/island/environment/` |
-| 2.6 | Audio: ambient lake, birds, music layers that rise with completion | `src/game/audio/`, `assets/audio/` |
+| [2.6](roadmap/phase-2/WP-2.6-audio.md) ✅ | Audio: ambient lake, birds, music layers that rise with completion | `src/game/audio/`, `assets/audio/` |
 | 2.7 | Mess dressing: non-interactive props (dead bonfire, collapsed tent, a snoring mate) | `src/game/island/dressing/` |
 | 2.8 | Web performance pass: texture budgets, LOD, load-time measurement in CI | `tools/`, `export_presets.cfg` |
 
-All eight are parallel-safe except 2.3 depends on 1.3's slot targeting API.
+Wave 2 dependencies: 2.3 uses the loader from 2.2, so 2.2 goes first. 2.5 and 2.7 both place things on the terrain via `Island.height_at()` and can run alongside. 2.8 goes last, once there is something to measure.
+
+**Models are sourced by hand** (ADR 0009): `.glb` only, CC0 or CC-BY only, and every file needs a row in `assets/models/CREDITS.md` before it ships. Roughly 25 models cover all 150 items — one per kind of object, tinted and auto-fitted per item.
 
 ## Phase 3 — Progression & abilities
 

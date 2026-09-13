@@ -11,3 +11,5 @@ One file per decision, numbered, never deleted — superseded ADRs get a "Supers
 | [0005](0005-content-as-json.md) | Content (items, containers, levels) as JSON, validated by tests | Accepted |
 | [0006](0006-i18n-danish-default.md) | Danish default UI, all strings via tr() and a CSV | Accepted |
 | [0007](0007-web-export-no-threads.md) | Web export with threads disabled, GL Compatibility renderer | Accepted |
+| [0008](0008-procedural-assets.md) | Assets are generated in code, not downloaded | Accepted (amended by 0009) |
+| [0009](0009-third-party-models.md) | Third-party models allowed, with tracked attribution | Accepted |
