@@ -44,7 +44,10 @@ Given item *I*, container *C*, slot *s*:
 4. If `C.ordered` and `I.sequence > 0`: for every other member *J* of the same series already in *C*, `slot(J) < s ⇔ J.sequence < I.sequence` → else `WRONG_ORDER`. Gaps are fine; relative order is what matters.
 5. Otherwise `CORRECT`.
 
-A **container is complete** when it holds ≥ 1 item, all of them `CORRECT`, and every series present in it has all its members present.
+A **container is complete** when every item that belongs in it is in it and all of them are `CORRECT`. "Belongs in it" means every item whose category *only* this container accepts. Items whose category several containers accept are not required in any particular one, but a series may still never be split across containers.
+
+> This was originally specified as "every series present has all its members present", which was wrong: an item with no series (the tent canvas, the schnapps bottle, the napkins) declared its container packed the moment it was dropped in alone.
+
 The **island is clean** when every catalog item is placed and `CORRECT`.
 
 ## 4. Carrying
