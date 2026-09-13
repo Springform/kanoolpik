@@ -57,7 +57,7 @@ func _process(_delta: float) -> void:
 	if _player == null:
 		return
 	_refresh_carrying()
-	prompt_label.text = _prompt_for(_player.aimed_target(), _player.carried_items())
+	prompt_label.text = _prompt_for(_player.aimed_target(), _player.carried_items(), _player.aimed_slot())
 
 
 # --- Public ----------------------------------------------------------------------
@@ -107,13 +107,22 @@ static func error_key(error_id: String) -> String:
 			return "ui.error.generic"
 
 
-## Prompt text for what the crosshair is on and what is held.
-func _prompt_for(target: Node, held: Array[String]) -> String:
+## Prompt text for what the crosshair is on, what is held, and which slot is
+## targeted (-1 = the container body / not a container).
+func _prompt_for(target: Node, held: Array[String], slot: int = -1) -> String:
 	var active := "" if held.is_empty() else tr(GameSession.catalog.get_item(held[held.size() - 1]).name_key)
 	if target is PickupItem:
 		return tr("ui.hud.pickup") % tr((target as PickupItem).def.name_key)
-	if target is ContainerNode and not held.is_empty():
-		return tr("ui.hud.place") % [active, tr((target as ContainerNode).def.name_key)]
+	if target is ContainerNode:
+		var container := target as ContainerNode
+		if slot >= 0:
+			var occupant := GameSession.state.item_in_slot(container.container_id, slot)
+			if not occupant.is_empty():
+				return tr("ui.hud.take_out") % tr(GameSession.catalog.get_item(occupant).name_key)
+			if not held.is_empty():
+				return tr("ui.hud.place_slot") % [active, slot + 1] # 1-based for humans
+		elif not held.is_empty():
+			return tr("ui.hud.place") % [active, tr(container.def.name_key)]
 	if not held.is_empty():
 		return tr("ui.hud.drop") % active
 	return ""

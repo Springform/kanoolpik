@@ -21,7 +21,7 @@ func _container(id: String) -> ContainerNode:
 
 
 func _slot_mesh(c: ContainerNode, slot: int) -> MeshInstance3D:
-	return c._slot_meshes[slot]
+	return c.slot_mesh(slot)
 
 
 func _place(item_id: String, cid: String, slot: int) -> void:
@@ -43,7 +43,7 @@ func test_correct_placement_uses_correct_style_and_no_marker() -> void:
 	_place("can_tuborg_1", "pant_bag", 2)
 	# Flash material is temporary; the resting material is restored by a tween. Check verdict + marker now.
 	assert_int(bag.slot_verdict(2)).is_equal(PlacementRules.Verdict.CORRECT)
-	assert_bool(bag._slot_marks[2].visible).is_false()
+	assert_bool(bag.slot_mark(2).visible).is_false()
 	await await_millis(int(ContainerNode.FLASH_SECONDS * 1000) + 100)
 	assert_object(_slot_mesh(bag, 2).material_override).is_equal(VerdictStyle.material("correct"))
 
@@ -52,8 +52,10 @@ func test_wrong_placement_shows_marker_and_wrong_style() -> void:
 	var canoe := _container("canoe")
 	_place("food_bread", "canoe", 0)
 	assert_int(canoe.slot_verdict(0)).is_equal(PlacementRules.Verdict.WRONG_CATEGORY)
-	assert_bool(canoe._slot_marks[0].visible).is_true()
-	assert_str(canoe._slot_marks[0].text).is_equal(VerdictStyle.MARK_WRONG)
+	assert_bool(canoe.slot_mark(0).visible).is_true()
+	assert_str(canoe.slot_mark(0).text).is_equal(VerdictStyle.MARK_WRONG)
+	# Guard against glyphs the default font cannot draw (Dingbats etc. render as nothing).
+	assert_int(VerdictStyle.MARK_WRONG.unicode_at(0)).is_less(0x0250)
 	await await_millis(int(ContainerNode.FLASH_SECONDS * 1000) + 100)
 	assert_object(_slot_mesh(canoe, 0).material_override).is_equal(VerdictStyle.material("wrong"))
 
@@ -62,7 +64,7 @@ func test_taking_out_clears_marker() -> void:
 	var canoe := _container("canoe")
 	_place("food_bread", "canoe", 0)
 	GameSession.submit(Commands.take_out(pid, "food_bread"))
-	assert_bool(canoe._slot_marks[0].visible).is_false()
+	assert_bool(canoe.slot_mark(0).visible).is_false()
 	assert_int(canoe.slot_verdict(0)).is_equal(-1)
 
 
@@ -71,7 +73,7 @@ func test_completed_container_goes_gold_and_marks_label() -> void:
 	for i in range(1, 6):
 		_place("firewood_%d" % i, "fire_pit", i - 1)
 	assert_bool(pit.is_complete).is_true()
-	assert_str(pit.label.text).starts_with(VerdictStyle.MARK_COMPLETE)
+	assert_str(pit.label.text).is_equal(tr("ui.container_packed") % tr("container.fire_pit"))
 	await await_millis(int(ContainerNode.COMPLETE_PULSE_SECONDS * 1000) + 100)
 	for i in range(5):
 		assert_object(_slot_mesh(pit, i).material_override).is_equal(VerdictStyle.material("complete"))

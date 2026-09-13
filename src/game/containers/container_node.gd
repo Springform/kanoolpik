@@ -2,11 +2,15 @@ class_name ContainerNode
 extends StaticBody3D
 ## Presentation of one container (pant bag, cooler, canoe...).
 ##
-## Placeholder visual: a translucent box with a label and a row of small
-## "slot" cubes. Feedback (WP-1.2): placing flashes the slot and plays a chime
-## (correct) or a thud (wrong); wrong slots carry an ✕ marker; a completed
-## container turns gold, glows and plays a fanfare; the island-clean fanfare
-## plays from the container that received the final item.
+## Placeholder visual: a translucent box with a label and a row of [SlotNode]
+## children — each slot is separately aimable (WP-1.3), so the player chooses
+## where an item goes and can take items back out.
+##
+## Feedback (WP-1.2): placing flashes the slot and plays a chime (correct) or a
+## thud (wrong); wrong slots carry an ✕ marker; a completed container turns
+## gold, glows and plays a fanfare; the island-clean fanfare plays from the
+## container that received the final item.
+##
 ## Phase 2 replaces the box with a real model via ContainerDef.scene.
 
 const FLASH_SECONDS := 0.35
@@ -14,6 +18,9 @@ const COMPLETE_PULSE_SECONDS := 0.6
 ## Correct chimes within this window step up in pitch (a little melody when you're on a roll).
 const CHIME_COMBO_WINDOW := 2.0
 const CHIME_MAX_STEPS := 7
+const SLOT_SPACING := 0.25
+## Slots sit just above the lid so the interaction ray reaches them before the body.
+const SLOT_HEIGHT := 0.74
 
 var container_id: String
 var def: ContainerDef
@@ -27,8 +34,7 @@ var is_complete := false
 @onready var sfx_complete: AudioStreamPlayer3D = $SfxComplete
 @onready var sfx_clean: AudioStreamPlayer3D = $SfxClean
 
-var _slot_meshes: Array[MeshInstance3D] = []
-var _slot_marks: Array[Label3D] = []
+var _slots: Array[SlotNode] = []
 var _last_chime_time := -100.0
 var _chime_steps := 0
 var _received_last_item := false
@@ -40,7 +46,7 @@ func setup(p_def: ContainerDef) -> void:
 
 
 func _ready() -> void:
-	var width := 0.25 * def.slot_count + 0.3
+	var width := SLOT_SPACING * def.slot_count + 0.3
 	var box := BoxMesh.new()
 	box.size = Vector3(width, 0.6, 0.8)
 	mesh.mesh = box
@@ -51,31 +57,37 @@ func _ready() -> void:
 	var shape: BoxShape3D = $Collision.shape
 	shape.size = box.size
 	label.text = tr(def.name_key)
-	label.position.y = 0.9
+	label.position.y = 1.15
 	for i in range(def.slot_count):
-		var m := MeshInstance3D.new()
-		var cube := BoxMesh.new()
-		cube.size = Vector3(0.18, 0.18, 0.18)
-		m.mesh = cube
-		m.material_override = VerdictStyle.material("empty")
-		m.position = Vector3(-width * 0.5 + 0.25 + i * 0.25, 0.4, 0)
-		slots_root.add_child(m)
-		_slot_meshes.append(m)
-		var mark := Label3D.new()
-		mark.text = VerdictStyle.MARK_WRONG
-		mark.modulate = VerdictStyle.COLOR_WRONG
-		mark.outline_size = 6
-		mark.pixel_size = 0.004
-		mark.font_size = 40
-		mark.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		mark.position = m.position + Vector3(0, 0.2, 0)
-		mark.visible = false
-		slots_root.add_child(mark)
-		_slot_marks.append(mark)
+		var slot := SlotNode.create(container_id, i)
+		slot.position = Vector3(-width * 0.5 + 0.25 + i * SLOT_SPACING, SLOT_HEIGHT, 0)
+		slots_root.add_child(slot)
+		_slots.append(slot)
 	GameEvents.item_placed.connect(_on_item_placed)
 	GameEvents.item_taken_out.connect(_on_item_taken_out)
 	GameEvents.container_completed.connect(_on_completed)
 	GameEvents.island_clean.connect(_on_island_clean)
+	refresh()
+
+
+# --- Queries ---------------------------------------------------------------------
+
+func slot_count() -> int:
+	return _slots.size()
+
+
+func slot_node(slot: int) -> SlotNode:
+	return _slots[slot] if slot >= 0 and slot < _slots.size() else null
+
+
+func slot_mesh(slot: int) -> MeshInstance3D:
+	var node := slot_node(slot)
+	return node.mesh if node != null else null
+
+
+func slot_mark(slot: int) -> Label3D:
+	var node := slot_node(slot)
+	return node.mark if node != null else null
 
 
 func first_free_slot() -> int:
@@ -93,8 +105,20 @@ func slot_verdict(slot: int) -> int:
 	return PlacementRules.evaluate(GameSession.catalog, GameSession.state, item_id, container_id, slot)
 
 
+## Slot index for a raycast collider, or -1 when the hit was the container body.
+func slot_at(collider: Node) -> int:
+	var node := collider
+	while node != null and not (node is SlotNode):
+		if node is ContainerNode:
+			return -1
+		node = node.get_parent()
+	return (node as SlotNode).slot_index if node is SlotNode else -1
+
+
+# --- Look ------------------------------------------------------------------------
+
 func refresh() -> void:
-	for i in range(_slot_meshes.size()):
+	for i in range(_slots.size()):
 		_apply_resting_material(i)
 
 
@@ -110,8 +134,8 @@ func resting_material_kind(slot: int) -> String:
 
 func _apply_resting_material(slot: int) -> void:
 	var kind := resting_material_kind(slot)
-	_slot_meshes[slot].material_override = VerdictStyle.material(kind)
-	_slot_marks[slot].visible = kind == "wrong"
+	_slots[slot].mesh.material_override = VerdictStyle.material(kind)
+	_slots[slot].mark.visible = kind == "wrong"
 
 
 # --- Event handlers ------------------------------------------------------------
@@ -133,6 +157,7 @@ func _on_item_taken_out(_item_id: String, _player_id: int, cid: String) -> void:
 	if cid == container_id:
 		is_complete = false
 		label.text = tr(def.name_key)
+		label.modulate = Color.WHITE
 		refresh()
 
 
@@ -140,7 +165,7 @@ func _on_completed(cid: String) -> void:
 	if cid != container_id:
 		return
 	is_complete = true
-	label.text = VerdictStyle.MARK_COMPLETE + " " + tr(def.name_key)
+	label.text = tr("ui.container_packed") % tr(def.name_key)
 	label.modulate = VerdictStyle.COLOR_COMPLETE
 	refresh()
 	_pulse_all_slots()
@@ -155,9 +180,10 @@ func _on_island_clean() -> void:
 # --- Feedback helpers -----------------------------------------------------------
 
 func _flash_slot(slot: int, good: bool) -> void:
-	if slot < 0 or slot >= _slot_meshes.size():
+	var node := slot_node(slot)
+	if node == null:
 		return
-	var m := _slot_meshes[slot]
+	var m := node.mesh
 	var flash := StandardMaterial3D.new()
 	flash.albedo_color = VerdictStyle.COLOR_FLASH_GOOD if good else VerdictStyle.COLOR_FLASH_BAD
 	flash.emission_enabled = true
@@ -170,15 +196,15 @@ func _flash_slot(slot: int, good: bool) -> void:
 	tween.tween_property(m, "scale", Vector3.ONE, FLASH_SECONDS).set_ease(Tween.EASE_OUT)
 	tween.tween_property(flash, "emission_energy_multiplier", 0.0, FLASH_SECONDS)
 	# Recompute the resting look at the end: state may have changed (e.g. completed) during the flash.
-	tween.chain().tween_callback(func(): if is_instance_valid(m): _apply_resting_material(slot))
+	tween.chain().tween_callback(func() -> void: if is_instance_valid(m): _apply_resting_material(slot))
 
 
 func _pulse_all_slots() -> void:
 	var tween := create_tween()
 	tween.set_parallel(true)
-	for m in _slot_meshes:
-		m.scale = Vector3.ONE * 1.4
-		tween.tween_property(m, "scale", Vector3.ONE, COMPLETE_PULSE_SECONDS).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	for s in _slots:
+		s.mesh.scale = Vector3.ONE * 1.4
+		tween.tween_property(s.mesh, "scale", Vector3.ONE, COMPLETE_PULSE_SECONDS).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	mesh.scale = Vector3(1.05, 1.15, 1.05)
 	tween.tween_property(mesh, "scale", Vector3.ONE, COMPLETE_PULSE_SECONDS).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 
