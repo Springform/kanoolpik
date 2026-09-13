@@ -62,6 +62,7 @@ func to_title() -> void:
 	# Deferred: start_game frees the title screen, which would otherwise still be
 	# locked emitting this very signal.
 	title_screen.start_requested.connect(start_game, CONNECT_DEFERRED)
+	title_screen.continue_requested.connect(continue_game, CONNECT_DEFERRED)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
@@ -70,6 +71,11 @@ func start_game(seed: int = LEVEL_DEFAULT_SEED) -> void:
 	_tear_down()
 	state = State.PLAYING
 	GameSession.start_level(level_id, seed)
+	_build_playing_scene()
+
+
+## The nodes a playable level needs, whether it was generated or loaded.
+func _build_playing_scene() -> void:
 	island = ISLAND.instantiate()
 	add_child(island)
 	player = PLAYER.instantiate()
@@ -86,6 +92,18 @@ func start_game(seed: int = LEVEL_DEFAULT_SEED) -> void:
 	evaluation = EVALUATION.instantiate()
 	add_child(evaluation)
 	GameEvents.island_clean.connect(_on_island_clean)
+
+
+## Resume the autosave. Falls back to a fresh game when the slot turns out to be
+## unusable, so the button can never leave the player stuck on the title.
+func continue_game(slot: String = SaveGame.DEFAULT_SLOT) -> bool:
+	_tear_down()
+	if not GameSession.load_save(slot):
+		start_game(LEVEL_DEFAULT_SEED)
+		return false
+	state = State.PLAYING
+	_build_playing_scene()
+	return true
 
 
 ## Play the same mess again.

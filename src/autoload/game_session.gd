@@ -22,6 +22,8 @@ var level: Dictionary = {}
 var level_id: String = ""
 
 var _running := false
+## Autosave after each container is packed. Tests turn this off.
+var autosave_enabled := true
 
 
 func _physics_process(delta: float) -> void:
@@ -32,24 +34,62 @@ func _physics_process(delta: float) -> void:
 ## Load catalog + level, generate the mess and wire a local (single-player) transport.
 ## Multiplayer will pass its own transport in phase 4.
 func start_level(p_level_id: String, level_seed: int = -1, p_transport: Transport = null) -> void:
-	level_id = p_level_id
-	level = load_level(p_level_id)
-	catalog = Catalog.load_from_files(ITEMS_PATH, CONTAINERS_PATH)
-	var problems := catalog.validate()
-	for p in problems:
+	var lvl := load_level(p_level_id)
+	var cat := Catalog.load_from_files(ITEMS_PATH, CONTAINERS_PATH)
+	for p in cat.validate():
 		push_error("Catalog problem: %s" % p)
-	var use_seed := int(level.get("seed_default", 0)) if level_seed < 0 else level_seed
+	var use_seed := int(lvl.get("seed_default", 0)) if level_seed < 0 else level_seed
 	var exclusions := MessGenerator.container_exclusions(
-		catalog, level.get("container_positions", {}), float(level.get("container_clearance", 0.4)))
-	state = MessGenerator.generate(
-		use_seed, catalog, level["spawn_zones"], float(level.get("ground_y", 0.0)), exclusions)
+		cat, lvl.get("container_positions", {}), float(lvl.get("container_clearance", 0.4)))
+	var fresh := MessGenerator.generate(
+		use_seed, cat, lvl["spawn_zones"], float(lvl.get("ground_y", 0.0)), exclusions)
+	_begin(p_level_id, lvl, cat, fresh, Progression.new(), p_transport)
+
+
+## Resume a saved run instead of generating a new mess.
+## Returns false (changing nothing) when the slot is empty, corrupt or from an
+## older schema — the caller can then simply start a new game.
+func load_save(slot: String = SaveGame.DEFAULT_SLOT) -> bool:
+	var unpacked := SaveGame.unpack(SaveGame.read(slot))
+	if unpacked.is_empty():
+		return false
+	var saved_level_id: String = unpacked["level_id"]
+	var lvl := load_level(saved_level_id)
+	if lvl.is_empty():
+		push_error("Save refers to an unknown level: %s" % saved_level_id)
+		return false
+	_begin(saved_level_id, lvl, Catalog.load_from_files(ITEMS_PATH, CONTAINERS_PATH),
+		unpacked["state"], unpacked["progression"], null)
+	return true
+
+
+## Write the running game to a slot. False when nothing is running or the write failed.
+func save(slot: String = SaveGame.DEFAULT_SLOT) -> bool:
+	if state == null or level_id.is_empty():
+		return false
+	return SaveGame.write(slot, SaveGame.pack(state, progression, level_id))
+
+
+func has_save(slot: String = SaveGame.DEFAULT_SLOT) -> bool:
+	return SaveGame.has_save(slot)
+
+
+## Shared tail of start_level and load_save: adopt these objects as the running game.
+func _begin(p_level_id: String, p_level: Dictionary, p_catalog: Catalog,
+		p_state: WorldState, p_progression: Progression, p_transport: Transport) -> void:
+	level_id = p_level_id
+	level = p_level
+	catalog = p_catalog
+	state = p_state
+	progression = p_progression
 	processor = CommandProcessor.new(catalog)
-	progression = Progression.new()
 	transport = p_transport if p_transport != null else LocalTransport.new(processor, state)
 	transport.command_applied.connect(_on_command_applied)
 	transport.command_rejected.connect(_on_command_rejected)
 	transport.state_replaced.connect(_on_state_replaced)
-	state.add_player(transport.local_player_id(), base_capacity())
+	# A loaded state already knows its players (and their earned capacity).
+	if not state.has_player(transport.local_player_id()):
+		state.add_player(transport.local_player_id(), base_capacity())
 	_running = true
 	GameEvents.level_loaded.emit(level_id)
 	_emit_progress()
@@ -107,10 +147,15 @@ func player_spawn(index: int) -> Vector3:
 
 
 func _on_command_applied(_command: Dictionary, result: Dictionary) -> void:
+	var pack_completed := false
 	for event in result["events"]:
 		if event["type"] == "container_completed":
 			progression.credit_container(event["container_id"])
+			pack_completed = true
 		GameEvents.publish(event)
+	# Autosave only at a natural milestone — never on a tick, never mid-placement.
+	if pack_completed and autosave_enabled:
+		save()
 	if result["events"].size() > 0 and result["events"][0]["type"] != "ticked":
 		_emit_progress()
 

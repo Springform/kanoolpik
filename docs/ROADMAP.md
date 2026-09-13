@@ -24,16 +24,18 @@ Bootable gray-box vertical slice; pure core with 74 tests; data-driven content; 
 
 *Exit criterion: a friend can play Island 01 start to finish in a browser, see their grade, and want to try again.*
 
+**Status: everything except WP-1.7 (controller feel) is done — 190 tests.** The loop is complete end to end: title → play → evaluation → restart, with autosave and resume.
+
 | WP | Title | Lane | Owns | Depends on |
 |---|---|---|---|---|
-| [1.1](roadmap/phase-1/WP-1.1-carry-visuals.md) | Carried items visible in hand | items | `src/game/items/` | — |
-| [1.2](roadmap/phase-1/WP-1.2-placement-feedback.md) | Placement feedback: flash, chime, completion glow | containers+audio | `src/game/containers/`, `assets/audio/sfx/` | — |
-| [1.3](roadmap/phase-1/WP-1.3-take-out-and-slot-targeting.md) | Take items back out; aim at a specific slot | containers/player | `src/game/containers/`, `src/game/player/` | 1.2 |
-| [1.4](roadmap/phase-1/WP-1.4-hud-v1.md) | HUD v1 (Danish): progress, carrying, prompts, toasts | hud | `src/game/hud/` | — |
-| [1.5](roadmap/phase-1/WP-1.5-evaluation-screen.md) | End-of-level evaluation screen + restart | hud/flow | `src/game/hud/evaluation/`, `src/game/main/` | 1.4 |
-| [1.6](roadmap/phase-1/WP-1.6-title-and-flow.md) | Title screen, seed entry, pause, restart | flow | `src/game/main/`, `src/game/title/` | — |
+| [1.1](roadmap/phase-1/WP-1.1-carry-visuals.md) ✅ | Carried items visible in hand | items | `src/game/items/` | — |
+| [1.2](roadmap/phase-1/WP-1.2-placement-feedback.md) ✅ | Placement feedback: flash, chime, completion glow | containers+audio | `src/game/containers/`, `assets/audio/sfx/` | — |
+| [1.3](roadmap/phase-1/WP-1.3-take-out-and-slot-targeting.md) ✅ | Take items back out; aim at a specific slot | containers/player | `src/game/containers/`, `src/game/player/` | 1.2 |
+| [1.4](roadmap/phase-1/WP-1.4-hud-v1.md) ✅ | HUD v1 (Danish): progress, carrying, prompts, toasts | hud | `src/game/hud/` | — |
+| [1.5](roadmap/phase-1/WP-1.5-evaluation-screen.md) ✅ | End-of-level evaluation screen + restart | hud/flow | `src/game/hud/evaluation/`, `src/game/main/` | 1.4 |
+| [1.6](roadmap/phase-1/WP-1.6-title-and-flow.md) ✅ | Title screen, seed entry, pause, restart | flow | `src/game/main/`, `src/game/title/` | — |
 | [1.7](roadmap/phase-1/WP-1.7-controller-feel.md) | Controller feel: acceleration, head bob toggle, FOV, sensitivity | player | `src/game/player/` | — |
-| [1.8](roadmap/phase-1/WP-1.8-save-load.md) | Save/load via WorldState snapshot (core + autoload) | core/infra | `src/core/save_game.gd`, `src/autoload/` | — |
+| [1.8](roadmap/phase-1/WP-1.8-save-load.md) ✅ | Save/load via WorldState snapshot (core + autoload) | core/infra | `src/core/save_game.gd`, `src/autoload/` | — |
 
 Parallel-safe sets: {1.1, 1.2, 1.4, 1.6, 1.7, 1.8} can all start at once. 1.3 after 1.2; 1.5 after 1.4.
 
