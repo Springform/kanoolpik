@@ -7,6 +7,7 @@ var main: Main
 
 func before_test() -> void:
 	main = auto_free(load("res://src/game/main/main.tscn").instantiate())
+	main.skip_title = true # this suite is about the end of a game, not the flow
 	add_child(main)
 
 
