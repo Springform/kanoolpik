@@ -23,12 +23,16 @@ static var _failed: Dictionary = {}
 
 ## The visual for one object. [param fallback_size] is both the placeholder's
 ## size and the box the model is fitted into.
+## [param fit_height], when above zero, fits the model to that height in metres
+## instead of squeezing its longest axis into [param fallback_size] — a canoe is
+## five metres long and knee-high, and no single box budget describes both.
 static func build(model_path: String, fallback_size: Vector3, color: Color,
-		scale_override: float = 0.0, y_rotation_degrees: float = 0.0) -> Node3D:
+		scale_override: float = 0.0, y_rotation_degrees: float = 0.0,
+		fit_height: float = 0.0) -> Node3D:
 	var model := _load_model(model_path)
 	if model == null:
 		return _placeholder(fallback_size, color)
-	_fit(model, fallback_size, scale_override)
+	_fit(model, fallback_size, scale_override, fit_height)
 	model.rotate_y(deg_to_rad(y_rotation_degrees))
 	if color != Color.WHITE:
 		_tint(model, color)
@@ -132,13 +136,20 @@ static func _placeholder(size: Vector3, color: Color) -> Node3D:
 ## 1.2 means "a fifth bigger than the automatic size" whatever units the model
 ## arrived in. Tuning it by eye must not require knowing that a log is 43 units
 ## long — that is the whole point of auto-fit.
-static func _fit(model: Node3D, budget: Vector3, scale_override: float) -> void:
+static func _fit(model: Node3D, budget: Vector3, scale_override: float, fit_height: float = 0.0) -> void:
 	var bounds := combined_aabb(model)
 	if bounds.size.length() <= 0.0001:
 		return # nothing to measure; leave it alone rather than dividing by zero
-	var longest_model := maxf(bounds.size.x, maxf(bounds.size.y, bounds.size.z))
-	var longest_budget := maxf(budget.x, maxf(budget.y, budget.z))
-	var factor := longest_budget / longest_model
+	var factor: float
+	if fit_height > 0.0 and bounds.size.y > 0.0001:
+		# How tall is this thing in real life? That is a question a person can
+		# answer about a bin bag without measuring anything, and it leaves the
+		# model's own proportions alone.
+		factor = fit_height / bounds.size.y
+	else:
+		var longest_model := maxf(bounds.size.x, maxf(bounds.size.y, bounds.size.z))
+		var longest_budget := maxf(budget.x, maxf(budget.y, budget.z))
+		factor = longest_budget / longest_model
 	if scale_override > 0.0:
 		factor *= scale_override
 	model.scale = Vector3.ONE * factor

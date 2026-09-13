@@ -112,8 +112,9 @@ func test_drawn_box_matches_the_footprint_used_for_layout() -> void:
 		if ItemVisual.has_model(GameSession.catalog.get_container(cid).scene):
 			continue # a model is fitted to the footprint, not equal to the box
 		var drawn := ItemVisual.visual_size(node.visual, Vector3.ONE)
-		assert_float(drawn.x).is_equal_approx(GameSession.catalog.get_container(cid).width(), 0.001)
-		assert_float(drawn.z).is_equal_approx(ContainerDef.DEPTH, 0.001)
+		var cdef := GameSession.catalog.get_container(cid)
+		assert_float(drawn.x).is_equal_approx(cdef.width(), 0.001)
+		assert_float(drawn.z).is_equal_approx(cdef.depth(), 0.001)
 
 
 # --- 3. Falling in the lake ------------------------------------------------------------

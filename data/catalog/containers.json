@@ -14,21 +14,30 @@
       "accepts": [
         "bottle_glass"
       ],
-      "slot_count": 8
+      "slot_count": 8,
+      "scene": "res://assets/models/containers/glass_crate.glb",
+      "model_height": 0.35,
+      "footprint": 0.79
     },
     {
       "id": "trash_bag",
       "accepts": [
         "trash"
       ],
-      "slot_count": 20
+      "slot_count": 20,
+      "scene": "res://assets/models/containers/trash_bag.glb",
+      "model_height": 0.9,
+      "footprint": 1.06
     },
     {
       "id": "cooler",
       "accepts": [
         "food"
       ],
-      "slot_count": 14
+      "slot_count": 14,
+      "scene": "res://assets/models/containers/cooler.glb",
+      "model_height": 0.45,
+      "footprint": 0.97
     },
     {
       "id": "tent_bag",
@@ -38,14 +47,20 @@
         "tent_canvas"
       ],
       "slot_count": 12,
-      "ordered": true
+      "ordered": true,
+      "scene": "res://assets/models/containers/tent_bag.glb",
+      "model_height": 0.32,
+      "footprint": 0.89
     },
     {
       "id": "dry_bag",
       "accepts": [
         "clothing"
       ],
-      "slot_count": 16
+      "slot_count": 16,
+      "scene": "res://assets/models/containers/dry_bag.glb",
+      "model_height": 0.6,
+      "footprint": 0.97
     },
     {
       "id": "canoe",
@@ -53,7 +68,11 @@
         "paddle",
         "life_vest"
       ],
-      "slot_count": 6
+      "slot_count": 6,
+      "scene": "res://assets/models/containers/canoe.glb",
+      "model_height": 0.45,
+      "footprint": 1.52,
+      "model_rotation": 90.0
     },
     {
       "id": "fire_pit",
@@ -61,7 +80,10 @@
         "firewood"
       ],
       "slot_count": 6,
-      "scene": "res://assets/models/containers/fire_pit.glb"
+      "scene": "res://assets/models/containers/fire_pit.glb",
+      "slot_layout": "ring",
+      "model_height": 0.4,
+      "footprint": 1.02
     },
     {
       "id": "canoe_b",
@@ -69,7 +91,11 @@
         "paddle",
         "life_vest"
       ],
-      "slot_count": 6
+      "slot_count": 6,
+      "scene": "res://assets/models/containers/canoe.glb",
+      "model_height": 0.45,
+      "footprint": 1.52,
+      "model_rotation": 90.0
     },
     {
       "id": "sleeping_bag_sack",
@@ -77,21 +103,52 @@
         "sleeping_bag"
       ],
       "slot_count": 8,
-      "ordered": true
+      "ordered": true,
+      "scene": "res://assets/models/containers/sleeping_bag_sack.glb",
+      "model_height": 0.5,
+      "footprint": 0.79
     },
     {
       "id": "lost_found",
       "accepts": [
         "misc"
       ],
-      "slot_count": 22
+      "slot_count": 22,
+      "scene": "res://assets/models/containers/lost_found.glb",
+      "model_height": 0.3,
+      "footprint": 1.3
     },
     {
       "id": "kitchen_box",
       "accepts": [
         "cookware"
       ],
-      "slot_count": 14
+      "slot_count": 14,
+      "scene": "res://assets/models/containers/kitchen_box.glb",
+      "model_height": 0.45,
+      "footprint": 0.97
+    },
+    {
+      "id": "can_cooler_1",
+      "accepts": [
+        "can_sealed"
+      ],
+      "slot_count": 6,
+      "name_key": "container.can_cooler_1",
+      "scene": "res://assets/models/containers/can_cooler_1.glb",
+      "model_height": 0.45,
+      "footprint": 0.71
+    },
+    {
+      "id": "can_cooler_2",
+      "accepts": [
+        "can_sealed"
+      ],
+      "slot_count": 6,
+      "name_key": "container.can_cooler_2",
+      "scene": "res://assets/models/containers/can_cooler_2.glb",
+      "model_height": 0.45,
+      "footprint": 0.71
     }
   ]
 }

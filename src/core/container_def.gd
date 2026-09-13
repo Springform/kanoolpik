@@ -5,11 +5,15 @@ extends RefCounted
 ##
 ## Pure data — loaded from data/catalog/containers.json via [Catalog].
 
-## Placeholder footprint, shared by the level layout, the mess generator and
+## Slot-tray geometry, shared by the level layout, the mess generator and
 ## [ContainerNode] so "how much room does this take" is defined exactly once.
+##
+## The slots are a tray hovering above the container, not a shelf built into it:
+## roughly square, so twenty of them are a hand's reach across rather than a
+## five-metre row. Before real models arrived they *were* the container, which
+## is why a 34-slot pant bag used to be 8.8 m wide.
 const SLOT_SPACING := 0.25
 const EDGE_MARGIN := 0.3
-const DEPTH := 0.8
 
 var id: String
 var accepts: Array[String] = [] ## Item categories this container is the correct home for.
@@ -21,6 +25,20 @@ var scene: String = "" ## Optional res:// path to a .glb; empty means the transl
 ## 0.8 = a fifth smaller. 0.0 (the default) means no nudge.
 var model_scale: float = 0.0
 var model_rotation: float = 0.0 ## Degrees around Y.
+## How the slots are arranged on the model: "grid" (default) or "ring" for
+## things you gather round, like the fire pit. Presentation decides what the
+## name means; the catalog only carries it.
+var slot_layout: String = "grid"
+## How tall this thing is in real life, in metres. Containers differ wildly in
+## shape — a canoe is five metres long and knee-high, a bin bag is a metre of
+## nothing but height — so fitting the longest axis to one box budget produced a
+## five-metre bin bag. Height is the one dimension a person can state about a
+## real object without measuring the mesh. 0.0 keeps the old longest-axis fit.
+var model_height: float = 0.0
+## Footprint radius in metres, when the model's is not what the slot count
+## implies. 0.0 means "work it out from slot_count" (the placeholder rule).
+## Whoever sets this has measured the fitted model; see WP-2.3.
+var footprint: float = 0.0
 
 
 static func from_dict(d: Dictionary) -> ContainerDef:
@@ -36,6 +54,9 @@ static func from_dict(d: Dictionary) -> ContainerDef:
 	def.scene = String(d.get("scene", ""))
 	def.model_scale = maxf(0.0, float(d.get("model_scale", 0.0)))
 	def.model_rotation = float(d.get("model_rotation", 0.0))
+	def.slot_layout = String(d.get("slot_layout", "grid"))
+	def.model_height = maxf(0.0, float(d.get("model_height", 0.0)))
+	def.footprint = maxf(0.0, float(d.get("footprint", 0.0)))
 	return def
 
 
@@ -49,18 +70,37 @@ func to_dict() -> Dictionary:
 		"scene": scene,
 		"model_scale": model_scale,
 		"model_rotation": model_rotation,
+		"slot_layout": slot_layout,
+		"model_height": model_height,
+		"footprint": footprint,
 	}
 
 
-## Width in metres of the placeholder box (grows with slot count).
+## Columns and rows of the slot tray: as square as the count allows.
+func slot_columns() -> int:
+	return maxi(1, ceili(sqrt(float(slot_count))))
+
+
+func slot_rows() -> int:
+	return maxi(1, ceili(float(slot_count) / slot_columns()))
+
+
+## Width in metres of the slot tray (and of the placeholder box under it).
 func width() -> float:
-	return SLOT_SPACING * slot_count + EDGE_MARGIN
+	return SLOT_SPACING * slot_columns() + EDGE_MARGIN
+
+
+## Depth in metres of the slot tray.
+func depth() -> float:
+	return SLOT_SPACING * slot_rows() + EDGE_MARGIN
 
 
 ## Radius of a circle that covers the whole footprint — used to keep containers
 ## apart and to keep items from spawning inside one.
 func footprint_radius() -> float:
-	return sqrt(pow(width() * 0.5, 2) + pow(DEPTH * 0.5, 2))
+	if footprint > 0.0:
+		return footprint
+	return sqrt(pow(width() * 0.5, 2) + pow(depth() * 0.5, 2))
 
 
 func accepts_category(category: String) -> bool:

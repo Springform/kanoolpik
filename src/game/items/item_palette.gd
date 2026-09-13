@@ -9,6 +9,8 @@ const CATEGORY_COLOURS := {
 	"trash": Color(0.55, 0.55, 0.55), "food": Color(0.9, 0.5, 0.5), "tent_pole": Color(0.2, 0.4, 0.8),
 	"tent_peg": Color(0.3, 0.3, 0.6), "tent_canvas": Color(0.15, 0.3, 0.6), "clothing": Color(0.8, 0.4, 0.8),
 	"paddle": Color(0.6, 0.4, 0.2), "life_vest": Color(1.0, 0.5, 0.0), "firewood": Color(0.4, 0.25, 0.1),
+	# Still cold, still closed: the one category you are saving rather than clearing.
+	"can_sealed": Color(0.95, 0.9, 0.75),
 }
 
 
