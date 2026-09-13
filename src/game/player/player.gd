@@ -80,6 +80,15 @@ func aimed_target() -> Node:
 	return hit
 
 
+## The specific slot the crosshair is on, or -1 when aiming at a container body
+## or at anything else. Used by the HUD to say what [E] will do.
+func aimed_slot() -> int:
+	if not ray.is_colliding():
+		return -1
+	var target := aimed_target()
+	return (target as ContainerNode).slot_at(ray.get_collider()) if target is ContainerNode else -1
+
+
 func carried_items() -> Array[String]:
 	return GameSession.state.carried_by(player_id)
 
@@ -87,17 +96,30 @@ func carried_items() -> Array[String]:
 func _interact() -> void:
 	var target := aimed_target()
 	if target is PickupItem:
-		GameSession.submit(Commands.pick_up(player_id, target.item_id))
+		GameSession.submit(Commands.pick_up(player_id, (target as PickupItem).item_id))
 	elif target is ContainerNode:
-		var held := carried_items()
-		if held.is_empty():
-			return
-		var item_id := held[held.size() - 1] # carried_by() is in pick-up order: last = in hand
-		var slot := PlacementRules.find_correct_slot(GameSession.catalog, GameSession.state, item_id, target.container_id)
-		if slot < 0:
-			slot = target.first_free_slot()
-		if slot >= 0:
-			GameSession.submit(Commands.place(player_id, item_id, target.container_id, slot))
+		interact_with_container(target as ContainerNode, aimed_slot())
+
+
+## Split out from [method _interact] so tests can drive it without simulating a raycast.
+##   aimed at an occupied slot  -> take that item back out
+##   aimed at an empty slot     -> put the active item exactly there
+##   aimed at the body (-1)     -> put it in its correct slot, else the first free one
+func interact_with_container(container: ContainerNode, slot: int) -> void:
+	var occupant := GameSession.state.item_in_slot(container.container_id, slot) if slot >= 0 else ""
+	if not occupant.is_empty():
+		GameSession.submit(Commands.take_out(player_id, occupant))
+		return
+	var item_id := GameSession.state.active_item(player_id)
+	if item_id.is_empty():
+		return
+	var target_slot := slot
+	if target_slot < 0:
+		target_slot = PlacementRules.find_correct_slot(GameSession.catalog, GameSession.state, item_id, container.container_id)
+		if target_slot < 0:
+			target_slot = container.first_free_slot()
+	if target_slot >= 0:
+		GameSession.submit(Commands.place(player_id, item_id, container.container_id, target_slot))
 
 
 func _drop_one() -> void:

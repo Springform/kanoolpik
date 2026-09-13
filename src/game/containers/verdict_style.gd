@@ -12,9 +12,12 @@ const COLOR_WRONG := Color(0.75, 0.15, 0.15) # dark red
 const COLOR_COMPLETE := Color(1.0, 0.82, 0.25) # gold
 const COLOR_FLASH_GOOD := Color(1.0, 0.95, 0.6)
 const COLOR_FLASH_BAD := Color(0.5, 0.05, 0.05)
+## Brighter than COLOR_WRONG so the ×-marker reads against grass and water.
+const COLOR_MARK := Color(1.0, 0.3, 0.25)
 
-const MARK_WRONG := "✕"
-const MARK_COMPLETE := "✓"
+## Latin-1 only: Godot's default font (Open Sans) has no Dingbats/Geometric
+## Shapes glyphs, so ✓/✕/▶ render as nothing at all. Verified on screen.
+const MARK_WRONG := "×"
 
 ## Shared materials (built once, reused by every slot mesh).
 static var _materials: Dictionary = {}

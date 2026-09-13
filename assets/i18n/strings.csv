@@ -107,3 +107,6 @@ ui.error.item_not_on_ground,Den ligger ikke der længere,It isn't there any more
 ui.error.item_not_carried_by_player,Du holder ikke den,You aren't holding that
 ui.error.item_not_placed,Den ligger ikke i noget,It isn't in anything
 ui.error.generic,Det kan du ikke lige nu,You can't do that right now
+ui.hud.take_out,[E] Tag %s ud,[E] Take out %s
+ui.hud.place_slot,[E] Læg %s på plads %d,[E] Put %s in spot %d
+ui.container_packed,%s – pakket,%s – packed
