@@ -6,11 +6,18 @@ extends StaticBody3D
 ## floating above it. Phase 2 swaps the box for real models via ItemDef.model.
 ## Reacts to core events on the bus; never mutates state itself.
 
+## Item names are only drawn within this distance of the camera (metres).
+## Tuned by looking at the island, not by theory — at 6 m the 150 names still
+## read as a wall of text. Worth re-tuning once you have played a full round.
+const LABEL_VISIBLE_METRES := 3.5
+
 var item_id: String
 var def: ItemDef
 
-@onready var mesh: MeshInstance3D = $Mesh
 @onready var label: Label3D = $Label
+
+## The model, or the generated placeholder when there is no model.
+var visual: Node3D
 
 
 func setup(p_def: ItemDef) -> void:
@@ -19,22 +26,44 @@ func setup(p_def: ItemDef) -> void:
 
 
 func _ready() -> void:
-	var box := BoxMesh.new()
-	box.size = ItemPalette.box_size(def)
-	mesh.mesh = box
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = ItemPalette.color_for(def.category)
-	mesh.material_override = mat
-	var shape: BoxShape3D = $Collision.shape
-	shape.size = box.size
+	var budget := ItemPalette.box_size(def)
+	visual = ItemVisual.build(def.model, budget, ItemPalette.visual_color(def),
+		def.model_scale, def.model_rotation)
+	add_child(visual)
+	# Collision follows whatever we ended up drawing, model or box, and stays a
+	# simple box — the interaction ray only needs something to hit.
+	var drawn := ItemVisual.visual_size(visual, budget)
+	# Its OWN shape: a sub-resource declared in the .tscn is shared by every
+	# instance of that scene, so all 150 items were writing to one BoxShape3D and
+	# the last one to spawn decided the collision size for all of them.
+	var shape := BoxShape3D.new()
+	shape.size = drawn
+	$Collision.shape = shape
+	$Collision.position.y = drawn.y * 0.5
 	label.text = tr(def.name_key)
-	label.position.y = box.size.y + 0.15
+	label.position.y = drawn.y + 0.15
+	# With ~150 items the names became a wall of text across the whole island.
+	# Only show them close up: the HUD prompt names whatever the crosshair is on,
+	# so a label is just for the things right around you.
+	#
+	# Done in _process rather than with GeometryInstance3D.visibility_range_end,
+	# which Label3D does not honour under the GL Compatibility renderer (the
+	# property sets fine and changes nothing on screen — checked in the browser).
+	label.visible = false
 	GameEvents.item_picked_up.connect(_on_picked_up)
 	GameEvents.item_dropped.connect(_on_dropped)
 	GameEvents.item_placed.connect(_on_placed)
 	GameEvents.item_taken_out.connect(_on_taken_out)
 	# A level built from a save starts with items already carried or packed.
 	set_in_world(GameSession.state.kind_of(item_id) == WorldState.Kind.GROUND)
+
+
+func _process(_delta: float) -> void:
+	if not visible:
+		return
+	var camera := get_viewport().get_camera_3d()
+	label.visible = camera != null and \
+		global_position.distance_squared_to(camera.global_position) <= LABEL_VISIBLE_METRES * LABEL_VISIBLE_METRES
 
 
 func _on_picked_up(id: String, _player_id: int) -> void:
@@ -44,7 +73,7 @@ func _on_picked_up(id: String, _player_id: int) -> void:
 
 func _on_dropped(id: String, _player_id: int, position: Vector3) -> void:
 	if id == item_id:
-		global_position = position + Vector3(0, mesh.mesh.size.y * 0.5, 0)
+		global_position = position
 		set_in_world(true)
 
 

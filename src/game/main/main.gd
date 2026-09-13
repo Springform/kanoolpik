@@ -80,7 +80,10 @@ func _build_playing_scene() -> void:
 	add_child(island)
 	player = PLAYER.instantiate()
 	player.player_id = GameSession.local_player_id()
-	player.position = GameSession.player_spawn(0)
+	# Spawn points in the level data are flat (Y is presentation, not world
+	# state), so lift them onto the terrain — otherwise the player can start
+	# inside or under a hill and fall straight through into the lake.
+	player.position = spawn_point(0)
 	player.spawn_position = player.position
 	add_child(player)
 	hud = HUD.instantiate()
@@ -114,6 +117,14 @@ func restart_same_island() -> void:
 ## Roll a new mess on the same island.
 func restart_new_mess() -> void:
 	start_game(randi() % 1000000)
+
+
+## A level spawn point placed on the actual ground, with room to stand.
+func spawn_point(index: int) -> Vector3:
+	var spawn := GameSession.player_spawn(index)
+	if island != null:
+		spawn.y = island.height_at(spawn.x, spawn.z) + 1.0
+	return spawn
 
 
 func current_seed() -> int:

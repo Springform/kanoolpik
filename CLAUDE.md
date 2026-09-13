@@ -40,6 +40,13 @@ Scenes react ←  GameEvents.<signal>  ←  GameSession publishes events  ←  r
 - `.tscn` files are text. Keep them thin — build node trees in `_ready()` from data where reasonable — and never hand-write `uid=` attributes (let Godot generate them).
 - Web export uses the **GL Compatibility** renderer and **no threads** (so GitHub Pages works without COOP/COEP headers). Don't use `Thread`, `WorkerThreadPool` or Forward+-only features.
 - Use `Array[String]`/typed arrays in signatures; pass `Array` literals directly (Godot infers). A `.map()` result is untyped: annotate as `Array`.
+- **Look at it on screen before calling it done.** This has caught real bugs three times: Godot's default font has no Dingbats/Geometric Shapes glyphs, so ▶ ✓ ✕ drew as *nothing* while string assertions passed (use Latin-1: × » –); `Label3D` ignores `visibility_range_end` under GL Compatibility — the property sets fine and changes nothing; and 150 item labels turned the island into a wall of text that no test would ever flag.
+- Building a custom `ArrayMesh` via `SurfaceTool.commit_to_arrays()` bakes in an all-zero `ARRAY_TANGENT`, which **silently breaks lighting** under GL Compatibility (the mesh renders flat black despite correct normals). Build the arrays by hand and omit tangents.
+- Freeing a node from inside its own signal fails with "Attempted to free a locked object" — connect anything that rebuilds a screen with `CONNECT_DEFERRED`.
+- A `Shape3D` (or any resource) declared inside a `.tscn` is a **sub-resource shared by every instance** of that scene. 150 items all wrote to one `BoxShape3D` and the last to spawn decided collision for all of them. Build per-instance resources in `_ready()` with `.new()`.
+- Measure meshes with local transforms accumulated up to the node, never `global_transform` — the answer must not depend on whether the node is in the tree yet.
+- Tinting an imported glTF *multiplies* its albedo, so it darkens as much as it colours. Placeholders get the category colour; models keep their own unless the item asks for a tint.
+- `get_tree().paused` is right for a pause menu and wrong for "level finished". **No test may `await` while the tree is paused** — the awaited timer never fires and the suite hangs.
 
 ## How to pick up work
 

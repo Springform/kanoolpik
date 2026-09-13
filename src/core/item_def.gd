@@ -16,7 +16,16 @@ var series: String = ""
 var sequence: int = 0
 var size: int = 1 ## Carry slots this item consumes.
 var name_key: String = "" ## i18n key; defaults to "item.<id>".
-var model: String = "" ## Optional res:// path to a 3D scene for presentation.
+var model: String = "" ## Optional res:// path to a .glb; empty means the generated box.
+## Nudge on top of the automatic fit: 1.2 = a fifth bigger than the size the
+## loader picked, 0.8 = a fifth smaller. 0.0 (the default) means no nudge.
+## Never a raw multiplier — asset-library models arrive in arbitrary units, so
+## tuning by eye must not require knowing that a log is 43 units long.
+var model_scale: float = 0.0
+var model_rotation: float = 0.0 ## Degrees around Y, for models that face the wrong way.
+## Optional "#rrggbb" so one model can serve many items. Empty means the
+## category colour for a placeholder, and the model's own colours for a model.
+var tint: String = ""
 
 
 static func from_dict(d: Dictionary) -> ItemDef:
@@ -28,7 +37,16 @@ static func from_dict(d: Dictionary) -> ItemDef:
 	def.size = maxi(1, int(d.get("size", 1)))
 	def.name_key = String(d.get("name_key", "item.%s" % def.id))
 	def.model = String(d.get("model", ""))
+	def.model_scale = maxf(0.0, float(d.get("model_scale", 0.0)))
+	def.model_rotation = float(d.get("model_rotation", 0.0))
+	def.tint = String(d.get("tint", ""))
 	return def
+
+
+## The colour to paint this item: its own tint when it has one, otherwise the
+## category colour. Presentation calls this; the catalog stays a plain string.
+func tint_color(fallback: Color) -> Color:
+	return Color(tint) if not tint.is_empty() and Color.html_is_valid(tint) else fallback
 
 
 func to_dict() -> Dictionary:
@@ -40,6 +58,9 @@ func to_dict() -> Dictionary:
 		"size": size,
 		"name_key": name_key,
 		"model": model,
+		"model_scale": model_scale,
+		"model_rotation": model_rotation,
+		"tint": tint,
 	}
 
 

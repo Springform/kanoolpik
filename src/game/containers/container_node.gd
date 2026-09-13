@@ -25,7 +25,10 @@ var container_id: String
 var def: ContainerDef
 var is_complete := false
 
-@onready var mesh: MeshInstance3D = $Mesh
+@onready var mesh: Node3D = $Mesh
+
+## The container's model, or the translucent placeholder box.
+var visual: Node3D
 @onready var label: Label3D = $Label
 @onready var slots_root: Node3D = $Slots
 @onready var sfx_correct: AudioStreamPlayer3D = $SfxCorrect
@@ -48,15 +51,24 @@ func _ready() -> void:
 	# Footprint comes from ContainerDef so the level layout and the mess generator
 	# agree with what is actually drawn here.
 	var width := def.width()
-	var box := BoxMesh.new()
-	box.size = Vector3(width, 0.6, ContainerDef.DEPTH)
-	mesh.mesh = box
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.3, 0.35, 0.4, 0.6)
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mesh.material_override = mat
-	var shape: BoxShape3D = $Collision.shape
-	shape.size = box.size
+	var body_size := Vector3(width, 0.6, ContainerDef.DEPTH)
+	# A model if there is one, otherwise the translucent box. Same loader the
+	# items use, so a container model needs no measuring either.
+	visual = ItemVisual.build(def.scene, body_size, Color.WHITE, def.model_scale, def.model_rotation)
+	if not ItemVisual.has_model(def.scene):
+		# The placeholder is see-through so you can read the slots through it.
+		for placeholder: MeshInstance3D in visual.find_children("*", "MeshInstance3D", true, false):
+			var mat := StandardMaterial3D.new()
+			mat.albedo_color = Color(0.3, 0.35, 0.4, 0.6)
+			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			placeholder.material_override = mat
+	mesh.add_child(visual)
+	# Its own shape, for the same reason as PickupItem: .tscn sub-resources are
+	# shared between instances.
+	var shape := BoxShape3D.new()
+	shape.size = ItemVisual.visual_size(visual, body_size)
+	$Collision.shape = shape
+	$Collision.position.y = shape.size.y * 0.5
 	label.text = tr(def.name_key)
 	label.position.y = 1.15
 	for i in range(def.slot_count):

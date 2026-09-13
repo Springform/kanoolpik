@@ -3,8 +3,8 @@
   "name_key": "level.island_01",
   "seed_default": 4242,
   "ground_y": 0.0,
-  "par_seconds": 600,
-  "max_seconds": 1800,
+  "par_seconds": 1200,
+  "max_seconds": 2400,
   "spawn_zones": [
     {
       "id": "camp",
@@ -24,13 +24,14 @@
         -5.0
       ],
       "radius": 3.5,
-      "weight": 2.0,
+      "weight": 3.0,
       "categories": [
         "can",
         "bottle_glass",
         "trash",
         "firewood",
-        "food"
+        "food",
+        "cookware"
       ]
     },
     {
@@ -40,13 +41,14 @@
         0,
         4.0
       ],
-      "radius": 4.0,
-      "weight": 2.0,
+      "radius": 4.5,
+      "weight": 3.0,
       "categories": [
         "tent_pole",
         "tent_peg",
         "tent_canvas",
-        "clothing"
+        "clothing",
+        "sleeping_bag"
       ]
     },
     {
@@ -56,8 +58,8 @@
         0,
         9.5
       ],
-      "radius": 4.0,
-      "weight": 1.5,
+      "radius": 4.5,
+      "weight": 2.5,
       "categories": [
         "paddle",
         "life_vest",
@@ -74,49 +76,69 @@
         -9.0
       ],
       "radius": 3.5,
-      "weight": 1.0
+      "weight": 1.5
     }
   ],
   "container_positions": {
     "pant_bag": [
       0.0,
       0,
-      -6.0
+      -8.5
     ],
     "trash_bag": [
-      -5.5,
+      -6.0,
+      0,
+      -1.0
+    ],
+    "glass_crate": [
+      6.5,
+      0,
+      -8.5
+    ],
+    "cooler": [
+      9.5,
       0,
       -3.0
     ],
-    "glass_crate": [
-      4.5,
-      0,
-      -4.5
-    ],
-    "cooler": [
-      6.8,
-      0,
-      -1.5
-    ],
     "fire_pit": [
-      7.0,
+      9.5,
       0,
-      -7.5
+      -8.5
+    ],
+    "kitchen_box": [
+      9.7,
+      0,
+      1.5
     ],
     "tent_bag": [
-      -7.5,
+      -9.5,
       0,
-      4.0
+      5.0
     ],
     "dry_bag": [
-      -3.5,
+      -4.0,
       0,
-      7.0
+      8.5
+    ],
+    "sleeping_bag_sack": [
+      -9.8,
+      0,
+      9.5
     ],
     "canoe": [
-      3.0,
+      2.0,
       0,
-      11.0
+      12.5
+    ],
+    "canoe_b": [
+      5.5,
+      0,
+      12.5
+    ],
+    "lost_found": [
+      -9.5,
+      0,
+      -6.5
     ]
   },
   "player_spawns": [

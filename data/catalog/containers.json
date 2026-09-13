@@ -7,28 +7,28 @@
         "can",
         "bottle_plastic"
       ],
-      "slot_count": 14
+      "slot_count": 34
     },
     {
       "id": "glass_crate",
       "accepts": [
         "bottle_glass"
       ],
-      "slot_count": 6
+      "slot_count": 8
     },
     {
       "id": "trash_bag",
       "accepts": [
         "trash"
       ],
-      "slot_count": 10
+      "slot_count": 20
     },
     {
       "id": "cooler",
       "accepts": [
         "food"
       ],
-      "slot_count": 6
+      "slot_count": 14
     },
     {
       "id": "tent_bag",
@@ -45,7 +45,7 @@
       "accepts": [
         "clothing"
       ],
-      "slot_count": 8
+      "slot_count": 16
     },
     {
       "id": "canoe",
@@ -60,7 +60,38 @@
       "accepts": [
         "firewood"
       ],
+      "slot_count": 6,
+      "scene": "res://assets/models/containers/fire_pit.glb"
+    },
+    {
+      "id": "canoe_b",
+      "accepts": [
+        "paddle",
+        "life_vest"
+      ],
       "slot_count": 6
+    },
+    {
+      "id": "sleeping_bag_sack",
+      "accepts": [
+        "sleeping_bag"
+      ],
+      "slot_count": 8,
+      "ordered": true
+    },
+    {
+      "id": "lost_found",
+      "accepts": [
+        "misc"
+      ],
+      "slot_count": 22
+    },
+    {
+      "id": "kitchen_box",
+      "accepts": [
+        "cookware"
+      ],
+      "slot_count": 14
     }
   ]
 }

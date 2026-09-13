@@ -25,7 +25,7 @@ func test_initial_progress_is_shown_without_waiting_for_an_event() -> void:
 	var total := GameSession.catalog.item_count()
 	assert_str(hud.progress_label.text).is_equal(tr("ui.hud.progress") % [0, total])
 	assert_float(hud.progress_bar.value).is_equal(0.0)
-	assert_str(hud.containers_label.text).is_equal(tr("ui.hud.containers") % [0, 8])
+	assert_str(hud.containers_label.text).is_equal(tr("ui.hud.containers") % [0, GameSession.catalog.container_ids().size()])
 
 
 func test_progress_updates_after_placement() -> void:

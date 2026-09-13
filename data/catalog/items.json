@@ -268,27 +268,485 @@
     {
       "id": "firewood_1",
       "category": "firewood",
-      "series": "firewood"
+      "series": "firewood",
+      "model": "res://assets/models/items/firewood_1.glb",
+      "model_scale": 1.6,
+      "model_rotation": 0.0
     },
     {
       "id": "firewood_2",
       "category": "firewood",
-      "series": "firewood"
+      "series": "firewood",
+      "model": "res://assets/models/items/firewood_1.glb",
+      "model_scale": 1.6,
+      "model_rotation": 72.0
     },
     {
       "id": "firewood_3",
       "category": "firewood",
-      "series": "firewood"
+      "series": "firewood",
+      "model": "res://assets/models/items/firewood_1.glb",
+      "model_scale": 1.6,
+      "model_rotation": 144.0
     },
     {
       "id": "firewood_4",
       "category": "firewood",
-      "series": "firewood"
+      "series": "firewood",
+      "model": "res://assets/models/items/firewood_1.glb",
+      "model_scale": 1.6,
+      "model_rotation": 216.0
     },
     {
       "id": "firewood_5",
       "category": "firewood",
-      "series": "firewood"
+      "series": "firewood",
+      "model": "res://assets/models/items/firewood_1.glb",
+      "model_scale": 1.6,
+      "model_rotation": 288.0
+    },
+    {
+      "id": "can_pripps_1",
+      "category": "can",
+      "series": "brand_pripps"
+    },
+    {
+      "id": "can_pripps_2",
+      "category": "can",
+      "series": "brand_pripps"
+    },
+    {
+      "id": "can_pripps_3",
+      "category": "can",
+      "series": "brand_pripps"
+    },
+    {
+      "id": "can_pripps_4",
+      "category": "can",
+      "series": "brand_pripps"
+    },
+    {
+      "id": "can_somersby_1",
+      "category": "can",
+      "series": "brand_somersby"
+    },
+    {
+      "id": "can_somersby_2",
+      "category": "can",
+      "series": "brand_somersby"
+    },
+    {
+      "id": "can_somersby_3",
+      "category": "can",
+      "series": "brand_somersby"
+    },
+    {
+      "id": "can_somersby_4",
+      "category": "can",
+      "series": "brand_somersby"
+    },
+    {
+      "id": "can_redbull_1",
+      "category": "can",
+      "series": "brand_redbull"
+    },
+    {
+      "id": "can_redbull_2",
+      "category": "can",
+      "series": "brand_redbull"
+    },
+    {
+      "id": "can_redbull_3",
+      "category": "can",
+      "series": "brand_redbull"
+    },
+    {
+      "id": "bottle_faxekondi_1",
+      "category": "bottle_plastic",
+      "series": "brand_faxekondi"
+    },
+    {
+      "id": "bottle_faxekondi_2",
+      "category": "bottle_plastic",
+      "series": "brand_faxekondi"
+    },
+    {
+      "id": "bottle_faxekondi_3",
+      "category": "bottle_plastic",
+      "series": "brand_faxekondi"
+    },
+    {
+      "id": "bottle_water_1",
+      "category": "bottle_plastic",
+      "series": "brand_water"
+    },
+    {
+      "id": "bottle_water_2",
+      "category": "bottle_plastic",
+      "series": "brand_water"
+    },
+    {
+      "id": "bottle_water_3",
+      "category": "bottle_plastic",
+      "series": "brand_water"
+    },
+    {
+      "id": "bottle_water_4",
+      "category": "bottle_plastic",
+      "series": "brand_water"
+    },
+    {
+      "id": "bottle_water_5",
+      "category": "bottle_plastic",
+      "series": "brand_water"
+    },
+    {
+      "id": "bottle_wine_1",
+      "category": "bottle_glass",
+      "series": "glass_wine"
+    },
+    {
+      "id": "bottle_wine_2",
+      "category": "bottle_glass",
+      "series": "glass_wine"
+    },
+    {
+      "id": "bottle_wine_3",
+      "category": "bottle_glass",
+      "series": "glass_wine"
+    },
+    {
+      "id": "trash_candy_1",
+      "category": "trash",
+      "series": "candy_wrapper"
+    },
+    {
+      "id": "trash_candy_2",
+      "category": "trash",
+      "series": "candy_wrapper"
+    },
+    {
+      "id": "trash_candy_3",
+      "category": "trash",
+      "series": "candy_wrapper"
+    },
+    {
+      "id": "trash_candy_4",
+      "category": "trash",
+      "series": "candy_wrapper"
+    },
+    {
+      "id": "trash_cup_1",
+      "category": "trash",
+      "series": "cups_plastic"
+    },
+    {
+      "id": "trash_cup_2",
+      "category": "trash",
+      "series": "cups_plastic"
+    },
+    {
+      "id": "trash_cup_3",
+      "category": "trash",
+      "series": "cups_plastic"
+    },
+    {
+      "id": "trash_cup_4",
+      "category": "trash",
+      "series": "cups_plastic"
+    },
+    {
+      "id": "trash_cup_5",
+      "category": "trash",
+      "series": "cups_plastic"
+    },
+    {
+      "id": "trash_cup_6",
+      "category": "trash",
+      "series": "cups_plastic"
+    },
+    {
+      "id": "trash_receipt",
+      "category": "trash"
+    },
+    {
+      "id": "food_eggs",
+      "category": "food"
+    },
+    {
+      "id": "food_butter",
+      "category": "food"
+    },
+    {
+      "id": "food_juice",
+      "category": "food"
+    },
+    {
+      "id": "food_bacon",
+      "category": "food"
+    },
+    {
+      "id": "food_mustard",
+      "category": "food"
+    },
+    {
+      "id": "food_yogurt",
+      "category": "food"
+    },
+    {
+      "id": "food_apples",
+      "category": "food"
+    },
+    {
+      "id": "sock_b_left",
+      "category": "clothing",
+      "series": "socks_b",
+      "sequence": 1
+    },
+    {
+      "id": "sock_b_right",
+      "category": "clothing",
+      "series": "socks_b",
+      "sequence": 2
+    },
+    {
+      "id": "glove_left",
+      "category": "clothing",
+      "series": "gloves",
+      "sequence": 1
+    },
+    {
+      "id": "glove_right",
+      "category": "clothing",
+      "series": "gloves",
+      "sequence": 2
+    },
+    {
+      "id": "flipflop_left",
+      "category": "clothing",
+      "series": "flipflops",
+      "sequence": 1
+    },
+    {
+      "id": "flipflop_right",
+      "category": "clothing",
+      "series": "flipflops",
+      "sequence": 2
+    },
+    {
+      "id": "cloth_sweater",
+      "category": "clothing"
+    },
+    {
+      "id": "cloth_beanie",
+      "category": "clothing"
+    },
+    {
+      "id": "cloth_scarf",
+      "category": "clothing"
+    },
+    {
+      "id": "paddle_b_1",
+      "category": "paddle",
+      "series": "paddles_b",
+      "size": 2
+    },
+    {
+      "id": "paddle_b_2",
+      "category": "paddle",
+      "series": "paddles_b",
+      "size": 2
+    },
+    {
+      "id": "paddle_b_3",
+      "category": "paddle",
+      "series": "paddles_b",
+      "size": 2
+    },
+    {
+      "id": "life_vest_b_1",
+      "category": "life_vest",
+      "series": "vests_b"
+    },
+    {
+      "id": "life_vest_b_2",
+      "category": "life_vest",
+      "series": "vests_b"
+    },
+    {
+      "id": "life_vest_b_3",
+      "category": "life_vest",
+      "series": "vests_b"
+    },
+    {
+      "id": "sleeping_bag_a_1",
+      "category": "sleeping_bag",
+      "series": "sleeping_bags_a",
+      "sequence": 1,
+      "size": 2
+    },
+    {
+      "id": "sleeping_bag_a_2",
+      "category": "sleeping_bag",
+      "series": "sleeping_bags_a",
+      "sequence": 2,
+      "size": 2
+    },
+    {
+      "id": "sleeping_bag_a_3",
+      "category": "sleeping_bag",
+      "series": "sleeping_bags_a",
+      "sequence": 3,
+      "size": 2
+    },
+    {
+      "id": "sleeping_bag_b_1",
+      "category": "sleeping_bag",
+      "series": "sleeping_bags_b",
+      "sequence": 1,
+      "size": 2
+    },
+    {
+      "id": "sleeping_bag_b_2",
+      "category": "sleeping_bag",
+      "series": "sleeping_bags_b",
+      "sequence": 2,
+      "size": 2
+    },
+    {
+      "id": "sleeping_bag_b_3",
+      "category": "sleeping_bag",
+      "series": "sleeping_bags_b",
+      "sequence": 3,
+      "size": 2
+    },
+    {
+      "id": "misc_sunglasses",
+      "category": "misc"
+    },
+    {
+      "id": "misc_wallet",
+      "category": "misc"
+    },
+    {
+      "id": "misc_phone_charger",
+      "category": "misc"
+    },
+    {
+      "id": "misc_harmonica",
+      "category": "misc"
+    },
+    {
+      "id": "misc_frisbee",
+      "category": "misc"
+    },
+    {
+      "id": "misc_playing_cards",
+      "category": "misc"
+    },
+    {
+      "id": "misc_flashlight",
+      "category": "misc"
+    },
+    {
+      "id": "misc_bug_spray",
+      "category": "misc"
+    },
+    {
+      "id": "misc_sunscreen",
+      "category": "misc"
+    },
+    {
+      "id": "misc_watch",
+      "category": "misc"
+    },
+    {
+      "id": "misc_lighter",
+      "category": "misc"
+    },
+    {
+      "id": "misc_compass",
+      "category": "misc"
+    },
+    {
+      "id": "misc_umbrella",
+      "category": "misc"
+    },
+    {
+      "id": "misc_key_fob",
+      "category": "misc"
+    },
+    {
+      "id": "misc_earplugs",
+      "category": "misc"
+    },
+    {
+      "id": "misc_hammock",
+      "category": "misc"
+    },
+    {
+      "id": "misc_dice",
+      "category": "misc"
+    },
+    {
+      "id": "misc_lucky_coin",
+      "category": "misc"
+    },
+    {
+      "id": "misc_bandana",
+      "category": "misc"
+    },
+    {
+      "id": "misc_multitool",
+      "category": "misc"
+    },
+    {
+      "id": "cook_pot",
+      "category": "cookware"
+    },
+    {
+      "id": "cook_pan",
+      "category": "cookware"
+    },
+    {
+      "id": "cook_spatula",
+      "category": "cookware"
+    },
+    {
+      "id": "cook_cutting_board",
+      "category": "cookware"
+    },
+    {
+      "id": "cook_gas_burner",
+      "category": "cookware"
+    },
+    {
+      "id": "cook_kettle",
+      "category": "cookware"
+    },
+    {
+      "id": "cook_tongs",
+      "category": "cookware"
+    },
+    {
+      "id": "cook_ladle",
+      "category": "cookware"
+    },
+    {
+      "id": "cook_plate_1",
+      "category": "cookware"
+    },
+    {
+      "id": "cook_plate_2",
+      "category": "cookware"
+    },
+    {
+      "id": "cook_bowl_1",
+      "category": "cookware"
+    },
+    {
+      "id": "cook_bowl_2",
+      "category": "cookware"
     }
   ]
 }

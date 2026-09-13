@@ -16,7 +16,11 @@ var accepts: Array[String] = [] ## Item categories this container is the correct
 var slot_count: int = 8
 var ordered: bool = false ## If true, series sequence must increase with slot index.
 var name_key: String = ""
-var scene: String = "" ## Optional res:// path to a 3D scene for presentation.
+var scene: String = "" ## Optional res:// path to a .glb; empty means the translucent box.
+## Nudge on top of the automatic fit to the footprint: 1.2 = a fifth bigger,
+## 0.8 = a fifth smaller. 0.0 (the default) means no nudge.
+var model_scale: float = 0.0
+var model_rotation: float = 0.0 ## Degrees around Y.
 
 
 static func from_dict(d: Dictionary) -> ContainerDef:
@@ -30,6 +34,8 @@ static func from_dict(d: Dictionary) -> ContainerDef:
 	def.ordered = bool(d.get("ordered", false))
 	def.name_key = String(d.get("name_key", "container.%s" % def.id))
 	def.scene = String(d.get("scene", ""))
+	def.model_scale = maxf(0.0, float(d.get("model_scale", 0.0)))
+	def.model_rotation = float(d.get("model_rotation", 0.0))
 	return def
 
 
@@ -41,6 +47,8 @@ func to_dict() -> Dictionary:
 		"ordered": ordered,
 		"name_key": name_key,
 		"scene": scene,
+		"model_scale": model_scale,
+		"model_rotation": model_rotation,
 	}
 
 

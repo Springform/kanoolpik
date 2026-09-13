@@ -21,6 +21,7 @@ config/icon="res://icon.svg"
 
 GameEvents="*res://src/autoload/game_events.gd"
 GameSession="*res://src/autoload/game_session.gd"
+Soundscape="*res://src/game/audio/soundscape.gd"
 
 [debug]
 

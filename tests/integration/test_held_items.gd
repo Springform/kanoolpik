@@ -66,8 +66,11 @@ func test_ignores_other_players() -> void:
 
 func test_first_person_meshes_draw_on_top_and_cast_no_shadow() -> void:
 	GameSession.submit(Commands.pick_up(pid, "can_tuborg_1"))
-	var m: MeshInstance3D = held.get_node("Held_can_tuborg_1")
-	var mat: StandardMaterial3D = m.material_override
+	var holder: Node3D = held.get_node("Held_can_tuborg_1")
+	var meshes: Array[Node] = holder.find_children("*", "MeshInstance3D", true, false)
+	assert_array(meshes).is_not_empty()
+	var m: MeshInstance3D = meshes[0]
+	var mat: StandardMaterial3D = m.get_active_material(0)
 	assert_bool(mat.no_depth_test).is_true()
 	assert_int(m.cast_shadow).is_equal(GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
 	assert_object(mat.albedo_color).is_equal(ItemPalette.color_for("can"))

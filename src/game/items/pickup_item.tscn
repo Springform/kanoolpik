@@ -11,8 +11,6 @@ script = ExtResource("1_item")
 [node name="Collision" type="CollisionShape3D" parent="."]
 shape = SubResource("BoxShape3D_item")
 
-[node name="Mesh" type="MeshInstance3D" parent="."]
-
 [node name="Label" type="Label3D" parent="."]
 billboard = 1
 pixel_size = 0.004

@@ -67,5 +67,6 @@ func test_item_def_defaults_and_validity() -> void:
 
 
 func test_item_def_round_trips_through_dict() -> void:
-	var src := {"id": "a", "category": "c", "series": "s", "sequence": 2, "size": 3, "name_key": "k", "model": "res://m.tscn"}
+	var src := {"id": "a", "category": "c", "series": "s", "sequence": 2, "size": 3, "name_key": "k",
+		"model": "res://m.tscn", "model_scale": 1.5, "model_rotation": 90.0, "tint": "#ff8800"}
 	assert_dict(ItemDef.from_dict(src).to_dict()).is_equal(src)

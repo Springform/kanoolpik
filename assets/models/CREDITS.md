@@ -25,13 +25,13 @@ Every `.glb` under `assets/models/` must have a row here **before or in the same
 
 | File | Title | Author | Source | Licence | Changes |
 |---|---|---|---|---|---|
-| items/firewood_1 | Log | J-Toastie | https://poly.pizza/m/ncDQNqeOFj | CC-BY | |
+| `items/firewood_1.glb` | Log | J-Toastie | https://poly.pizza/m/ncDQNqeOFj | CC-BY-3.0 | Auto-fitted to the item size budget at load |
 
 ## Containers
 
 | File | Title | Author | Source | Licence | Changes |
 |---|---|---|---|---|---|
-| containers/fire_pit.glb | Bonfire | Quaternius | https://poly.pizza/m/Azj9hJwwwG | CC0 | |
+| `containers/fire_pit.glb` | Bonfire | Quaternius | https://poly.pizza/m/Azj9hJwwwG | CC0-1.0 | Auto-fitted to the container footprint at load |
 
 
 ## Island and scenery

@@ -21,15 +21,34 @@ static func box_size(def: ItemDef) -> Vector3:
 	return Vector3(s, s * 0.8, s)
 
 
-static func make_mesh(def: ItemDef, no_depth_test: bool = false) -> MeshInstance3D:
-	var m := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = box_size(def)
-	m.mesh = box
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color_for(def.category)
-	if no_depth_test:
-		mat.no_depth_test = true
-		mat.render_priority = 10
-	m.material_override = mat
-	return m
+## The colour to hand the loader.
+##
+## A generated box wants the category colour — that is the only thing telling
+## a can from a bottle. A model already looks like itself, so it keeps its own
+## colours unless the item explicitly asks for a tint: tinting multiplies
+## albedo, which on a textured model darkens as much as it colours.
+static func visual_color(def: ItemDef) -> Color:
+	return def.tint_color(color_for(def.category) if def.model.is_empty() else Color.WHITE)
+
+
+## The in-hand visual: the item's model if it has one, otherwise the coloured
+## box, with depth testing off so held things never clip into a wall.
+static func make_held_visual(def: ItemDef) -> Node3D:
+	var node := ItemVisual.build(def.model, box_size(def),
+		visual_color(def), def.model_scale, def.model_rotation)
+	for mesh: MeshInstance3D in node.find_children("*", "MeshInstance3D", true, false):
+		# material_override takes precedence over per-surface overrides, so the
+		# no-depth-test copy has to replace whichever one is actually in force.
+		if mesh.material_override != null:
+			mesh.material_override = _no_depth_copy(mesh.material_override)
+		else:
+			for surface in range(mesh.mesh.get_surface_count() if mesh.mesh != null else 0):
+				mesh.set_surface_override_material(surface, _no_depth_copy(mesh.get_active_material(surface)))
+	return node
+
+
+static func _no_depth_copy(source: Material) -> StandardMaterial3D:
+	var mat := source.duplicate() if source is StandardMaterial3D else StandardMaterial3D.new()
+	mat.no_depth_test = true
+	mat.render_priority = 10
+	return mat

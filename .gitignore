@@ -13,3 +13,5 @@ Thumbs.db
 *.swp
 # Godot binary if someone drops it here
 Godot_v*
+# Agent worktrees
+.claude/

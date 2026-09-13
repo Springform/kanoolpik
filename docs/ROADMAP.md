@@ -43,12 +43,12 @@ Parallel-safe sets: {1.1, 1.2, 1.4, 1.6, 1.7, 1.8} can all start at once. 1.3 af
 
 *Exit criterion: the island looks like a place; 150 items; it still loads in < 10 s on a normal connection.*
 
-**Wave 1 done (2.1, 2.4, 2.6), built in parallel by three agents in isolated worktrees — 218 tests.** All assets are generated in code (ADR 0008). Wave 2 is the model kits (2.2, 2.3), which depend on the terrain's `height_at()`, plus environment (2.5), dressing (2.7) and the performance pass (2.8).
+**Wave 1 done (2.1, 2.4, 2.6), built in parallel by three agents in isolated worktrees. Wave 2: 2.5 and 2.2 done — 250 tests.** Assets are generated in code (ADR 0008) except hand-sourced `.glb` models (ADR 0009), which `ItemVisual` loads, auto-fits and falls back from. Remaining: container models (2.3), dressing (2.7) and the performance pass (2.8).
 
 | WP | Title | Owns |
 |---|---|---|
 | [2.1](roadmap/phase-2/WP-2.1-terrain.md) ✅ | Procedural island terrain replacing the gray-box cylinder | `src/game/island/` |
-| [2.2](roadmap/phase-2/WP-2.2-item-models.md) | Item model kit: loader + hand-sourced `.glb` models via `ItemDef.model`; fallback box stays | `assets/models/items/`, `src/game/items/` |
+| [2.2](roadmap/phase-2/WP-2.2-item-models.md) ✅ | Item model kit: loader + hand-sourced `.glb` models via `ItemDef.model`; fallback box stays | `assets/models/items/`, `src/game/items/` |
 | [2.3](roadmap/phase-2/WP-2.3-container-models.md) | Container models with visible slots (bag opening, cooler lid, canoe hull) | `assets/models/containers/`, `src/game/containers/` |
 | [2.4](roadmap/phase-2/WP-2.4-content.md) ✅ | Content expansion to 150 items, 12 containers, two canoes with crews, sleeping bags ordered | `data/`, `assets/i18n/` |
 | [2.5](roadmap/phase-2/WP-2.5-environment.md) ✅ | Environment: trees, grass, reeds, bigger water (sky/water shaders and wind still open) | `src/game/island/environment/` |

@@ -109,9 +109,11 @@ func test_every_container_sits_on_the_island() -> void:
 func test_drawn_box_matches_the_footprint_used_for_layout() -> void:
 	for cid in GameSession.catalog.container_ids():
 		var node: ContainerNode = island.get_node("Containers/Container_" + cid)
-		var box: BoxMesh = node.mesh.mesh
-		assert_float(box.size.x).is_equal_approx(GameSession.catalog.get_container(cid).width(), 0.001)
-		assert_float(box.size.z).is_equal_approx(ContainerDef.DEPTH, 0.001)
+		if ItemVisual.has_model(GameSession.catalog.get_container(cid).scene):
+			continue # a model is fitted to the footprint, not equal to the box
+		var drawn := ItemVisual.visual_size(node.visual, Vector3.ONE)
+		assert_float(drawn.x).is_equal_approx(GameSession.catalog.get_container(cid).width(), 0.001)
+		assert_float(drawn.z).is_equal_approx(ContainerDef.DEPTH, 0.001)
 
 
 # --- 3. Falling in the lake ------------------------------------------------------------
@@ -148,3 +150,37 @@ func test_dropped_items_are_clamped_to_the_island() -> void:
 	assert_float(Vector2(clamped.x, clamped.z).length()).is_less(GameSession.island_radius())
 	var near := Vector3(1, 0, 2)
 	assert_vector(Player.clamp_to_island(near)).is_equal(near)
+
+
+func test_player_spawns_standing_on_the_terrain_not_inside_it() -> void:
+	# Regression from merging WP-2.1 (terrain) with flat spawn points in the
+	# level data: the player started below the hill and fell through into the lake.
+	var main: Main = auto_free(load("res://src/game/main/main.tscn").instantiate())
+	main.skip_title = true
+	add_child(main)
+	for i in range(GameSession.level["player_spawns"].size()):
+		var spawn := main.spawn_point(i)
+		var ground := main.island.height_at(spawn.x, spawn.z)
+		assert_float(spawn.y).override_failure_message(
+			"spawn %d is at y=%.2f but the ground there is y=%.2f" % [i, spawn.y, ground]).is_greater(ground)
+		assert_bool(main.island.is_on_land(spawn.x, spawn.z)).override_failure_message(
+			"spawn %d is in the water" % i).is_true()
+	assert_float(main.player.global_position.y).is_greater(
+		main.island.height_at(main.player.global_position.x, main.player.global_position.z))
+	GameSession.stop_level()
+
+
+func test_item_labels_only_show_close_to_the_camera() -> void:
+	# 150 items with always-on names turned the island into a wall of text.
+	var node: PickupItem = island.get_node("Items/Item_can_tuborg_1")
+	assert_bool(node.label.visible).override_failure_message(
+		"labels must start hidden until the camera is judged").is_false()
+	var camera: Camera3D = auto_free(Camera3D.new())
+	add_child(camera)
+	camera.current = true
+	camera.global_position = node.global_position + Vector3(0, 0, PickupItem.LABEL_VISIBLE_METRES * 2.0)
+	node._process(0.0)
+	assert_bool(node.label.visible).override_failure_message("a far-off name is still drawn").is_false()
+	camera.global_position = node.global_position + Vector3(0, 0, 1.5)
+	node._process(0.0)
+	assert_bool(node.label.visible).override_failure_message("a nearby name is not drawn").is_true()

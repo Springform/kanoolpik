@@ -88,6 +88,12 @@ func test_a_container_is_only_packed_when_everything_that_belongs_is_there() -> 
 func test_no_lone_item_in_the_real_catalog_can_pack_a_container() -> void:
 	# The canvas was not the only one: the schnapps bottle and the napkins have
 	# no series either. Nothing may complete a container by itself.
+	#
+	# A category can now be accepted by more than one container (the two
+	# canoes both take "paddle" and "life_vest" — the series is what tells
+	# them apart), so [PlacementRules.required_items] alone no longer decides
+	# whether a lone item is "enough": an item can still need its series
+	# siblings even when its category is not exclusively this container's.
 	var cat := Catalog.load_from_files(ITEMS, CONTAINERS)
 	for item_id in cat.item_ids():
 		var item := cat.get_item(item_id)
@@ -96,7 +102,14 @@ func test_no_lone_item_in_the_real_catalog_can_pack_a_container() -> void:
 			for id in cat.item_ids():
 				state.set_on_ground(id, Vector3.ZERO)
 			state.set_placed(item_id, container.id, 0)
-			var alone_is_enough := PlacementRules.required_items(cat, container.id).size() <= 1
+			var required := PlacementRules.required_items(cat, container.id)
+			required.erase(item_id)
+			var other_series_members := 0
+			if not item.series.is_empty():
+				for member in cat.series_members(item.series):
+					if member.id != item_id:
+						other_series_members += 1
+			var alone_is_enough := required.is_empty() and other_series_members == 0
 			assert_bool(PlacementRules.is_container_complete(cat, state, container.id)).override_failure_message(
 				"'%s' alone packs '%s'" % [item_id, container.id]).is_equal(alone_is_enough)
 

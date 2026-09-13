@@ -128,3 +128,100 @@ ui.pause.resume,Fortsæt,Resume
 ui.pause.restart,Start forfra,Start over
 ui.pause.to_title,Til forsiden,Back to title
 ui.title.continue,Fortsæt hvor I slap,Continue where you left off
+item.can_pripps_1,Pripps-dåse,Pripps can
+item.can_pripps_2,Pripps-dåse,Pripps can
+item.can_pripps_3,Pripps-dåse,Pripps can
+item.can_pripps_4,Pripps-dåse,Pripps can
+item.can_somersby_1,Somersby-dåse,Somersby can
+item.can_somersby_2,Somersby-dåse,Somersby can
+item.can_somersby_3,Somersby-dåse,Somersby can
+item.can_somersby_4,Somersby-dåse,Somersby can
+item.can_redbull_1,Energidrik-dåse,Energy drink can
+item.can_redbull_2,Energidrik-dåse,Energy drink can
+item.can_redbull_3,Energidrik-dåse,Energy drink can
+item.bottle_faxekondi_1,Faxe Kondi-flaske,Faxe Kondi bottle
+item.bottle_faxekondi_2,Faxe Kondi-flaske,Faxe Kondi bottle
+item.bottle_faxekondi_3,Faxe Kondi-flaske,Faxe Kondi bottle
+item.bottle_water_1,Vandflaske,Water bottle
+item.bottle_water_2,Vandflaske,Water bottle
+item.bottle_water_3,Vandflaske,Water bottle
+item.bottle_water_4,Vandflaske,Water bottle
+item.bottle_water_5,Vandflaske,Water bottle
+item.bottle_wine_1,Vinflaske,Wine bottle
+item.bottle_wine_2,Vinflaske,Wine bottle
+item.bottle_wine_3,Vinflaske,Wine bottle
+item.trash_candy_1,Slikpapir,Candy wrapper
+item.trash_candy_2,Slikpapir,Candy wrapper
+item.trash_candy_3,Slikpapir,Candy wrapper
+item.trash_candy_4,Slikpapir,Candy wrapper
+item.trash_cup_1,Plastikkrus,Plastic cup
+item.trash_cup_2,Plastikkrus,Plastic cup
+item.trash_cup_3,Plastikkrus,Plastic cup
+item.trash_cup_4,Plastikkrus,Plastic cup
+item.trash_cup_5,Plastikkrus,Plastic cup
+item.trash_cup_6,Plastikkrus,Plastic cup
+item.trash_receipt,Kvittering,Receipt
+item.food_eggs,Æg,Eggs
+item.food_butter,Smør,Butter
+item.food_juice,Juice,Juice
+item.food_bacon,Bacon,Bacon
+item.food_mustard,Sennep,Mustard
+item.food_yogurt,Yoghurt,Yoghurt
+item.food_apples,Æbler,Apples
+item.sock_b_left,Venstre sok (par 2),Left sock (pair 2)
+item.sock_b_right,Højre sok (par 2),Right sock (pair 2)
+item.glove_left,Venstre handske,Left glove
+item.glove_right,Højre handske,Right glove
+item.flipflop_left,Venstre flipflop,Left flip-flop
+item.flipflop_right,Højre flipflop,Right flip-flop
+item.cloth_sweater,Sweater,Sweater
+item.cloth_beanie,Hue,Beanie
+item.cloth_scarf,Halstørklæde,Scarf
+item.paddle_b_1,Padle (kano 2),Paddle (canoe 2)
+item.paddle_b_2,Padle (kano 2),Paddle (canoe 2)
+item.paddle_b_3,Padle (kano 2),Paddle (canoe 2)
+item.life_vest_b_1,Redningsvest (kano 2),Life vest (canoe 2)
+item.life_vest_b_2,Redningsvest (kano 2),Life vest (canoe 2)
+item.life_vest_b_3,Redningsvest (kano 2),Life vest (canoe 2)
+item.sleeping_bag_a_1,Sovepose (hold A),Sleeping bag (crew A)
+item.sleeping_bag_a_2,Sovepose (hold A),Sleeping bag (crew A)
+item.sleeping_bag_a_3,Sovepose (hold A),Sleeping bag (crew A)
+item.sleeping_bag_b_1,Sovepose (hold B),Sleeping bag (crew B)
+item.sleeping_bag_b_2,Sovepose (hold B),Sleeping bag (crew B)
+item.sleeping_bag_b_3,Sovepose (hold B),Sleeping bag (crew B)
+item.misc_sunglasses,Solbriller,Sunglasses
+item.misc_wallet,Tegnebog,Wallet
+item.misc_phone_charger,Telefonoplader,Phone charger
+item.misc_harmonica,Mundharmonika,Harmonica
+item.misc_frisbee,Frisbee,Frisbee
+item.misc_playing_cards,Spillekort,Playing cards
+item.misc_flashlight,Lommelygte,Flashlight
+item.misc_bug_spray,Myggespray,Bug spray
+item.misc_sunscreen,Solcreme,Sunscreen
+item.misc_watch,Armbåndsur,Wristwatch
+item.misc_lighter,Lighter,Lighter
+item.misc_compass,Kompas,Compass
+item.misc_umbrella,Paraply,Umbrella
+item.misc_key_fob,Nøglering,Key fob
+item.misc_earplugs,Ørepropper,Earplugs
+item.misc_hammock,Hængekøje,Hammock
+item.misc_dice,Terninger,Dice
+item.misc_lucky_coin,Lykkemønt,Lucky coin
+item.misc_bandana,Bandana,Bandana
+item.misc_multitool,Multiværktøj,Multitool
+item.cook_pot,Gryde,Pot
+item.cook_pan,Stegepande,Frying pan
+item.cook_spatula,Paletkniv,Spatula
+item.cook_cutting_board,Skærebræt,Cutting board
+item.cook_gas_burner,Gaskomfur,Gas burner
+item.cook_kettle,Kedel,Kettle
+item.cook_tongs,Grilltang,Tongs
+item.cook_ladle,Suppeske,Ladle
+item.cook_plate_1,Tallerken,Plate
+item.cook_plate_2,Tallerken,Plate
+item.cook_bowl_1,Skål,Bowl
+item.cook_bowl_2,Skål,Bowl
+container.canoe_b,Kano 2,Canoe 2
+container.sleeping_bag_sack,Sovepose-sæk,Sleeping bag sack
+container.lost_found,Hittegods,Lost and found
+container.kitchen_box,Køkkenkasse,Kitchen box

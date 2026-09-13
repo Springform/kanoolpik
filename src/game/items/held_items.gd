@@ -17,7 +17,7 @@ const ANIM_SECONDS := 0.18
 @export var is_first_person := true
 
 var player_id: int = -1
-var _nodes: Dictionary = {} # item_id -> MeshInstance3D
+var _nodes: Dictionary = {} # item_id -> Node3D
 
 
 func set_player(pid: int) -> void:
@@ -79,7 +79,7 @@ func _rebuild() -> void:
 	# Remove nodes for items no longer held (shrink out).
 	for id in _nodes.keys():
 		if not held.has(id):
-			var gone: MeshInstance3D = _nodes[id]
+			var gone: Node3D = _nodes[id]
 			_nodes.erase(id)
 			var t := gone.create_tween()
 			t.tween_property(gone, "scale", Vector3.ZERO, ANIM_SECONDS)
@@ -90,7 +90,7 @@ func _rebuild() -> void:
 		var is_top := i == held.size() - 1
 		var target_scale := Vector3.ONE * (ACTIVE_SCALE if is_top else HELD_SCALE)
 		var target_pos := Vector3(0, i * STACK_STEP, -i * 0.02)
-		var node: MeshInstance3D
+		var node: Node3D
 		if _nodes.has(id):
 			node = _nodes[id]
 			var t := node.create_tween()
@@ -98,9 +98,10 @@ func _rebuild() -> void:
 			t.tween_property(node, "position", target_pos, ANIM_SECONDS)
 			t.tween_property(node, "scale", target_scale, ANIM_SECONDS)
 		else:
-			node = ItemPalette.make_mesh(GameSession.catalog.get_item(id), is_first_person)
+			node = ItemPalette.make_held_visual(GameSession.catalog.get_item(id))
 			node.name = "Held_" + id
-			node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			for mesh: MeshInstance3D in node.find_children("*", "MeshInstance3D", true, false):
+				mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			node.position = target_pos
 			node.scale = Vector3.ZERO
 			node.rotation_degrees = Vector3(10, -25, 0)
