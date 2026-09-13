@@ -1,0 +1,294 @@
+{
+  "$schema": "../schemas/items.schema.json",
+  "items": [
+    {
+      "id": "can_tuborg_1",
+      "category": "can",
+      "series": "brand_tuborg"
+    },
+    {
+      "id": "can_tuborg_2",
+      "category": "can",
+      "series": "brand_tuborg"
+    },
+    {
+      "id": "can_tuborg_3",
+      "category": "can",
+      "series": "brand_tuborg"
+    },
+    {
+      "id": "can_tuborg_4",
+      "category": "can",
+      "series": "brand_tuborg"
+    },
+    {
+      "id": "can_tuborg_5",
+      "category": "can",
+      "series": "brand_tuborg"
+    },
+    {
+      "id": "can_tuborg_6",
+      "category": "can",
+      "series": "brand_tuborg"
+    },
+    {
+      "id": "can_carlsberg_1",
+      "category": "can",
+      "series": "brand_carlsberg"
+    },
+    {
+      "id": "can_carlsberg_2",
+      "category": "can",
+      "series": "brand_carlsberg"
+    },
+    {
+      "id": "can_carlsberg_3",
+      "category": "can",
+      "series": "brand_carlsberg"
+    },
+    {
+      "id": "can_carlsberg_4",
+      "category": "can",
+      "series": "brand_carlsberg"
+    },
+    {
+      "id": "bottle_cola_1",
+      "category": "bottle_plastic",
+      "series": "brand_cola"
+    },
+    {
+      "id": "bottle_cola_2",
+      "category": "bottle_plastic",
+      "series": "brand_cola"
+    },
+    {
+      "id": "bottle_cola_3",
+      "category": "bottle_plastic",
+      "series": "brand_cola"
+    },
+    {
+      "id": "bottle_beer_1",
+      "category": "bottle_glass",
+      "series": "glass_beer"
+    },
+    {
+      "id": "bottle_beer_2",
+      "category": "bottle_glass",
+      "series": "glass_beer"
+    },
+    {
+      "id": "bottle_beer_3",
+      "category": "bottle_glass",
+      "series": "glass_beer"
+    },
+    {
+      "id": "bottle_snaps",
+      "category": "bottle_glass"
+    },
+    {
+      "id": "chips_bag_1",
+      "category": "trash",
+      "series": "chips"
+    },
+    {
+      "id": "chips_bag_2",
+      "category": "trash",
+      "series": "chips"
+    },
+    {
+      "id": "chips_bag_3",
+      "category": "trash",
+      "series": "chips"
+    },
+    {
+      "id": "chips_bag_4",
+      "category": "trash",
+      "series": "chips"
+    },
+    {
+      "id": "pizza_box_1",
+      "category": "trash",
+      "series": "pizza",
+      "size": 2
+    },
+    {
+      "id": "pizza_box_2",
+      "category": "trash",
+      "series": "pizza",
+      "size": 2
+    },
+    {
+      "id": "napkins",
+      "category": "trash"
+    },
+    {
+      "id": "food_sausages",
+      "category": "food"
+    },
+    {
+      "id": "food_bread",
+      "category": "food"
+    },
+    {
+      "id": "food_ketchup",
+      "category": "food"
+    },
+    {
+      "id": "food_cheese",
+      "category": "food"
+    },
+    {
+      "id": "food_milk",
+      "category": "food"
+    },
+    {
+      "id": "tent_pole_1",
+      "category": "tent_pole",
+      "series": "tent_poles",
+      "sequence": 1,
+      "size": 2
+    },
+    {
+      "id": "tent_pole_2",
+      "category": "tent_pole",
+      "series": "tent_poles",
+      "sequence": 2,
+      "size": 2
+    },
+    {
+      "id": "tent_pole_3",
+      "category": "tent_pole",
+      "series": "tent_poles",
+      "sequence": 3,
+      "size": 2
+    },
+    {
+      "id": "tent_pole_4",
+      "category": "tent_pole",
+      "series": "tent_poles",
+      "sequence": 4,
+      "size": 2
+    },
+    {
+      "id": "tent_peg_1",
+      "category": "tent_peg",
+      "series": "tent_pegs"
+    },
+    {
+      "id": "tent_peg_2",
+      "category": "tent_peg",
+      "series": "tent_pegs"
+    },
+    {
+      "id": "tent_peg_3",
+      "category": "tent_peg",
+      "series": "tent_pegs"
+    },
+    {
+      "id": "tent_peg_4",
+      "category": "tent_peg",
+      "series": "tent_pegs"
+    },
+    {
+      "id": "tent_peg_5",
+      "category": "tent_peg",
+      "series": "tent_pegs"
+    },
+    {
+      "id": "tent_peg_6",
+      "category": "tent_peg",
+      "series": "tent_pegs"
+    },
+    {
+      "id": "tent_canvas",
+      "category": "tent_canvas",
+      "size": 3
+    },
+    {
+      "id": "sock_left",
+      "category": "clothing",
+      "series": "socks",
+      "sequence": 1
+    },
+    {
+      "id": "sock_right",
+      "category": "clothing",
+      "series": "socks",
+      "sequence": 2
+    },
+    {
+      "id": "cloth_hoodie",
+      "category": "clothing"
+    },
+    {
+      "id": "cloth_cap",
+      "category": "clothing"
+    },
+    {
+      "id": "cloth_towel",
+      "category": "clothing"
+    },
+    {
+      "id": "cloth_swim_trunks",
+      "category": "clothing"
+    },
+    {
+      "id": "paddle_1",
+      "category": "paddle",
+      "series": "paddles",
+      "size": 2
+    },
+    {
+      "id": "paddle_2",
+      "category": "paddle",
+      "series": "paddles",
+      "size": 2
+    },
+    {
+      "id": "paddle_3",
+      "category": "paddle",
+      "series": "paddles",
+      "size": 2
+    },
+    {
+      "id": "life_vest_1",
+      "category": "life_vest",
+      "series": "vests"
+    },
+    {
+      "id": "life_vest_2",
+      "category": "life_vest",
+      "series": "vests"
+    },
+    {
+      "id": "life_vest_3",
+      "category": "life_vest",
+      "series": "vests"
+    },
+    {
+      "id": "firewood_1",
+      "category": "firewood",
+      "series": "firewood"
+    },
+    {
+      "id": "firewood_2",
+      "category": "firewood",
+      "series": "firewood"
+    },
+    {
+      "id": "firewood_3",
+      "category": "firewood",
+      "series": "firewood"
+    },
+    {
+      "id": "firewood_4",
+      "category": "firewood",
+      "series": "firewood"
+    },
+    {
+      "id": "firewood_5",
+      "category": "firewood",
+      "series": "firewood"
+    }
+  ]
+}

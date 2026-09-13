@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/game/items/pickup_item.gd" id="1_item"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_item"]
+size = Vector3(0.3, 0.3, 0.3)
+
+[node name="PickupItem" type="StaticBody3D"]
+script = ExtResource("1_item")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_item")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+
+[node name="Label" type="Label3D" parent="."]
+billboard = 1
+pixel_size = 0.004
+font_size = 40
+outline_size = 8

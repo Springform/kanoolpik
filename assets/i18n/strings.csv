@@ -1,0 +1,94 @@
+keys,da,en
+item.can_tuborg_1,Tuborg-dåse,Tuborg can
+item.can_tuborg_2,Tuborg-dåse,Tuborg can
+item.can_tuborg_3,Tuborg-dåse,Tuborg can
+item.can_tuborg_4,Tuborg-dåse,Tuborg can
+item.can_tuborg_5,Tuborg-dåse,Tuborg can
+item.can_tuborg_6,Tuborg-dåse,Tuborg can
+item.can_carlsberg_1,Carlsberg-dåse,Carlsberg can
+item.can_carlsberg_2,Carlsberg-dåse,Carlsberg can
+item.can_carlsberg_3,Carlsberg-dåse,Carlsberg can
+item.can_carlsberg_4,Carlsberg-dåse,Carlsberg can
+item.bottle_cola_1,Colaflaske,Cola bottle
+item.bottle_cola_2,Colaflaske,Cola bottle
+item.bottle_cola_3,Colaflaske,Cola bottle
+item.bottle_beer_1,Ølflaske,Beer bottle
+item.bottle_beer_2,Ølflaske,Beer bottle
+item.bottle_beer_3,Ølflaske,Beer bottle
+item.bottle_snaps,Snapseflaske,Schnapps bottle
+item.chips_bag_1,Chipspose,Bag of chips
+item.chips_bag_2,Chipspose,Bag of chips
+item.chips_bag_3,Chipspose,Bag of chips
+item.chips_bag_4,Chipspose,Bag of chips
+item.pizza_box_1,Pizzabakke,Pizza box
+item.pizza_box_2,Pizzabakke,Pizza box
+item.napkins,Servietter,Napkins
+item.food_sausages,Pølser,Sausages
+item.food_bread,Brød,Bread
+item.food_ketchup,Ketchup,Ketchup
+item.food_cheese,Ost,Cheese
+item.food_milk,Mælk,Milk
+item.tent_pole_1,Teltstang 1,Tent pole 1
+item.tent_pole_2,Teltstang 2,Tent pole 2
+item.tent_pole_3,Teltstang 3,Tent pole 3
+item.tent_pole_4,Teltstang 4,Tent pole 4
+item.tent_peg_1,Teltpløk,Tent peg
+item.tent_peg_2,Teltpløk,Tent peg
+item.tent_peg_3,Teltpløk,Tent peg
+item.tent_peg_4,Teltpløk,Tent peg
+item.tent_peg_5,Teltpløk,Tent peg
+item.tent_peg_6,Teltpløk,Tent peg
+item.tent_canvas,Teltdug,Tent canvas
+item.sock_left,Venstre sok,Left sock
+item.sock_right,Højre sok,Right sock
+item.cloth_hoodie,Hættetrøje,Hoodie
+item.cloth_cap,Kasket,Cap
+item.cloth_towel,Håndklæde,Towel
+item.cloth_swim_trunks,Badebukser,Swim trunks
+item.paddle_1,Padle,Paddle
+item.paddle_2,Padle,Paddle
+item.paddle_3,Padle,Paddle
+item.life_vest_1,Redningsvest,Life vest
+item.life_vest_2,Redningsvest,Life vest
+item.life_vest_3,Redningsvest,Life vest
+item.firewood_1,Brænde,Firewood
+item.firewood_2,Brænde,Firewood
+item.firewood_3,Brænde,Firewood
+item.firewood_4,Brænde,Firewood
+item.firewood_5,Brænde,Firewood
+container.pant_bag,Pantpose,Deposit bag
+container.glass_crate,Flaskekasse,Bottle crate
+container.trash_bag,Skraldesæk,Trash bag
+container.cooler,Køletaske,Cooler
+container.tent_bag,Teltpose,Tent bag
+container.dry_bag,Drybag,Dry bag
+container.canoe,Kano,Canoe
+container.fire_pit,Bålplads,Fire pit
+level.island_01,Øen,The island
+ability.insight,Klarsyn,Insight
+ability.call_mate,Råb på en kammerat,Call a mate
+ability.steady_hands,Rolige hænder,Steady hands
+ability.auto_place,Autopilot,Auto-place
+ability.map_sense,Stedsans,Map sense
+grade.s,Spejderleder-standard,Scout-leader standard
+grade.a,Flot arbejde,Fine work
+grade.b,Godkendt,Approved
+grade.c,Tja...,Meh...
+grade.d,I padler ingen steder,You're not paddling anywhere
+ui.title,Kanoølpik,Kanoølpik
+ui.start,Start oprydningen,Start cleaning
+ui.progress,%d af %d ting på plads,%d of %d things put away
+ui.carrying,Bærer %d/%d,Carrying %d/%d
+ui.interact,[E] Tag op,[E] Pick up
+ui.place,[E] Læg i %s,[E] Put in %s
+ui.drop,[Q] Smid,[Q] Drop
+ui.verdict.correct,Perfekt!,Perfect!
+ui.verdict.wrong_category,Det hører ikke til her,That doesn't go here
+ui.verdict.split_series,Resten ligger et andet sted,The rest is somewhere else
+ui.verdict.wrong_order,Forkert rækkefølge,Wrong order
+ui.container_complete,%s er pakket!,%s is packed!
+ui.island_clean,Øen er skinnende ren. Videre!,The island is spotless. Onwards!
+ui.evaluation,Lejrlederens vurdering,Camp leader's evaluation
+ui.time,Tid,Time
+ui.accuracy,Præcision,Accuracy
+ui.completion,Oprydning,Cleanup

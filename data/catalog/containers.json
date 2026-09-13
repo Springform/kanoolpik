@@ -1,0 +1,66 @@
+{
+  "$schema": "../schemas/containers.schema.json",
+  "containers": [
+    {
+      "id": "pant_bag",
+      "accepts": [
+        "can",
+        "bottle_plastic"
+      ],
+      "slot_count": 14
+    },
+    {
+      "id": "glass_crate",
+      "accepts": [
+        "bottle_glass"
+      ],
+      "slot_count": 6
+    },
+    {
+      "id": "trash_bag",
+      "accepts": [
+        "trash"
+      ],
+      "slot_count": 10
+    },
+    {
+      "id": "cooler",
+      "accepts": [
+        "food"
+      ],
+      "slot_count": 6
+    },
+    {
+      "id": "tent_bag",
+      "accepts": [
+        "tent_pole",
+        "tent_peg",
+        "tent_canvas"
+      ],
+      "slot_count": 12,
+      "ordered": true
+    },
+    {
+      "id": "dry_bag",
+      "accepts": [
+        "clothing"
+      ],
+      "slot_count": 8
+    },
+    {
+      "id": "canoe",
+      "accepts": [
+        "paddle",
+        "life_vest"
+      ],
+      "slot_count": 6
+    },
+    {
+      "id": "fire_pit",
+      "accepts": [
+        "firewood"
+      ],
+      "slot_count": 6
+    }
+  ]
+}

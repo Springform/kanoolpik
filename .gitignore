@@ -1,0 +1,15 @@
+# Godot
+.godot/
+*.import.tmp
+build/
+export/
+# gdUnit4 reports
+reports/
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+# Godot binary if someone drops it here
+Godot_v*
