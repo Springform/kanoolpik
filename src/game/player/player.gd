@@ -6,6 +6,9 @@ extends CharacterBody3D
 ## through [GameSession]. Remote players (phase 4) reuse this scene with
 ## [member is_local] = false and no input processing.
 
+## Group the local player joins so late-created UI can find it (the spawn signal may already have fired).
+const LOCAL_GROUP := "local_player"
+
 @export var is_local := true
 @export var walk_speed := 4.5
 @export var sprint_speed := 7.5
@@ -19,6 +22,7 @@ var _pitch := 0.0
 
 @onready var camera: Camera3D = $Camera3D
 @onready var ray: RayCast3D = $Camera3D/InteractRay
+@onready var held_items: HeldItems = $Camera3D/HeldItems
 
 
 func _ready() -> void:
@@ -26,7 +30,9 @@ func _ready() -> void:
 	ray.target_position = Vector3(0, 0, -interact_distance)
 	set_process_input(is_local)
 	set_physics_process(is_local)
+	held_items.set_player(player_id)
 	if is_local:
+		add_to_group(LOCAL_GROUP)
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		GameEvents.local_player_spawned.emit(self)
 
@@ -86,7 +92,7 @@ func _interact() -> void:
 		var held := carried_items()
 		if held.is_empty():
 			return
-		var item_id := held[held.size() - 1] # last picked up = in hand
+		var item_id := held[held.size() - 1] # carried_by() is in pick-up order: last = in hand
 		var slot := PlacementRules.find_correct_slot(GameSession.catalog, GameSession.state, item_id, target.container_id)
 		if slot < 0:
 			slot = target.first_free_slot()

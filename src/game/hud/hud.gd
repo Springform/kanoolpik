@@ -4,7 +4,7 @@ extends CanvasLayer
 ##
 ## Top-left: progress + bar + containers packed. Top-right: elapsed time.
 ## Bottom-left: carrying load with capacity squares and the held item names
-## (last = active, marked with ▶). Centre: crosshair + contextual prompt.
+## (last = active, marked with »). Centre: crosshair + contextual prompt.
 ## Top-centre: stacking toast queue (max [const MAX_TOASTS]) coloured by verdict.
 ##
 ## Reads state via GameSession (read-only) and reacts to GameEvents. Other
@@ -40,6 +40,10 @@ func _ready() -> void:
 	GameEvents.island_clean.connect(_on_island_clean)
 	GameEvents.command_rejected.connect(_on_rejected)
 	GameEvents.local_player_spawned.connect(func(p: Node3D) -> void: _player = p)
+	# The player may have spawned before this HUD existed — pick it up from its group.
+	var existing := get_tree().get_first_node_in_group(Player.LOCAL_GROUP)
+	if existing is Player:
+		_player = existing
 	prompt_label.text = ""
 	held_label.text = ""
 	if GameSession.catalog != null:
@@ -139,7 +143,7 @@ func _refresh_carrying() -> void:
 	var names: Array[String] = []
 	for i in range(held.size()):
 		var n := tr(GameSession.catalog.get_item(held[i]).name_key)
-		names.append(("▶ " + n) if i == held.size() - 1 else n)
+		names.append(("» " + n) if i == held.size() - 1 else n)
 	held_label.text = ", ".join(names)
 
 
