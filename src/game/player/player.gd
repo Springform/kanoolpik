@@ -15,8 +15,12 @@ const LOCAL_GROUP := "local_player"
 @export var jump_velocity := 4.8
 @export var mouse_sensitivity := 0.0025
 @export var interact_distance := 3.0
+## Falling below this (relative to ground level) counts as being in the lake.
+@export var water_depth := 2.0
 
 var player_id: int = 1
+## Where to put the player back after a swim. Set by whoever spawns the player.
+var spawn_position := Vector3.ZERO
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 var _pitch := 0.0
 
@@ -31,6 +35,8 @@ func _ready() -> void:
 	set_process_input(is_local)
 	set_physics_process(is_local)
 	held_items.set_player(player_id)
+	if spawn_position == Vector3.ZERO:
+		spawn_position = global_position
 	if is_local:
 		add_to_group(LOCAL_GROUP)
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -68,6 +74,16 @@ func _physics_process(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0, speed)
 		velocity.z = move_toward(velocity.z, 0, speed)
 	move_and_slide()
+	if global_position.y < GameSession.ground_y() - water_depth:
+		respawn()
+
+
+## Put the player back on dry land. Carried items come along — losing them to a
+## misstep would be punishing for no reason.
+func respawn() -> void:
+	velocity = Vector3.ZERO
+	global_position = spawn_position
+	GameEvents.player_respawned.emit(player_id)
 
 
 ## What the crosshair is on: a PickupItem, a ContainerNode, or null.
@@ -127,5 +143,16 @@ func _drop_one() -> void:
 	if held.is_empty():
 		return
 	var drop_pos := global_position + (-camera.global_transform.basis.z) * 1.2
-	drop_pos.y = global_position.y - 0.5
-	GameSession.submit(Commands.drop(player_id, held[held.size() - 1], drop_pos))
+	drop_pos.y = GameSession.ground_y()
+	GameSession.submit(Commands.drop(player_id, held[held.size() - 1], clamp_to_island(drop_pos)))
+
+
+## Keep a position on the island so a dropped item never lands in the lake where
+## it cannot be picked up again.
+static func clamp_to_island(position: Vector3) -> Vector3:
+	var limit := GameSession.island_radius() - 1.0
+	var flat := Vector2(position.x, position.z)
+	if flat.length() <= limit:
+		return position
+	flat = flat.normalized() * limit
+	return Vector3(flat.x, position.y, flat.y)

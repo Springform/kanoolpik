@@ -21,6 +21,8 @@ signal island_clean()
 signal level_loaded(level_id: String)
 signal local_player_spawned(player: Node3D)
 signal command_rejected(command: Dictionary, error: String)
+## A player fell off the island and was put back on dry land.
+signal player_respawned(player_id: int)
 signal progress_changed(progress: Dictionary)
 
 

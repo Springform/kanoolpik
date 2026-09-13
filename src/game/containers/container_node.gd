@@ -18,7 +18,6 @@ const COMPLETE_PULSE_SECONDS := 0.6
 ## Correct chimes within this window step up in pitch (a little melody when you're on a roll).
 const CHIME_COMBO_WINDOW := 2.0
 const CHIME_MAX_STEPS := 7
-const SLOT_SPACING := 0.25
 ## Slots sit just above the lid so the interaction ray reaches them before the body.
 const SLOT_HEIGHT := 0.74
 
@@ -46,9 +45,11 @@ func setup(p_def: ContainerDef) -> void:
 
 
 func _ready() -> void:
-	var width := SLOT_SPACING * def.slot_count + 0.3
+	# Footprint comes from ContainerDef so the level layout and the mess generator
+	# agree with what is actually drawn here.
+	var width := def.width()
 	var box := BoxMesh.new()
-	box.size = Vector3(width, 0.6, 0.8)
+	box.size = Vector3(width, 0.6, ContainerDef.DEPTH)
 	mesh.mesh = box
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(0.3, 0.35, 0.4, 0.6)
@@ -60,7 +61,7 @@ func _ready() -> void:
 	label.position.y = 1.15
 	for i in range(def.slot_count):
 		var slot := SlotNode.create(container_id, i)
-		slot.position = Vector3(-width * 0.5 + 0.25 + i * SLOT_SPACING, SLOT_HEIGHT, 0)
+		slot.position = Vector3(-width * 0.5 + 0.25 + i * ContainerDef.SLOT_SPACING, SLOT_HEIGHT, 0)
 		slots_root.add_child(slot)
 		_slots.append(slot)
 	GameEvents.item_placed.connect(_on_item_placed)

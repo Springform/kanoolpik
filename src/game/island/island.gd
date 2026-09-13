@@ -9,13 +9,15 @@ extends Node3D
 const PICKUP_ITEM := preload("res://src/game/items/pickup_item.tscn")
 const CONTAINER_NODE := preload("res://src/game/containers/container_node.tscn")
 
-@export var island_radius := 16.0
-
 @onready var items_root: Node3D = $Items
 @onready var containers_root: Node3D = $Containers
 
 
+var island_radius := 16.0
+
+
 func _ready() -> void:
+	island_radius = GameSession.island_radius()
 	_build_ground()
 	_spawn_containers()
 	_spawn_items()

@@ -13,17 +13,17 @@
         0,
         0
       ],
-      "radius": 5.0,
+      "radius": 5.5,
       "weight": 4.0
     },
     {
       "id": "fire",
       "center": [
-        6,
+        6.0,
         0,
-        -4
+        -5.0
       ],
-      "radius": 3.0,
+      "radius": 3.5,
       "weight": 2.0,
       "categories": [
         "can",
@@ -36,9 +36,9 @@
     {
       "id": "tents",
       "center": [
-        -7,
+        -7.0,
         0,
-        3
+        4.0
       ],
       "radius": 4.0,
       "weight": 2.0,
@@ -52,9 +52,9 @@
     {
       "id": "shore",
       "center": [
-        2,
+        2.0,
         0,
-        10
+        9.5
       ],
       "radius": 4.0,
       "weight": 1.5,
@@ -69,9 +69,9 @@
     {
       "id": "bushes",
       "center": [
-        -4,
+        -5.0,
         0,
-        -9
+        -9.0
       ],
       "radius": 3.5,
       "weight": 1.0
@@ -79,44 +79,44 @@
   ],
   "container_positions": {
     "pant_bag": [
-      1.5,
+      0.0,
       0,
-      -2.5
-    ],
-    "glass_crate": [
-      3,
-      0,
-      -2.5
+      -6.0
     ],
     "trash_bag": [
-      -1.5,
+      -5.5,
       0,
-      -2.5
+      -3.0
     ],
-    "cooler": [
+    "glass_crate": [
       4.5,
       0,
-      -1
+      -4.5
     ],
-    "tent_bag": [
-      -6,
+    "cooler": [
+      6.8,
       0,
-      5
-    ],
-    "dry_bag": [
-      -4,
-      0,
-      5
-    ],
-    "canoe": [
-      3,
-      0,
-      13
+      -1.5
     ],
     "fire_pit": [
-      6,
+      7.0,
       0,
-      -4
+      -7.5
+    ],
+    "tent_bag": [
+      -7.5,
+      0,
+      4.0
+    ],
+    "dry_bag": [
+      -3.5,
+      0,
+      7.0
+    ],
+    "canoe": [
+      3.0,
+      0,
+      11.0
     ]
   },
   "player_spawns": [
@@ -150,5 +150,7 @@
       1,
       4
     ]
-  ]
+  ],
+  "island_radius": 16.0,
+  "container_clearance": 0.4
 }

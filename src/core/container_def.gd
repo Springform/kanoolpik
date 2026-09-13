@@ -5,6 +5,12 @@ extends RefCounted
 ##
 ## Pure data — loaded from data/catalog/containers.json via [Catalog].
 
+## Placeholder footprint, shared by the level layout, the mess generator and
+## [ContainerNode] so "how much room does this take" is defined exactly once.
+const SLOT_SPACING := 0.25
+const EDGE_MARGIN := 0.3
+const DEPTH := 0.8
+
 var id: String
 var accepts: Array[String] = [] ## Item categories this container is the correct home for.
 var slot_count: int = 8
@@ -36,6 +42,17 @@ func to_dict() -> Dictionary:
 		"name_key": name_key,
 		"scene": scene,
 	}
+
+
+## Width in metres of the placeholder box (grows with slot count).
+func width() -> float:
+	return SLOT_SPACING * slot_count + EDGE_MARGIN
+
+
+## Radius of a circle that covers the whole footprint — used to keep containers
+## apart and to keep items from spawning inside one.
+func footprint_radius() -> float:
+	return sqrt(pow(width() * 0.5, 2) + pow(DEPTH * 0.5, 2))
 
 
 func accepts_category(category: String) -> bool:
