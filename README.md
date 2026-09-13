@@ -16,7 +16,7 @@ godot --path . --editor
 # 3. Press F5 — you spawn on a gray-box island full of junk. WASD, mouse, E = pick up / put in, Q = drop, Esc = release mouse.
 
 # Run the whole test suite headless (also what CI runs)
-GODOT_BIN=/path/to/godot tools/run_tests.sh
+GODOT_BIN=/path/to/godot bash tools/run_tests.sh
 ```
 
 ## Read this first

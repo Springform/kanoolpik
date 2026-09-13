@@ -32,6 +32,7 @@ Scenes react ←  GameEvents.<signal>  ←  GameSession publishes events  ←  r
 
 ## Godot-specific gotchas (learned the hard way)
 
+- Invoke scripts as `bash tools/run_tests.sh` — the repo is edited from Windows, so executable bits are not reliable.
 - Run `godot --headless --path . --import` once after cloning or after adding assets; otherwise translations and imports are missing and tests fail confusingly.
 - Don't name variables `seed`, `load`, `range`, `name` etc. — they shadow built-ins and produce warnings (we treat warnings as failures).
 - Untyped `Dictionary` values can't be inferred: `var x := d["k"]` fails to parse. Write `var x: float = d["k"]`.
