@@ -65,15 +65,32 @@ func test_ignores_other_players() -> void:
 
 
 func test_first_person_meshes_draw_on_top_and_cast_no_shadow() -> void:
-	GameSession.submit(Commands.pick_up(pid, "can_tuborg_1"))
-	var holder: Node3D = held.get_node("Held_can_tuborg_1")
+	# Deliberately an item that is still a placeholder box: a modelled item keeps
+	# its own colours, so only a placeholder can be checked against the palette.
+	# The id is found rather than hard-coded, because the model kit keeps filling
+	# up and whichever item is "the one without a model" changes week to week.
+	var plain := _an_item_without_a_model()
+	assert_str(plain).override_failure_message(
+		"every item has a model now — point this test at one of them instead").is_not_empty()
+	GameSession.submit(Commands.pick_up(pid, plain))
+	var holder: Node3D = held.get_node("Held_" + plain)
 	var meshes: Array[Node] = holder.find_children("*", "MeshInstance3D", true, false)
 	assert_array(meshes).is_not_empty()
 	var m: MeshInstance3D = meshes[0]
 	var mat: StandardMaterial3D = m.get_active_material(0)
 	assert_bool(mat.no_depth_test).is_true()
 	assert_int(m.cast_shadow).is_equal(GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
-	assert_object(mat.albedo_color).is_equal(ItemPalette.color_for("can"))
+	assert_object(mat.albedo_color).is_equal(
+		ItemPalette.color_for(GameSession.catalog.get_item(plain).category))
+
+
+## The first catalog item still drawn as a generated box, or "" when the model
+## kit is complete.
+func _an_item_without_a_model() -> String:
+	for id in GameSession.catalog.item_ids():
+		if GameSession.catalog.get_item(id).model.is_empty():
+			return id
+	return ""
 
 
 func test_player_scene_carries_a_held_items_node_for_its_player_id() -> void:

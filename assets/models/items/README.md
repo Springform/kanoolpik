@@ -45,3 +45,9 @@ Both canoes share one `canoe.glb`. Containers matter more per object than items 
 - **Scale is automatic.** The model's bounding box is measured and fitted to the item's size budget, then recentred on its base. A model that arrives 0.05 or 50 units tall both end up right. You never measure anything.
 - **A missing model is not a bug.** Anything without a file keeps its generated box and stays fully playable. A half-populated kit is the normal state for a while.
 - **Prefer one library, or one artist, over the best individual model of each object.** Mixed provenance means mixed styles, and a coherent cheap look beats an incoherent expensive one.
+
+## Still boxes
+
+Five categories have no model yet — `trash` (18 items), `misc` (20), `clothing` (15), `food` (12), `cookware` (12). Each is one `.glb`, one CREDITS row, and `model` set on those items in `data/catalog/items.json`; nothing else has to change and nothing breaks in the meantime.
+
+**Size is stated, not measured.** A category's real-world length lives in `ItemPalette.CATEGORY_LENGTHS` (metres, longest axis) and the model is fitted to it. Add a row there when you add a category — without one it falls back to a guess derived from carry slots, which is how a paddle once ended up 34 cm long.

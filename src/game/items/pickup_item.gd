@@ -10,6 +10,11 @@ extends StaticBody3D
 ## Tuned by looking at the island, not by theory — at 6 m the 150 names still
 ## read as a wall of text. Worth re-tuning once you have played a full round.
 const LABEL_VISIBLE_METRES := 3.5
+## Only one item in this many frames re-checks its distance, staggered by
+## instance id so the work is spread rather than spiking on one frame. 162 items
+## doing a camera lookup and a distance test every frame buys nothing — a label
+## cannot appear and disappear again within a tenth of a second of walking.
+const LABEL_CHECK_FRAMES := 6
 
 var item_id: String
 var def: ItemDef
@@ -61,6 +66,18 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if not visible:
 		return
+	# Staggered by instance id so the 162 checks are spread across frames rather
+	# than all landing on the same one.
+	if (Engine.get_process_frames() + get_instance_id()) % LABEL_CHECK_FRAMES != 0:
+		return
+	refresh_label()
+
+
+## Show the name only when the camera is close. Public because the stagger above
+## makes "call _process and look" an unreliable thing for a test to do — and
+## because an item that has just appeared should be right immediately, not in
+## six frames' time.
+func refresh_label() -> void:
 	var camera := get_viewport().get_camera_3d()
 	label.visible = camera != null and \
 		global_position.distance_squared_to(camera.global_position) <= LABEL_VISIBLE_METRES * LABEL_VISIBLE_METRES
