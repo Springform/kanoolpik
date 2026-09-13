@@ -40,7 +40,7 @@ jobs:
         run: ~/godot/godot --headless --path . --import || true
 
       - name: Run tests
-        run: GODOT_BIN=~/godot/godot tools/run_tests.sh
+        run: GODOT_BIN=~/godot/godot bash tools/run_tests.sh
 
       - name: Upload test report
         if: always()
