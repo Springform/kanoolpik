@@ -1,6 +1,10 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://src/game/containers/container_node.gd" id="1_container"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/place_correct.wav" id="2_correct"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/place_wrong.wav" id="3_wrong"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/container_complete.wav" id="4_complete"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/island_clean.wav" id="5_clean"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_container"]
 size = Vector3(2, 0.6, 0.8)
@@ -22,3 +26,28 @@ billboard = 1
 pixel_size = 0.005
 font_size = 48
 outline_size = 10
+
+[node name="SfxCorrect" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("2_correct")
+unit_size = 6.0
+max_db = 0.0
+bus = &"SFX"
+
+[node name="SfxWrong" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("3_wrong")
+unit_size = 6.0
+max_db = 0.0
+bus = &"SFX"
+
+[node name="SfxComplete" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("4_complete")
+unit_size = 10.0
+max_db = 3.0
+bus = &"SFX"
+
+[node name="SfxClean" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("5_clean")
+unit_size = 40.0
+max_db = 3.0
+attenuation_model = 3
+bus = &"SFX"

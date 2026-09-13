@@ -92,3 +92,18 @@ ui.evaluation,Lejrlederens vurdering,Camp leader's evaluation
 ui.time,Tid,Time
 ui.accuracy,Præcision,Accuracy
 ui.completion,Oprydning,Cleanup
+ui.hud.progress,%d af %d ting på plads,%d of %d things put away
+ui.hud.containers,%d af %d pakket,%d of %d packed
+ui.hud.carrying,Bærer %d/%d,Carrying %d/%d
+ui.hud.hands_empty,Tomme hænder,Empty hands
+ui.hud.pickup,[E] Tag op: %s,[E] Pick up: %s
+ui.hud.place,[E] Læg %s i %s,[E] Put %s in %s
+ui.hud.drop,[Q] Smid %s,[Q] Drop %s
+ui.hud.time,Tid,Time
+ui.hud.clean,Øen er ren!,Island clean!
+ui.error.hands_full,Hænderne er fulde,Your hands are full
+ui.error.bad_slot,Der er ikke plads der,No room there
+ui.error.item_not_on_ground,Den ligger ikke der længere,It isn't there any more
+ui.error.item_not_carried_by_player,Du holder ikke den,You aren't holding that
+ui.error.item_not_placed,Den ligger ikke i noget,It isn't in anything
+ui.error.generic,Det kan du ikke lige nu,You can't do that right now

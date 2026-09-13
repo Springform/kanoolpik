@@ -31,7 +31,7 @@ func test_pick_up_hides_item_and_place_colours_slot() -> void:
 	var slot := bag.first_free_slot()
 	GameSession.submit(Commands.place(pid, "can_tuborg_1", "pant_bag", slot))
 	assert_int(GameSession.state.kind_of("can_tuborg_1")).is_equal(WorldState.Kind.PLACED)
-	assert_object(bag.get_node("Slots").get_child(slot).material_override).is_equal(bag._mat_correct)
+	assert_int(bag.slot_verdict(slot)).is_equal(PlacementRules.Verdict.CORRECT)
 
 
 func test_wrong_placement_colours_slot_red_and_counts() -> void:
@@ -39,7 +39,8 @@ func test_wrong_placement_colours_slot_red_and_counts() -> void:
 	GameSession.submit(Commands.pick_up(pid, "food_bread"))
 	GameSession.submit(Commands.place(pid, "food_bread", "canoe", 0))
 	var canoe: ContainerNode = island.get_node("Containers/Container_canoe")
-	assert_object(canoe.get_node("Slots").get_child(0).material_override).is_equal(canoe._mat_wrong)
+	assert_int(canoe.slot_verdict(0)).is_equal(PlacementRules.Verdict.WRONG_CATEGORY)
+	assert_bool(canoe._slot_marks[0].visible).is_true()
 	assert_int(GameSession.state.stats["wrong_placements"]).is_equal(1)
 
 

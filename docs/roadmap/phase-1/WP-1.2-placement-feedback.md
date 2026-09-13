@@ -1,6 +1,6 @@
 # WP-1.2 — Placement feedback: flash, chime, completion glow
 
-**Phase:** 1 · **Lane:** containers + audio · **Size:** M · **Status:** unclaimed
+**Phase:** 1 · **Lane:** containers + audio · **Size:** M · **Status:** done (Claude, 2026-09-13)
 
 ## Goal
 Placing an item gives immediate, legible feedback: a gold flash and a bright chime for `CORRECT`; a dull red pulse and a low "thud/shrug" for any wrong verdict; when a container completes, all its slots glow, a short fanfare plays and the label gets its ✓. When the island is clean, a longer fanfare. This is the heart of the game's feel.
@@ -18,13 +18,22 @@ Placing an item gives immediate, legible feedback: a gold flash and a bright chi
 **Provides:** nothing new. Colours: define `Verdict → Color` in `containers/verdict_style.gd` so HUD (1.4) can import it.
 
 ## Acceptance criteria
-- [ ] Correct / wrong / complete / clean each have distinct visual and audio feedback.
-- [ ] Feedback is driven only by events (no polling `state` in `_process`).
-- [ ] Sounds are 3D-positioned at the container; volume via an `SFX` audio bus (add bus in `default_bus_layout.tres` — that file is yours).
-- [ ] Colour-blind safe: gold vs red also differ in brightness/shape (e.g. wrong slots show an ✕ decal).
-- [ ] Integration test: place wrong → slot material is the wrong style; place correct → correct style; complete → all slots "complete" style.
-- [ ] `tools/run_tests.sh` green; boot check green.
+- [x] Correct / wrong / complete / clean each have distinct visual and audio feedback.
+- [x] Feedback is driven only by events (no polling `state` in `_process`).
+- [x] Sounds are 3D-positioned at the container; volume via an `SFX` audio bus (add bus in `default_bus_layout.tres` — that file is yours).
+- [x] Colour-blind safe: gold vs red also differ in brightness/shape (e.g. wrong slots show an ✕ decal).
+- [x] Integration test: place wrong → slot material is the wrong style; place correct → correct style; complete → all slots "complete" style.
+- [x] `tools/run_tests.sh` green; boot check green.
 
 ## Playtest checklist
 - [ ] Rapid-fire placing five items doesn't produce a cacophony (limit overlapping chimes or pitch-step them).
 - [ ] Completing a container feels like a small celebration.
+
+## Notes / decisions
+- Sounds are synthesised placeholders (`tools/gen_sfx.py`, CC0) so nothing external is licensed; WP-2.6 replaces them.
+- Flash is a temporary emissive material + scale tween (0.35 s). The resting material is **recomputed from state** when the tween ends — capturing it up front caused a stale-closure bug when a container completed mid-flash.
+- Correct chimes within 2 s of each other step up one semitone (max +7) — cheap "combo" feel, avoids a cacophony.
+- `VerdictStyle` (containers/verdict_style.gd) is the shared verdict → colour/material/toast-key mapping; HUD (WP-1.4) should import it instead of composing keys itself.
+- Island-clean fanfare plays from the container that received the last item (tracked per node via the last `item_placed` event).
+- Added `ContainerNode.slot_verdict(slot)` and `resting_material_kind(slot)` — tests assert on those rather than on transient materials.
+- New audio bus `SFX` in `default_bus_layout.tres`.
