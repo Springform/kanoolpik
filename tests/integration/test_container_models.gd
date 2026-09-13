@@ -37,12 +37,14 @@ func test_a_container_with_a_model_draws_it() -> void:
 	assert_int(pit.visual.find_children("*", "MeshInstance3D", true, false).size()).is_greater(0)
 
 
-func test_a_container_without_a_model_is_unchanged() -> void:
-	var bag := _container("pant_bag")
-	assert_str(GameSession.catalog.get_container("pant_bag").scene).is_empty()
-	var mesh: MeshInstance3D = bag.visual.find_children("*", "MeshInstance3D", true, false)[0]
-	var mat: StandardMaterial3D = mesh.material_override
-	assert_int(mat.transparency).is_equal(BaseMaterial3D.TRANSPARENCY_ALPHA)
+func test_every_container_in_the_catalog_has_a_model_that_loads() -> void:
+	# The kit is complete as of WP-2.3's second pass. If a container loses its
+	# model this fails here rather than showing up as a grey box in a playtest.
+	for cid in GameSession.catalog.container_ids():
+		var scene := GameSession.catalog.get_container(cid).scene
+		assert_str(scene).override_failure_message("'%s' has no model" % cid).is_not_empty()
+		assert_bool(ItemVisual.has_model(scene)).override_failure_message(
+			"'%s' names '%s', which does not load — is the .import file there?" % [cid, scene]).is_true()
 
 
 func test_collision_follows_the_model_not_the_placeholder() -> void:

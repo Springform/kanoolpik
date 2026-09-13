@@ -18,8 +18,26 @@ static func color_for(category: String) -> Color:
 	return CATEGORY_COLOURS.get(category, Color.WHITE)
 
 
+## How long the real thing is, in metres, along its longest axis — the size
+## budget a model is fitted into and the size of the placeholder box.
+##
+## [member ItemDef.size] is *carry slots*, a gameplay number, and deriving
+## metres from it made a paddle 34 cm long. Containers hit the same wall and
+## answered it the same way (`ContainerDef.model_height`): what a thing measures
+## in real life is something a person knows without opening the mesh.
+const CATEGORY_LENGTHS := {
+	"can": 0.13, "can_sealed": 0.13, "bottle_plastic": 0.26, "bottle_glass": 0.28,
+	"trash": 0.22, "food": 0.2, "cookware": 0.26, "misc": 0.2, "clothing": 0.32,
+	"tent_pole": 0.65, "tent_peg": 0.18, "tent_canvas": 0.8,
+	"paddle": 1.4, "life_vest": 0.6, "sleeping_bag": 0.55, "firewood": 0.42,
+}
+## For a category nobody has measured yet: the old slot-derived guess.
+static func fallback_length(def: ItemDef) -> float:
+	return 0.18 + 0.08 * def.size
+
+
 static func box_size(def: ItemDef) -> Vector3:
-	var s := 0.18 + 0.08 * def.size
+	var s: float = CATEGORY_LENGTHS.get(def.category, fallback_length(def))
 	return Vector3(s, s * 0.8, s)
 
 

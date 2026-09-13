@@ -4,86 +4,120 @@
     {
       "id": "can_tuborg_1",
       "category": "can",
-      "series": "brand_tuborg"
+      "series": "brand_tuborg",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 0.0
     },
     {
       "id": "can_tuborg_2",
       "category": "can",
-      "series": "brand_tuborg"
+      "series": "brand_tuborg",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 137.5
     },
     {
       "id": "can_tuborg_3",
       "category": "can",
-      "series": "brand_tuborg"
+      "series": "brand_tuborg",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 275.0
     },
     {
       "id": "can_tuborg_4",
       "category": "can",
-      "series": "brand_tuborg"
+      "series": "brand_tuborg",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 52.5
     },
     {
       "id": "can_tuborg_5",
       "category": "can",
-      "series": "brand_tuborg"
+      "series": "brand_tuborg",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 190.0
     },
     {
       "id": "can_tuborg_6",
       "category": "can",
-      "series": "brand_tuborg"
+      "series": "brand_tuborg",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 327.5
     },
     {
       "id": "can_carlsberg_1",
       "category": "can",
-      "series": "brand_carlsberg"
+      "series": "brand_carlsberg",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 105.0
     },
     {
       "id": "can_carlsberg_2",
       "category": "can",
-      "series": "brand_carlsberg"
+      "series": "brand_carlsberg",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 242.5
     },
     {
       "id": "can_carlsberg_3",
       "category": "can",
-      "series": "brand_carlsberg"
+      "series": "brand_carlsberg",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 20.0
     },
     {
       "id": "can_carlsberg_4",
       "category": "can",
-      "series": "brand_carlsberg"
+      "series": "brand_carlsberg",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 157.5
     },
     {
       "id": "bottle_cola_1",
       "category": "bottle_plastic",
-      "series": "brand_cola"
+      "series": "brand_cola",
+      "model": "res://assets/models/items/bottle_plastic.glb",
+      "model_rotation": 0.0
     },
     {
       "id": "bottle_cola_2",
       "category": "bottle_plastic",
-      "series": "brand_cola"
+      "series": "brand_cola",
+      "model": "res://assets/models/items/bottle_plastic.glb",
+      "model_rotation": 137.5
     },
     {
       "id": "bottle_cola_3",
       "category": "bottle_plastic",
-      "series": "brand_cola"
+      "series": "brand_cola",
+      "model": "res://assets/models/items/bottle_plastic.glb",
+      "model_rotation": 275.0
     },
     {
       "id": "bottle_beer_1",
       "category": "bottle_glass",
-      "series": "glass_beer"
+      "series": "glass_beer",
+      "model": "res://assets/models/items/bottle_glass.glb",
+      "model_rotation": 0.0
     },
     {
       "id": "bottle_beer_2",
       "category": "bottle_glass",
-      "series": "glass_beer"
+      "series": "glass_beer",
+      "model": "res://assets/models/items/bottle_glass.glb",
+      "model_rotation": 137.5
     },
     {
       "id": "bottle_beer_3",
       "category": "bottle_glass",
-      "series": "glass_beer"
+      "series": "glass_beer",
+      "model": "res://assets/models/items/bottle_glass.glb",
+      "model_rotation": 275.0
     },
     {
       "id": "bottle_snaps",
-      "category": "bottle_glass"
+      "category": "bottle_glass",
+      "model": "res://assets/models/items/bottle_glass.glb",
+      "model_rotation": 52.5
     },
     {
       "id": "chips_bag_1",
@@ -146,63 +180,85 @@
       "category": "tent_pole",
       "series": "tent_poles",
       "sequence": 1,
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/tent_pole.glb",
+      "model_rotation": 0.0
     },
     {
       "id": "tent_pole_2",
       "category": "tent_pole",
       "series": "tent_poles",
       "sequence": 2,
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/tent_pole.glb",
+      "model_rotation": 137.5
     },
     {
       "id": "tent_pole_3",
       "category": "tent_pole",
       "series": "tent_poles",
       "sequence": 3,
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/tent_pole.glb",
+      "model_rotation": 275.0
     },
     {
       "id": "tent_pole_4",
       "category": "tent_pole",
       "series": "tent_poles",
       "sequence": 4,
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/tent_pole.glb",
+      "model_rotation": 52.5
     },
     {
       "id": "tent_peg_1",
       "category": "tent_peg",
-      "series": "tent_pegs"
+      "series": "tent_pegs",
+      "model": "res://assets/models/items/tent_peg.glb",
+      "model_rotation": 0.0
     },
     {
       "id": "tent_peg_2",
       "category": "tent_peg",
-      "series": "tent_pegs"
+      "series": "tent_pegs",
+      "model": "res://assets/models/items/tent_peg.glb",
+      "model_rotation": 137.5
     },
     {
       "id": "tent_peg_3",
       "category": "tent_peg",
-      "series": "tent_pegs"
+      "series": "tent_pegs",
+      "model": "res://assets/models/items/tent_peg.glb",
+      "model_rotation": 275.0
     },
     {
       "id": "tent_peg_4",
       "category": "tent_peg",
-      "series": "tent_pegs"
+      "series": "tent_pegs",
+      "model": "res://assets/models/items/tent_peg.glb",
+      "model_rotation": 52.5
     },
     {
       "id": "tent_peg_5",
       "category": "tent_peg",
-      "series": "tent_pegs"
+      "series": "tent_pegs",
+      "model": "res://assets/models/items/tent_peg.glb",
+      "model_rotation": 190.0
     },
     {
       "id": "tent_peg_6",
       "category": "tent_peg",
-      "series": "tent_pegs"
+      "series": "tent_pegs",
+      "model": "res://assets/models/items/tent_peg.glb",
+      "model_rotation": 327.5
     },
     {
       "id": "tent_canvas",
       "category": "tent_canvas",
-      "size": 3
+      "size": 3,
+      "model": "res://assets/models/items/tent_canvas.glb",
+      "model_rotation": 0.0
     },
     {
       "id": "sock_left",
@@ -236,41 +292,52 @@
       "id": "paddle_1",
       "category": "paddle",
       "series": "paddles",
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/paddle_1.glb",
+      "model_rotation": 0.0
     },
     {
       "id": "paddle_2",
       "category": "paddle",
       "series": "paddles",
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/paddle_1.glb",
+      "model_rotation": 137.5
     },
     {
       "id": "paddle_3",
       "category": "paddle",
       "series": "paddles",
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/paddle_1.glb",
+      "model_rotation": 275.0
     },
     {
       "id": "life_vest_1",
       "category": "life_vest",
-      "series": "vests"
+      "series": "vests",
+      "model": "res://assets/models/items/life_vest_1.glb",
+      "model_rotation": 0.0
     },
     {
       "id": "life_vest_2",
       "category": "life_vest",
-      "series": "vests"
+      "series": "vests",
+      "model": "res://assets/models/items/life_vest_1.glb",
+      "model_rotation": 137.5
     },
     {
       "id": "life_vest_3",
       "category": "life_vest",
-      "series": "vests"
+      "series": "vests",
+      "model": "res://assets/models/items/life_vest_1.glb",
+      "model_rotation": 275.0
     },
     {
       "id": "firewood_1",
       "category": "firewood",
       "series": "firewood",
       "model": "res://assets/models/items/firewood_1.glb",
-      "model_scale": 1.6,
       "model_rotation": 0.0
     },
     {
@@ -278,7 +345,6 @@
       "category": "firewood",
       "series": "firewood",
       "model": "res://assets/models/items/firewood_1.glb",
-      "model_scale": 1.6,
       "model_rotation": 72.0
     },
     {
@@ -286,7 +352,6 @@
       "category": "firewood",
       "series": "firewood",
       "model": "res://assets/models/items/firewood_1.glb",
-      "model_scale": 1.6,
       "model_rotation": 144.0
     },
     {
@@ -294,7 +359,6 @@
       "category": "firewood",
       "series": "firewood",
       "model": "res://assets/models/items/firewood_1.glb",
-      "model_scale": 1.6,
       "model_rotation": 216.0
     },
     {
@@ -302,118 +366,161 @@
       "category": "firewood",
       "series": "firewood",
       "model": "res://assets/models/items/firewood_1.glb",
-      "model_scale": 1.6,
       "model_rotation": 288.0
     },
     {
       "id": "can_pripps_1",
       "category": "can",
-      "series": "brand_pripps"
+      "series": "brand_pripps",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 295.0
     },
     {
       "id": "can_pripps_2",
       "category": "can",
-      "series": "brand_pripps"
+      "series": "brand_pripps",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 72.5
     },
     {
       "id": "can_pripps_3",
       "category": "can",
-      "series": "brand_pripps"
+      "series": "brand_pripps",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 210.0
     },
     {
       "id": "can_pripps_4",
       "category": "can",
-      "series": "brand_pripps"
+      "series": "brand_pripps",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 347.5
     },
     {
       "id": "can_somersby_1",
       "category": "can",
-      "series": "brand_somersby"
+      "series": "brand_somersby",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 125.0
     },
     {
       "id": "can_somersby_2",
       "category": "can",
-      "series": "brand_somersby"
+      "series": "brand_somersby",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 262.5
     },
     {
       "id": "can_somersby_3",
       "category": "can",
-      "series": "brand_somersby"
+      "series": "brand_somersby",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 40.0
     },
     {
       "id": "can_somersby_4",
       "category": "can",
-      "series": "brand_somersby"
+      "series": "brand_somersby",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 177.5
     },
     {
       "id": "can_redbull_1",
       "category": "can",
-      "series": "brand_redbull"
+      "series": "brand_redbull",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 315.0
     },
     {
       "id": "can_redbull_2",
       "category": "can",
-      "series": "brand_redbull"
+      "series": "brand_redbull",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 92.5
     },
     {
       "id": "can_redbull_3",
       "category": "can",
-      "series": "brand_redbull"
+      "series": "brand_redbull",
+      "model": "res://assets/models/items/can_1.glb",
+      "model_rotation": 230.0
     },
     {
       "id": "bottle_faxekondi_1",
       "category": "bottle_plastic",
-      "series": "brand_faxekondi"
+      "series": "brand_faxekondi",
+      "model": "res://assets/models/items/bottle_plastic.glb",
+      "model_rotation": 52.5
     },
     {
       "id": "bottle_faxekondi_2",
       "category": "bottle_plastic",
-      "series": "brand_faxekondi"
+      "series": "brand_faxekondi",
+      "model": "res://assets/models/items/bottle_plastic.glb",
+      "model_rotation": 190.0
     },
     {
       "id": "bottle_faxekondi_3",
       "category": "bottle_plastic",
-      "series": "brand_faxekondi"
+      "series": "brand_faxekondi",
+      "model": "res://assets/models/items/bottle_plastic.glb",
+      "model_rotation": 327.5
     },
     {
       "id": "bottle_water_1",
       "category": "bottle_plastic",
-      "series": "brand_water"
+      "series": "brand_water",
+      "model": "res://assets/models/items/bottle_plastic.glb",
+      "model_rotation": 105.0
     },
     {
       "id": "bottle_water_2",
       "category": "bottle_plastic",
-      "series": "brand_water"
+      "series": "brand_water",
+      "model": "res://assets/models/items/bottle_plastic.glb",
+      "model_rotation": 242.5
     },
     {
       "id": "bottle_water_3",
       "category": "bottle_plastic",
-      "series": "brand_water"
+      "series": "brand_water",
+      "model": "res://assets/models/items/bottle_plastic.glb",
+      "model_rotation": 20.0
     },
     {
       "id": "bottle_water_4",
       "category": "bottle_plastic",
-      "series": "brand_water"
+      "series": "brand_water",
+      "model": "res://assets/models/items/bottle_plastic.glb",
+      "model_rotation": 157.5
     },
     {
       "id": "bottle_water_5",
       "category": "bottle_plastic",
-      "series": "brand_water"
+      "series": "brand_water",
+      "model": "res://assets/models/items/bottle_plastic.glb",
+      "model_rotation": 295.0
     },
     {
       "id": "bottle_wine_1",
       "category": "bottle_glass",
-      "series": "glass_wine"
+      "series": "glass_wine",
+      "model": "res://assets/models/items/bottle_glass_wine.glb",
+      "model_rotation": 0.0
     },
     {
       "id": "bottle_wine_2",
       "category": "bottle_glass",
-      "series": "glass_wine"
+      "series": "glass_wine",
+      "model": "res://assets/models/items/bottle_glass_wine.glb",
+      "model_rotation": 137.5
     },
     {
       "id": "bottle_wine_3",
       "category": "bottle_glass",
-      "series": "glass_wine"
+      "series": "glass_wine",
+      "model": "res://assets/models/items/bottle_glass_wine.glb",
+      "model_rotation": 275.0
     },
     {
       "id": "trash_candy_1",
@@ -549,76 +656,100 @@
       "id": "paddle_b_1",
       "category": "paddle",
       "series": "paddles_b",
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/paddle_1.glb",
+      "model_rotation": 52.5
     },
     {
       "id": "paddle_b_2",
       "category": "paddle",
       "series": "paddles_b",
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/paddle_1.glb",
+      "model_rotation": 190.0
     },
     {
       "id": "paddle_b_3",
       "category": "paddle",
       "series": "paddles_b",
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/paddle_1.glb",
+      "model_rotation": 327.5
     },
     {
       "id": "life_vest_b_1",
       "category": "life_vest",
-      "series": "vests_b"
+      "series": "vests_b",
+      "model": "res://assets/models/items/life_vest_1.glb",
+      "model_rotation": 52.5
     },
     {
       "id": "life_vest_b_2",
       "category": "life_vest",
-      "series": "vests_b"
+      "series": "vests_b",
+      "model": "res://assets/models/items/life_vest_1.glb",
+      "model_rotation": 190.0
     },
     {
       "id": "life_vest_b_3",
       "category": "life_vest",
-      "series": "vests_b"
+      "series": "vests_b",
+      "model": "res://assets/models/items/life_vest_1.glb",
+      "model_rotation": 327.5
     },
     {
       "id": "sleeping_bag_a_1",
       "category": "sleeping_bag",
       "series": "sleeping_bags_a",
       "sequence": 1,
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/sleeping_bag_1.glb",
+      "model_rotation": 0.0
     },
     {
       "id": "sleeping_bag_a_2",
       "category": "sleeping_bag",
       "series": "sleeping_bags_a",
       "sequence": 2,
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/sleeping_bag_1.glb",
+      "model_rotation": 137.5
     },
     {
       "id": "sleeping_bag_a_3",
       "category": "sleeping_bag",
       "series": "sleeping_bags_a",
       "sequence": 3,
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/sleeping_bag_1.glb",
+      "model_rotation": 275.0
     },
     {
       "id": "sleeping_bag_b_1",
       "category": "sleeping_bag",
       "series": "sleeping_bags_b",
       "sequence": 1,
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/sleeping_bag_2.glb",
+      "model_rotation": 0.0
     },
     {
       "id": "sleeping_bag_b_2",
       "category": "sleeping_bag",
       "series": "sleeping_bags_b",
       "sequence": 2,
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/sleeping_bag_2.glb",
+      "model_rotation": 137.5
     },
     {
       "id": "sleeping_bag_b_3",
       "category": "sleeping_bag",
       "series": "sleeping_bags_b",
       "sequence": 3,
-      "size": 2
+      "size": 2,
+      "model": "res://assets/models/items/sleeping_bag_2.glb",
+      "model_rotation": 275.0
     },
     {
       "id": "misc_sunglasses",
@@ -751,62 +882,86 @@
     {
       "id": "sealed_tuborg_1",
       "category": "can_sealed",
-      "series": "sealed_tuborg"
+      "series": "sealed_tuborg",
+      "model": "res://assets/models/items/can_sealed.glb",
+      "model_rotation": 0.0
     },
     {
       "id": "sealed_tuborg_2",
       "category": "can_sealed",
-      "series": "sealed_tuborg"
+      "series": "sealed_tuborg",
+      "model": "res://assets/models/items/can_sealed.glb",
+      "model_rotation": 137.5
     },
     {
       "id": "sealed_tuborg_3",
       "category": "can_sealed",
-      "series": "sealed_tuborg"
+      "series": "sealed_tuborg",
+      "model": "res://assets/models/items/can_sealed.glb",
+      "model_rotation": 275.0
     },
     {
       "id": "sealed_tuborg_4",
       "category": "can_sealed",
-      "series": "sealed_tuborg"
+      "series": "sealed_tuborg",
+      "model": "res://assets/models/items/can_sealed.glb",
+      "model_rotation": 52.5
     },
     {
       "id": "sealed_tuborg_5",
       "category": "can_sealed",
-      "series": "sealed_tuborg"
+      "series": "sealed_tuborg",
+      "model": "res://assets/models/items/can_sealed.glb",
+      "model_rotation": 190.0
     },
     {
       "id": "sealed_tuborg_6",
       "category": "can_sealed",
-      "series": "sealed_tuborg"
+      "series": "sealed_tuborg",
+      "model": "res://assets/models/items/can_sealed.glb",
+      "model_rotation": 327.5
     },
     {
       "id": "sealed_carlsberg_1",
       "category": "can_sealed",
-      "series": "sealed_carlsberg"
+      "series": "sealed_carlsberg",
+      "model": "res://assets/models/items/can_sealed.glb",
+      "model_rotation": 105.0
     },
     {
       "id": "sealed_carlsberg_2",
       "category": "can_sealed",
-      "series": "sealed_carlsberg"
+      "series": "sealed_carlsberg",
+      "model": "res://assets/models/items/can_sealed.glb",
+      "model_rotation": 242.5
     },
     {
       "id": "sealed_carlsberg_3",
       "category": "can_sealed",
-      "series": "sealed_carlsberg"
+      "series": "sealed_carlsberg",
+      "model": "res://assets/models/items/can_sealed.glb",
+      "model_rotation": 20.0
     },
     {
       "id": "sealed_carlsberg_4",
       "category": "can_sealed",
-      "series": "sealed_carlsberg"
+      "series": "sealed_carlsberg",
+      "model": "res://assets/models/items/can_sealed.glb",
+      "model_rotation": 157.5
     },
     {
       "id": "sealed_carlsberg_5",
       "category": "can_sealed",
-      "series": "sealed_carlsberg"
+      "series": "sealed_carlsberg",
+      "model": "res://assets/models/items/can_sealed.glb",
+      "model_rotation": 295.0
     },
     {
       "id": "sealed_carlsberg_6",
       "category": "can_sealed",
-      "series": "sealed_carlsberg"
+      "series": "sealed_carlsberg",
+      "model": "res://assets/models/items/can_sealed.glb",
+      "model_rotation": 72.5
     }
   ]
 }

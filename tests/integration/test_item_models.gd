@@ -20,9 +20,21 @@ func _item(id: String) -> PickupItem:
 
 # --- Falling back ------------------------------------------------------------------
 
+## The first catalog item still drawn as a generated box, or "" when the model
+## kit is complete. Found rather than hard-coded: the kit keeps filling up, and
+## whichever item is "the one without a model" changes week to week.
+func _id_without_a_model() -> String:
+	for id in GameSession.catalog.item_ids():
+		if GameSession.catalog.get_item(id).model.is_empty():
+			return id
+	return ""
+
+
 func test_an_item_with_no_model_still_gets_a_visual() -> void:
-	var without := _item("can_tuborg_1")
-	assert_str(GameSession.catalog.get_item("can_tuborg_1").model).is_empty()
+	var id := _id_without_a_model()
+	assert_str(id).override_failure_message(
+		"every item has a model now — this test has nothing left to guard").is_not_empty()
+	var without := _item(id)
 	assert_object(without.visual).is_not_null()
 	assert_int(without.visual.find_children("*", "MeshInstance3D", true, false).size()).is_greater(0)
 
@@ -82,6 +94,27 @@ func test_a_model_is_fitted_to_the_item_size_budget() -> void:
 	).is_equal_approx(allowed, 0.01)
 
 
+func test_items_are_sized_in_metres_not_in_carry_slots() -> void:
+	# ItemDef.size is how many hands an item takes up, a gameplay number. Deriving
+	# metres from it made a paddle 34 cm long. Every category that has arrived
+	# should have a real-world length.
+	var missing: Array[String] = []
+	for id in GameSession.catalog.item_ids():
+		var def := GameSession.catalog.get_item(id)
+		if not def.model.is_empty() and not ItemPalette.CATEGORY_LENGTHS.has(def.category):
+			missing.append(def.category)
+	assert_array(missing).override_failure_message(
+		"modelled categories with no real-world length: %s" % [missing]).is_empty()
+
+
+func test_a_paddle_is_paddle_sized() -> void:
+	var node: Node3D = _item("paddle_1").visual
+	var drawn := ItemVisual.visual_size(node, Vector3.ONE)
+	var longest := maxf(drawn.x, maxf(drawn.y, drawn.z))
+	assert_float(longest).override_failure_message(
+		"a paddle you can hold in one hand is %.2f m long" % longest).is_greater(1.0)
+
+
 func test_model_scale_nudges_the_fit_rather_than_replacing_it() -> void:
 	# 1.5 must mean "half again as big as the automatic size" whatever units the
 	# file arrived in — otherwise tuning by eye needs a ruler on the raw model.
@@ -120,10 +153,15 @@ func test_the_container_model_loads_and_the_slots_stay_aimable() -> void:
 
 
 func test_a_container_without_a_model_keeps_its_translucent_box() -> void:
-	var bag: ContainerNode = island.get_node("Containers/Container_pant_bag")
-	assert_str(GameSession.catalog.get_container("pant_bag").scene).is_empty()
-	assert_object(bag.visual).is_not_null()
-	var meshes: Array[Node] = bag.visual.find_children("*", "MeshInstance3D", true, false)
+	# Every container in the catalog has a model now, so this is built from a
+	# definition rather than found on the island — the fallback still has to work
+	# for the next container somebody adds.
+	var def := ContainerDef.from_dict({"id": "no_model_yet", "accepts": ["trash"], "slot_count": 4})
+	var node: ContainerNode = auto_free(load("res://src/game/containers/container_node.tscn").instantiate())
+	node.setup(def)
+	add_child(node)
+	assert_object(node.visual).is_not_null()
+	var meshes: Array[Node] = node.visual.find_children("*", "MeshInstance3D", true, false)
 	assert_array(meshes).is_not_empty()
 	var mesh: MeshInstance3D = meshes[0]
 	var mat: StandardMaterial3D = mesh.material_override
@@ -174,5 +212,5 @@ func test_every_item_has_its_own_collision_shape() -> void:
 
 func test_a_model_and_a_box_get_different_collision_sizes() -> void:
 	var with_model: BoxShape3D = _item("firewood_1").get_node("Collision").shape
-	var without: BoxShape3D = _item("can_tuborg_1").get_node("Collision").shape
+	var without: BoxShape3D = _item(_id_without_a_model()).get_node("Collision").shape
 	assert_vector(with_model.size).is_not_equal(without.size)

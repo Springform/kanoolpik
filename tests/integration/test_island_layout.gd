@@ -180,8 +180,8 @@ func test_item_labels_only_show_close_to_the_camera() -> void:
 	add_child(camera)
 	camera.current = true
 	camera.global_position = node.global_position + Vector3(0, 0, PickupItem.LABEL_VISIBLE_METRES * 2.0)
-	node._process(0.0)
+	node.refresh_label()
 	assert_bool(node.label.visible).override_failure_message("a far-off name is still drawn").is_false()
 	camera.global_position = node.global_position + Vector3(0, 0, 1.5)
-	node._process(0.0)
+	node.refresh_label()
 	assert_bool(node.label.visible).override_failure_message("a nearby name is not drawn").is_true()

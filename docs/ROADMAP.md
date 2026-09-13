@@ -4,8 +4,8 @@ Work is cut into **phases** (a playable milestone each) and **work packages** (W
 
 ```mermaid
 flowchart LR
-    P0[Phase 0<br/>Foundation ✅] --> P1[Phase 1<br/>Playable single-player loop]
-    P1 --> P2[Phase 2<br/>Island, art & content]
+    P0[Phase 0<br/>Foundation ✅] --> P1[Phase 1<br/>Playable single-player loop ✅]
+    P1 --> P2[Phase 2<br/>Island, art & content ✅]
     P1 --> P3[Phase 3<br/>Progression & abilities]
     P1 --> P4[Phase 4<br/>Multiplayer]
     P2 & P3 & P4 --> P5[Phase 5<br/>Polish & release to friends]
@@ -43,7 +43,9 @@ Parallel-safe sets: {1.1, 1.2, 1.4, 1.6, 1.7, 1.8} can all start at once. 1.3 af
 
 *Exit criterion: the island looks like a place; 150+ items; it still loads in < 10 s on a normal connection.*
 
-**Wave 1 done (2.1, 2.4, 2.6), built in parallel by three agents in isolated worktrees. Wave 2: 2.5, 2.2, 2.3 and 2.7 done — 272 tests, 162 items, 14 containers.** Assets are generated in code (ADR 0008) except hand-sourced `.glb` models (ADR 0009), which `ItemVisual` loads, auto-fits and falls back from. Remaining: the web performance pass (2.8); the item model kit fills up one file at a time.
+**Phase 2 is complete — 279 tests, 162 items, 14 containers, 12.5 MB gzipped download.** Every container and most item categories have real models (ADR 0009); trash, food, cookware, clothing and misc are still generated boxes and the game is fully playable that way. Assets that are not models are generated in code (ADR 0008).
+
+Exit criterion — "the island looks like a place; 150+ items; loads in < 10 s on a normal connection" — is met on home broadband (~4 s) and not on mobile data (~21 s), three quarters of it the Godot engine wasm. The one thing phase 2 could not check from CI is frame rate on real hardware; see WP-2.8.
 
 | WP | Title | Owns |
 |---|---|---|
@@ -54,11 +56,11 @@ Parallel-safe sets: {1.1, 1.2, 1.4, 1.6, 1.7, 1.8} can all start at once. 1.3 af
 | [2.5](roadmap/phase-2/WP-2.5-environment.md) ✅ | Environment: trees, grass, reeds, bigger water (sky/water shaders and wind still open) | `src/game/island/environment/` |
 | [2.6](roadmap/phase-2/WP-2.6-audio.md) ✅ | Audio: ambient lake, birds, music layers that rise with completion | `src/game/audio/`, `assets/audio/` |
 | [2.7](roadmap/phase-2/WP-2.7-mess-dressing.md) ✅ | Mess dressing: collapsed tent, a mate still asleep and snoring, trampled ground — no colliders | `src/game/island/dressing/` |
-| 2.8 | Web performance pass: texture budgets, LOD, load-time measurement in CI | `tools/`, `export_presets.cfg` |
+| [2.8](roadmap/phase-2/WP-2.8-web-performance.md) ✅ | Web performance: download measured and budgeted in CI (12.5 MB gzipped), scene-shape budgets | `tools/`, `tests/` |
 
-Wave 2 dependencies: 2.3 uses the loader from 2.2, so 2.2 goes first. 2.5 and 2.7 both place things on the terrain via `Island.height_at()` and can run alongside. 2.8 goes last, once there is something to measure.
+**Models are sourced by hand** (ADR 0009): `.glb` only, CC0 or CC-BY only, and every file needs a row in `assets/models/CREDITS.md` before it ships. One model serves a whole category, rotated differently per item. Five categories are still boxes: `trash`, `food`, `cookware`, `clothing`, `misc` — filling them in is a data change, not a code change.
 
-**Models are sourced by hand** (ADR 0009): `.glb` only, CC0 or CC-BY only, and every file needs a row in `assets/models/CREDITS.md` before it ships. Roughly 25 models cover all 150 items — one per kind of object, tinted and auto-fitted per item.
+**Sizes are stated in metres, not derived from gameplay numbers.** `ItemPalette.CATEGORY_LENGTHS` for items, `ContainerDef.model_height` for containers. Deriving metres from carry slots made a paddle 34 cm long and a bin bag 5.3 m tall.
 
 ## Phase 3 — Progression & abilities
 

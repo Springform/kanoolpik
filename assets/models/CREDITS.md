@@ -26,9 +26,22 @@ Every `.glb` under `assets/models/` must have a row here **before or in the same
 | File | Title | Author | Source | Licence | Changes |
 |---|---|---|---|---|---|
 | `items/firewood_1.glb` | Log | J-Toastie | https://poly.pizza/m/ncDQNqeOFj | CC-BY-3.0 | Auto-fitted to the item size budget at load |
+| `items/bottle_glass.glb` | Molotov | CreativeTrio | https://poly.pizza/m/jsmWZYqVlM | CC0 | Beer and schnapps bottles |
+| `items/bottle_glass_wine.glb` | Bottle of wine | Poly by Google | https://poly.pizza/m/1ZqK8HQ8w65 | CC-BY |  |
+| `items/bottle_plastic.glb` | TIME HOTEL 2.9 | S. Paul Michael | https://poly.pizza/m/fOzuRm1Pm-7 | CC-BY |  |
+| `items/can_1.glb` | Crushed Soda Can | Thermo_DynAmics | https://poly.pizza/m/F9RZE7EnWl | CC-BY | All 21 empties |
+| `items/can_sealed.glb` | Soda can | Poly by Google | https://poly.pizza/m/4kj0P496sYF | CC-BY | The twelve unopened ones |
+| `items/life_vest_1.glb` | Life preserver | Poly by Google | https://poly.pizza/m/7n1vrlFN0GH | CC-BY |  |
+| `items/paddle_1.glb` | Oar | Poly by Google | https://poly.pizza/m/7qsTvFaVMBY | CC-BY |  |
+| `items/sleeping_bag_1.glb` | Bedroll | Kenney | https://poly.pizza/m/efwd5fjuMU | CC0 | Crew A |
+| `items/sleeping_bag_2.glb` | Bag | Quaternius | https://poly.pizza/m/VRfAODZ0Xk | CC0 | Crew B |
+| `items/tent_canvas.glb` | Wool Carpet | Zsky | https://poly.pizza/m/BEvHkYyR0C | CC-BY |  |
+| `items/tent_peg.glb` | Twig | Kenney | https://poly.pizza/m/xApCbtFYP8 | CC0 |  |
+| `items/tent_pole.glb` | Tent Frame | Kenney | https://poly.pizza/m/NBUHcJckRV | CC0 |  |
 
-Every model is auto-fitted and set on its own base at load, so "Changes" only
-records anything beyond that.
+Every model is auto-fitted and set on its own base at load, and repeated models
+are rotated by a different angle per item so twenty-one cans do not read as
+twenty-one copies of one can. "Changes" records anything beyond that.
 
 ## Containers
 
@@ -42,14 +55,11 @@ records anything beyond that.
 | `containers/fire_pit.glb` | Bonfire | Quaternius | https://poly.pizza/m/Azj9hJwwwG | CC0-1.0 |  |
 | `containers/glass_crate.glb` | Bottles | Quaternius | https://poly.pizza/m/UpU7H3QbAR | CC0 | Texture extracted on import to `glass_crate_Sushi_Atlas.png` |
 | `containers/kitchen_box.glb` | Cauldron | Quaternius | https://poly.pizza/m/QaWJOPa6Gt | CC0 |  |
+| `containers/pant_bag.glb` | trah bag grey | Jens Kull | https://poly.pizza/m/axTuG36RXnN | CC-BY |  |
 | `containers/lost_found.glb` | Floor Hole | J-Toastie | https://poly.pizza/m/FbJAtOQ8pb | CC-BY |  |
 | `containers/sleeping_bag_sack.glb` | Backpack | Emmett "TawpShelf" Baber | https://poly.pizza/m/ems9KHrB_4x | CC-BY |  |
 | `containers/tent_bag.glb` | Duffel Bag | accidentallyc | https://poly.pizza/m/rysPhwuIP4 | CC0 |  |
 | `containers/trash_bag.glb` | Garbage | Poly by Google | https://poly.pizza/m/0QdIPYIA_qe | CC-BY |  |
-
-**Still missing: `containers/pant_bag.glb`.** It had a row (trah bag grey, Jens Kull,
-CC-BY, https://poly.pizza/m/axTuG36RXnN) but the file never arrived, so the pant bag
-still draws the translucent box. Re-add the row together with the file.
 
 ## Island and scenery
 
