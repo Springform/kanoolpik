@@ -42,8 +42,8 @@ func test_carrying_panel_shows_load_and_active_item() -> void:
 	assert_int(hud.slots_box.get_child_count()).is_equal(3)
 	assert_object((hud.slots_box.get_child(1) as ColorRect).color).is_equal(HUD.COLOR_SLOT_FULL)
 	assert_object((hud.slots_box.get_child(2) as ColorRect).color).is_equal(HUD.COLOR_SLOT_EMPTY)
-	# carried_by() is id-sorted: can_tuborg_1 < food_bread → food_bread is the active (last) one.
-	assert_str(hud.held_label.text).ends_with("▶ " + tr("item.food_bread"))
+	# carried_by() is in pick-up order → food_bread (picked second) is the active one.
+	assert_str(hud.held_label.text).ends_with("» " + tr("item.food_bread"))
 
 
 func test_empty_hands_text() -> void:
@@ -114,3 +114,14 @@ func test_danish_glyphs_survive_translation() -> void:
 	assert_str(tr("ui.hud.progress") % [1, 2]).contains("på")
 	assert_str(tr("ui.hud.carrying") % [0, 3]).contains("Bærer")
 	assert_str(tr("ui.hud.clean")).contains("Øen")
+
+
+func test_hud_finds_a_player_that_spawned_before_it() -> void:
+	var player: Player = auto_free(load("res://src/game/player/player.tscn").instantiate())
+	player.is_local = true
+	player.player_id = pid
+	add_child(player)
+	var late_hud: HUD = auto_free(load("res://src/game/hud/hud.tscn").instantiate())
+	add_child(late_hud)
+	assert_object(late_hud._player).is_same(player)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

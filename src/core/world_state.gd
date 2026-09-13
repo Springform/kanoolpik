@@ -12,8 +12,10 @@ extends RefCounted
 
 enum Kind { GROUND, CARRIED, PLACED }
 
-## item_id -> Dictionary { kind, position: Vector3, player_id: int, container_id: String, slot: int }
+## item_id -> Dictionary { kind, position: Vector3, player_id: int, container_id: String, slot: int, carry_seq: int }
 var _locations: Dictionary = {}
+## Monotonic counter so carried_by() can return items in pick-up order (deterministic, serialised).
+var _carry_counter: int = 0
 ## player_id -> Dictionary { capacity: int }
 var _players: Dictionary = {}
 var rng_seed: int = 0
@@ -76,15 +78,16 @@ func kind_of(item_id: String) -> int:
 
 
 func set_on_ground(item_id: String, position: Vector3) -> void:
-	_locations[item_id] = {"kind": Kind.GROUND, "position": position, "player_id": -1, "container_id": "", "slot": -1}
+	_locations[item_id] = {"kind": Kind.GROUND, "position": position, "player_id": -1, "container_id": "", "slot": -1, "carry_seq": -1}
 
 
 func set_carried(item_id: String, player_id: int) -> void:
-	_locations[item_id] = {"kind": Kind.CARRIED, "position": Vector3.ZERO, "player_id": player_id, "container_id": "", "slot": -1}
+	_carry_counter += 1
+	_locations[item_id] = {"kind": Kind.CARRIED, "position": Vector3.ZERO, "player_id": player_id, "container_id": "", "slot": -1, "carry_seq": _carry_counter}
 
 
 func set_placed(item_id: String, container_id: String, slot: int) -> void:
-	_locations[item_id] = {"kind": Kind.PLACED, "position": Vector3.ZERO, "player_id": -1, "container_id": container_id, "slot": slot}
+	_locations[item_id] = {"kind": Kind.PLACED, "position": Vector3.ZERO, "player_id": -1, "container_id": container_id, "slot": slot, "carry_seq": -1}
 
 
 func remove_item(item_id: String) -> void:
@@ -107,13 +110,25 @@ func items_of_kind(kind: int) -> Array[String]:
 	return out
 
 
+## Items the player carries, in PICK-UP ORDER (first picked first). The last
+## element is the "active" item that place/drop act on.
 func carried_by(player_id: int) -> Array[String]:
-	var out: Array[String] = []
+	var entries: Array[Dictionary] = []
 	for id in item_ids():
 		var loc: Dictionary = _locations[id]
 		if loc["kind"] == Kind.CARRIED and loc["player_id"] == player_id:
-			out.append(id)
+			entries.append({"id": id, "seq": int(loc.get("carry_seq", 0))})
+	entries.sort_custom(func(a, b): return a["seq"] < b["seq"])
+	var out: Array[String] = []
+	for e in entries:
+		out.append(e["id"])
 	return out
+
+
+## The most recently picked-up item, or "" when hands are empty.
+func active_item(player_id: int) -> String:
+	var held := carried_by(player_id)
+	return "" if held.is_empty() else held[held.size() - 1]
 
 
 ## Returns Array of { "item_id": String, "slot": int } sorted by slot.
@@ -154,17 +169,19 @@ func to_dict() -> Dictionary:
 			"player_id": loc["player_id"],
 			"container_id": loc["container_id"],
 			"slot": loc["slot"],
+			"carry_seq": int(loc.get("carry_seq", -1)),
 		}
 	var players := {}
 	for pid in player_ids():
 		players[str(pid)] = _players[pid].duplicate()
-	return {"rng_seed": rng_seed, "elapsed_ticks": elapsed_ticks, "stats": stats.duplicate(), "locations": locs, "players": players}
+	return {"rng_seed": rng_seed, "elapsed_ticks": elapsed_ticks, "carry_counter": _carry_counter, "stats": stats.duplicate(), "locations": locs, "players": players}
 
 
 static func from_dict(d: Dictionary) -> WorldState:
 	var state := WorldState.new()
 	state.rng_seed = int(d.get("rng_seed", 0))
 	state.elapsed_ticks = int(d.get("elapsed_ticks", 0))
+	state._carry_counter = int(d.get("carry_counter", 0))
 	for k in d.get("stats", {}).keys():
 		state.stats[String(k)] = int(d["stats"][k])
 	for id in d.get("locations", {}).keys():
@@ -176,6 +193,7 @@ static func from_dict(d: Dictionary) -> WorldState:
 			"player_id": int(loc.get("player_id", -1)),
 			"container_id": String(loc.get("container_id", "")),
 			"slot": int(loc.get("slot", -1)),
+			"carry_seq": int(loc.get("carry_seq", -1)),
 		}
 	for pid in d.get("players", {}).keys():
 		state._players[int(pid)] = {"capacity": int(d["players"][pid].get("capacity", 3))}
