@@ -1,0 +1,133 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/game/hud/evaluation/evaluation_screen.gd" id="1_eval"]
+[ext_resource type="Theme" path="res://assets/ui/theme.tres" id="2_theme"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dim"]
+bg_color = Color(0.02, 0.05, 0.08, 0.72)
+
+[node name="EvaluationScreen" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_eval")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+
+[node name="Dim" type="PanelContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_dim")
+
+[node name="Panel" type="PanelContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -210.0
+offset_right = 260.0
+offset_bottom = 210.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Root/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Root/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Lejrlederens vurdering"
+horizontal_alignment = 1
+
+[node name="Separator" type="HSeparator" parent="Root/Panel/VBox"]
+layout_mode = 2
+
+[node name="Rows" type="GridContainer" parent="Root/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 24
+theme_override_constants/v_separation = 6
+columns = 2
+
+[node name="CompletionLabel" type="Label" parent="Root/Panel/VBox/Rows"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Oprydning"
+
+[node name="CompletionValue" type="Label" parent="Root/Panel/VBox/Rows"]
+layout_mode = 2
+text = "0 %"
+horizontal_alignment = 2
+
+[node name="AccuracyLabel" type="Label" parent="Root/Panel/VBox/Rows"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Præcision"
+
+[node name="AccuracyValue" type="Label" parent="Root/Panel/VBox/Rows"]
+layout_mode = 2
+text = "0 %"
+horizontal_alignment = 2
+
+[node name="TimeLabel" type="Label" parent="Root/Panel/VBox/Rows"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Tid"
+
+[node name="TimeValue" type="Label" parent="Root/Panel/VBox/Rows"]
+layout_mode = 2
+text = "00:00"
+horizontal_alignment = 2
+
+[node name="Separator2" type="HSeparator" parent="Root/Panel/VBox"]
+layout_mode = 2
+
+[node name="Points" type="Label" parent="Root/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 52
+text = "0 point"
+horizontal_alignment = 1
+
+[node name="Grade" type="Label" parent="Root/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.25, 1)
+theme_override_font_sizes/font_size = 26
+text = ""
+horizontal_alignment = 1
+
+[node name="Seed" type="Label" parent="Root/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = ""
+horizontal_alignment = 1
+
+[node name="Skip" type="Label" parent="Root/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = ""
+horizontal_alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="Root/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Again" type="Button" parent="Root/Panel/VBox/Buttons"]
+layout_mode = 2
+text = "Igen (samme ø)"
+
+[node name="New" type="Button" parent="Root/Panel/VBox/Buttons"]
+layout_mode = 2
+text = "Ny rodebutik"
