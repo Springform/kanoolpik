@@ -18,8 +18,8 @@ const COMPLETE_PULSE_SECONDS := 0.6
 ## Correct chimes within this window step up in pitch (a little melody when you're on a roll).
 const CHIME_COMBO_WINDOW := 2.0
 const CHIME_MAX_STEPS := 7
-## Slots sit just above the lid so the interaction ray reaches them before the body.
-const SLOT_HEIGHT := 0.74
+## Slots sit just above whatever is drawn, so the interaction ray reaches them
+## before the body collider. [SlotLayout] works out where.
 
 var container_id: String
 var def: ContainerDef
@@ -50,11 +50,11 @@ func setup(p_def: ContainerDef) -> void:
 func _ready() -> void:
 	# Footprint comes from ContainerDef so the level layout and the mess generator
 	# agree with what is actually drawn here.
-	var width := def.width()
-	var body_size := Vector3(width, 0.6, ContainerDef.DEPTH)
+	var body_size := Vector3(def.width(), 0.6, def.depth())
 	# A model if there is one, otherwise the translucent box. Same loader the
 	# items use, so a container model needs no measuring either.
-	visual = ItemVisual.build(def.scene, body_size, Color.WHITE, def.model_scale, def.model_rotation)
+	visual = ItemVisual.build(def.scene, body_size, Color.WHITE, def.model_scale, def.model_rotation,
+		def.model_height)
 	if not ItemVisual.has_model(def.scene):
 		# The placeholder is see-through so you can read the slots through it.
 		for placeholder: MeshInstance3D in visual.find_children("*", "MeshInstance3D", true, false):
@@ -65,15 +65,20 @@ func _ready() -> void:
 	mesh.add_child(visual)
 	# Its own shape, for the same reason as PickupItem: .tscn sub-resources are
 	# shared between instances.
+	var drawn := ItemVisual.visual_size(visual, body_size)
 	var shape := BoxShape3D.new()
-	shape.size = ItemVisual.visual_size(visual, body_size)
+	shape.size = drawn
 	$Collision.shape = shape
-	$Collision.position.y = shape.size.y * 0.5
+	$Collision.position.y = drawn.y * 0.5
 	label.text = tr(def.name_key)
-	label.position.y = 1.15
+	# Clear of the model itself, whatever height it turned out to be.
+	label.position.y = maxf(1.15, drawn.y + 0.5)
+	# Slots follow the shape of what is actually drawn, not an invented lid.
+	# `drawn` is the model with its fit applied, so this is the real silhouette.
+	var places := SlotLayout.positions(def, AABB(Vector3(-drawn.x * 0.5, 0.0, -drawn.z * 0.5), drawn))
 	for i in range(def.slot_count):
 		var slot := SlotNode.create(container_id, i)
-		slot.position = Vector3(-width * 0.5 + 0.25 + i * ContainerDef.SLOT_SPACING, SLOT_HEIGHT, 0)
+		slot.position = places[i]
 		slots_root.add_child(slot)
 		_slots.append(slot)
 	GameEvents.item_placed.connect(_on_item_placed)

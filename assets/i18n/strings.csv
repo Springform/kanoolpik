@@ -225,3 +225,17 @@ container.canoe_b,Kano 2,Canoe 2
 container.sleeping_bag_sack,Sovepose-sæk,Sleeping bag sack
 container.lost_found,Hittegods,Lost and found
 container.kitchen_box,Køkkenkasse,Kitchen box
+item.sealed_tuborg_1,Uåbnet Tuborg,Unopened Tuborg
+item.sealed_tuborg_2,Uåbnet Tuborg,Unopened Tuborg
+item.sealed_tuborg_3,Uåbnet Tuborg,Unopened Tuborg
+item.sealed_tuborg_4,Uåbnet Tuborg,Unopened Tuborg
+item.sealed_tuborg_5,Uåbnet Tuborg,Unopened Tuborg
+item.sealed_tuborg_6,Uåbnet Tuborg,Unopened Tuborg
+item.sealed_carlsberg_1,Uåbnet Carlsberg,Unopened Carlsberg
+item.sealed_carlsberg_2,Uåbnet Carlsberg,Unopened Carlsberg
+item.sealed_carlsberg_3,Uåbnet Carlsberg,Unopened Carlsberg
+item.sealed_carlsberg_4,Uåbnet Carlsberg,Unopened Carlsberg
+item.sealed_carlsberg_5,Uåbnet Carlsberg,Unopened Carlsberg
+item.sealed_carlsberg_6,Uåbnet Carlsberg,Unopened Carlsberg
+container.can_cooler_1,Rød køleboks,Red cooler
+container.can_cooler_2,Blå køleboks,Blue cooler

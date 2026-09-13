@@ -747,6 +747,66 @@
     {
       "id": "cook_bowl_2",
       "category": "cookware"
+    },
+    {
+      "id": "sealed_tuborg_1",
+      "category": "can_sealed",
+      "series": "sealed_tuborg"
+    },
+    {
+      "id": "sealed_tuborg_2",
+      "category": "can_sealed",
+      "series": "sealed_tuborg"
+    },
+    {
+      "id": "sealed_tuborg_3",
+      "category": "can_sealed",
+      "series": "sealed_tuborg"
+    },
+    {
+      "id": "sealed_tuborg_4",
+      "category": "can_sealed",
+      "series": "sealed_tuborg"
+    },
+    {
+      "id": "sealed_tuborg_5",
+      "category": "can_sealed",
+      "series": "sealed_tuborg"
+    },
+    {
+      "id": "sealed_tuborg_6",
+      "category": "can_sealed",
+      "series": "sealed_tuborg"
+    },
+    {
+      "id": "sealed_carlsberg_1",
+      "category": "can_sealed",
+      "series": "sealed_carlsberg"
+    },
+    {
+      "id": "sealed_carlsberg_2",
+      "category": "can_sealed",
+      "series": "sealed_carlsberg"
+    },
+    {
+      "id": "sealed_carlsberg_3",
+      "category": "can_sealed",
+      "series": "sealed_carlsberg"
+    },
+    {
+      "id": "sealed_carlsberg_4",
+      "category": "can_sealed",
+      "series": "sealed_carlsberg"
+    },
+    {
+      "id": "sealed_carlsberg_5",
+      "category": "can_sealed",
+      "series": "sealed_carlsberg"
+    },
+    {
+      "id": "sealed_carlsberg_6",
+      "category": "can_sealed",
+      "series": "sealed_carlsberg"
     }
   ]
 }
