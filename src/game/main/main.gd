@@ -16,5 +16,6 @@ func _ready() -> void:
 	var player: Player = PLAYER.instantiate()
 	player.player_id = GameSession.local_player_id()
 	player.position = GameSession.player_spawn(0)
+	player.spawn_position = player.position
 	add_child(player)
 	add_child(HUD.instantiate())

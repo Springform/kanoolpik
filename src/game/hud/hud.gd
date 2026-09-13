@@ -39,6 +39,7 @@ func _ready() -> void:
 	GameEvents.container_completed.connect(_on_container_completed)
 	GameEvents.island_clean.connect(_on_island_clean)
 	GameEvents.command_rejected.connect(_on_rejected)
+	GameEvents.player_respawned.connect(_on_respawned)
 	GameEvents.local_player_spawned.connect(func(p: Node3D) -> void: _player = p)
 	# The player may have spawned before this HUD existed — pick it up from its group.
 	var existing := get_tree().get_first_node_in_group(Player.LOCAL_GROUP)
@@ -175,6 +176,11 @@ func _on_container_completed(cid: String) -> void:
 
 func _on_island_clean() -> void:
 	show_toast(tr("ui.island_clean"), 10.0, VerdictStyle.COLOR_COMPLETE)
+
+
+func _on_respawned(player_id: int) -> void:
+	if _player == null or player_id == _player.player_id:
+		show_toast(tr("ui.hud.fell_in_water"), 2.5, COLOR_ERROR)
 
 
 func _on_rejected(_cmd: Dictionary, error: String) -> void:

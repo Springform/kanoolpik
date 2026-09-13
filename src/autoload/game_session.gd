@@ -39,7 +39,10 @@ func start_level(p_level_id: String, level_seed: int = -1, p_transport: Transpor
 	for p in problems:
 		push_error("Catalog problem: %s" % p)
 	var use_seed := int(level.get("seed_default", 0)) if level_seed < 0 else level_seed
-	state = MessGenerator.generate(use_seed, catalog, level["spawn_zones"], float(level.get("ground_y", 0.0)))
+	var exclusions := MessGenerator.container_exclusions(
+		catalog, level.get("container_positions", {}), float(level.get("container_clearance", 0.4)))
+	state = MessGenerator.generate(
+		use_seed, catalog, level["spawn_zones"], float(level.get("ground_y", 0.0)), exclusions)
 	processor = CommandProcessor.new(catalog)
 	progression = Progression.new()
 	transport = p_transport if p_transport != null else LocalTransport.new(processor, state)
@@ -75,6 +78,15 @@ static func load_level(p_level_id: String) -> Dictionary:
 		push_error("Level not found: %s" % path)
 		return {}
 	return JSON.parse_string(FileAccess.get_file_as_string(path))
+
+
+## Radius of the walkable island; anything beyond it is water.
+func island_radius() -> float:
+	return float(level.get("island_radius", 16.0))
+
+
+func ground_y() -> float:
+	return float(level.get("ground_y", 0.0))
 
 
 func container_position(container_id: String) -> Vector3:
