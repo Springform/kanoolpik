@@ -117,3 +117,13 @@ ui.eval.again,Igen (samme ø),Again (same island)
 ui.eval.new,Ny rodebutik,Fresh mess
 ui.eval.skip,Klik for at springe over,Click to skip
 ui.eval.percent,%d %%,%d %%
+ui.title.tagline,Ryd øen op før I må padle videre,Tidy the island before you paddle on
+ui.title.start,Start oprydningen,Start cleaning
+ui.title.seed,Ø-kode (valgfri),Island code (optional)
+ui.title.seed_hint,Tom = dagens ø,Blank = default
+ui.title.language,Sprog,Language
+ui.title.quit,Afslut,Quit
+ui.pause.title,Pause,Paused
+ui.pause.resume,Fortsæt,Resume
+ui.pause.restart,Start forfra,Start over
+ui.pause.to_title,Til forsiden,Back to title
