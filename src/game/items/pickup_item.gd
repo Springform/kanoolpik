@@ -9,7 +9,14 @@ extends StaticBody3D
 ## Item names are only drawn within this distance of the camera (metres).
 ## Tuned by looking at the island, not by theory — at 6 m the 150 names still
 ## read as a wall of text. Worth re-tuning once you have played a full round.
-const LABEL_VISIBLE_METRES := 3.5
+const LABEL_VISIBLE_METRES := 2.5
+## Only name what the player is actually facing. Distance alone is not enough:
+## measured on screen at the spawn point, 3.5 m in every direction put 31 names
+## up at once — a wall of text again, which is the thing the radius was added to
+## prevent. A name behind your shoulder was never readable anyway.
+## 0.45 is a little wider than the camera's own view, so a label does not blink
+## out at the edge of the screen as you turn.
+const LABEL_FACING_DOT := 0.45
 ## Only one item in this many frames re-checks its distance, staggered by
 ## instance id so the work is spread rather than spiking on one frame. 162 items
 ## doing a camera lookup and a distance test every frame buys nothing — a label
@@ -79,8 +86,16 @@ func _process(_delta: float) -> void:
 ## six frames' time.
 func refresh_label() -> void:
 	var camera := get_viewport().get_camera_3d()
-	label.visible = camera != null and \
-		global_position.distance_squared_to(camera.global_position) <= LABEL_VISIBLE_METRES * LABEL_VISIBLE_METRES
+	if camera == null:
+		label.visible = false
+		return
+	var offset := global_position - camera.global_position
+	if offset.length_squared() > LABEL_VISIBLE_METRES * LABEL_VISIBLE_METRES:
+		label.visible = false
+		return
+	# -Z is forward for a Godot camera.
+	var forward := -camera.global_transform.basis.z
+	label.visible = offset.normalized().dot(forward) >= LABEL_FACING_DOT
 
 
 func _on_picked_up(id: String, _player_id: int) -> void:
