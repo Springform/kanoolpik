@@ -17,6 +17,10 @@ extends RefCounted
 ##   item_placed      { item_id, player_id, container_id, slot, verdict }
 ##   item_taken_out   { item_id, player_id, container_id }
 ##   container_completed { container_id }
+##   points_awarded   { container_id, points, total_available }
+##   ability_unlocked { ability_id, player_id, points_left }
+##   capacity_changed { player_id, capacity }
+##   item_summoned    { item_id, player_id, position }
 ##   island_clean     {}
 ##   ticked           { elapsed_ticks }
 
@@ -28,6 +32,17 @@ const E_NOT_CARRIED := "item_not_carried_by_player"
 const E_NOT_PLACED := "item_not_placed"
 const E_HANDS_FULL := "hands_full"
 const E_BAD_SLOT := "bad_slot"
+const E_UNKNOWN_ABILITY := "unknown_ability"
+const E_ALREADY_UNLOCKED := "already_unlocked"
+const E_NOT_ENOUGH_POINTS := "not_enough_points"
+const E_ABILITY_LOCKED := "ability_locked"
+const E_UNKNOWN_SERIES := "unknown_series"
+const E_SERIES_SPENT := "series_already_summoned"
+const E_NOTHING_TO_SUMMON := "nothing_to_summon"
+
+## Where summoned items land, as a ring around the caller's feet: close enough
+## to reach without moving, far enough apart that six paddles do not z-fight.
+const SUMMON_RING_RADIUS := 1.1
 
 var catalog: Catalog
 
@@ -46,6 +61,10 @@ func apply(state: WorldState, cmd: Dictionary) -> Dictionary:
 			return _place(state, cmd)
 		Commands.TAKE_OUT:
 			return _take_out(state, cmd)
+		Commands.UNLOCK:
+			return _unlock(state, cmd)
+		Commands.SUMMON:
+			return _summon(state, cmd)
 		Commands.TICK:
 			state.elapsed_ticks += int(cmd.get("ticks", 1))
 			return _ok([{"type": "ticked", "elapsed_ticks": state.elapsed_ticks}])
@@ -120,6 +139,14 @@ func _place(state: WorldState, cmd: Dictionary) -> Dictionary:
 	}]
 	if PlacementRules.is_container_complete(catalog, state, container_id):
 		events.append({"type": "container_completed", "container_id": container_id})
+		# The skill point is part of the same transaction as the placement that
+		# earned it — not a side effect a listener applies afterwards (ADR 0010).
+		if state.progression.credit_container(container_id):
+			events.append({
+				"type": "points_awarded", "container_id": container_id,
+				"points": Progression.POINTS_PER_CONTAINER,
+				"total_available": state.progression.available_points(),
+			})
 	if PlacementRules.is_island_clean(catalog, state):
 		events.append({"type": "island_clean"})
 	return _ok(events, verdict)
@@ -139,6 +166,63 @@ func _take_out(state: WorldState, cmd: Dictionary) -> Dictionary:
 	var container_id := state.container_of(item_id)
 	state.set_carried(item_id, pid)
 	return _ok([{"type": "item_taken_out", "item_id": item_id, "player_id": pid, "container_id": container_id}])
+
+
+func _unlock(state: WorldState, cmd: Dictionary) -> Dictionary:
+	var pid := int(cmd["player_id"])
+	var ability_id := String(cmd.get("ability_id", ""))
+	if not state.has_player(pid):
+		return _fail(E_UNKNOWN_PLAYER)
+	if not Progression.ABILITIES.has(ability_id):
+		return _fail(E_UNKNOWN_ABILITY)
+	if state.progression.has(ability_id):
+		return _fail(E_ALREADY_UNLOCKED)
+	if not state.progression.unlock(ability_id):
+		return _fail(E_NOT_ENOUGH_POINTS)
+	var events: Array[Dictionary] = [{
+		"type": "ability_unlocked", "ability_id": ability_id, "player_id": pid,
+		"points_left": state.progression.available_points(),
+	}]
+	# Capacity is a party upgrade: everyone in the state gets it, now and on join.
+	var capacity := state.progression.capacity()
+	for other in state.player_ids():
+		if state.player_capacity(other) != capacity:
+			state.set_player_capacity(other, capacity)
+			events.append({"type": "capacity_changed", "player_id": other, "capacity": capacity})
+	return _ok(events)
+
+
+func _summon(state: WorldState, cmd: Dictionary) -> Dictionary:
+	var pid := int(cmd["player_id"])
+	var series := String(cmd.get("series", ""))
+	if not state.has_player(pid):
+		return _fail(E_UNKNOWN_PLAYER)
+	if not state.progression.has("call_mate"):
+		return _fail(E_ABILITY_LOCKED)
+	if series.is_empty() or catalog.series_members(series).is_empty():
+		return _fail(E_UNKNOWN_SERIES)
+	if not state.progression.can_summon(series):
+		return _fail(E_SERIES_SPENT)
+	# Only what is still lying about: never a placed item, never out of someone
+	# else's hands. Sorted so every peer moves the same item to the same spot.
+	var loose: Array[String] = []
+	for def in catalog.series_members(series):
+		var item_id: String = def.id
+		if state.has_item(item_id) and state.kind_of(item_id) == WorldState.Kind.GROUND:
+			loose.append(item_id)
+	loose.sort()
+	if loose.is_empty():
+		return _fail(E_NOTHING_TO_SUMMON)
+	var centre: Vector3 = state.clamp_to_island(cmd.get("position", Vector3.ZERO))
+	state.progression.mark_summoned(series)
+	var events: Array[Dictionary] = []
+	for i in range(loose.size()):
+		var angle := TAU * float(i) / float(loose.size())
+		var spot := state.clamp_to_island(
+			centre + Vector3(cos(angle), 0.0, sin(angle)) * SUMMON_RING_RADIUS)
+		state.set_on_ground(loose[i], spot)
+		events.append({"type": "item_summoned", "item_id": loose[i], "player_id": pid, "position": spot})
+	return _ok(events)
 
 
 # --- Helpers -----------------------------------------------------------------

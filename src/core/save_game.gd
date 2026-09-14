@@ -2,27 +2,30 @@ class_name SaveGame
 extends RefCounted
 ## Turning a run into JSON and back (WP-1.8).
 ##
-## A save is exactly [method WorldState.to_dict] plus the progression and the
-## level id — the same snapshot multiplayer will hand a late joiner, which is
-## why this lives in core and is tested for byte-for-byte round trips.
+## A save is exactly [method WorldState.to_dict] plus the level id — the same
+## snapshot multiplayer will hand a late joiner, which is why this lives in core
+## and is tested for byte-for-byte round trips. Since ADR 0010 the progression
+## is part of the state rather than a sibling of it, so there is one thing to
+## replicate and one thing to save.
 ##
 ## JSON has only one number type, so every integer comes back as a float.
 ## [method WorldState.from_dict] and [method Progression.from_dict] already cast
 ## everything they read; [method unpack] relies on that, and a test pins it.
 
-const SCHEMA_VERSION := 1
+## 2: progression moved inside the WorldState (ADR 0010). Schema 1 saves are
+## rejected rather than migrated — the only ones that ever existed were test runs.
+const SCHEMA_VERSION := 2
 const SAVE_DIR := "user://saves"
 const DEFAULT_SLOT := "auto"
 
 
 ## Snapshot of a running game, ready for [method JSON.stringify].
-static func pack(state: WorldState, progression: Progression, level_id: String) -> Dictionary:
+static func pack(state: WorldState, level_id: String) -> Dictionary:
 	return {
 		"schema": SCHEMA_VERSION,
 		"level_id": level_id,
 		"saved_at": int(Time.get_unix_time_from_system()),
 		"state": state.to_dict(),
-		"progression": progression.to_dict(),
 	}
 
 
@@ -33,9 +36,12 @@ static func pack(state: WorldState, progression: Progression, level_id: String) 
 static func unpack(data: Dictionary) -> Dictionary:
 	if not is_usable(data):
 		return {}
+	var state := WorldState.from_dict(data["state"])
 	return {
-		"state": WorldState.from_dict(data["state"]),
-		"progression": Progression.from_dict(data.get("progression", {})),
+		"state": state,
+		# Kept as a top-level key for callers' convenience; it is the same object
+		# the state owns, not a copy.
+		"progression": state.progression,
 		"level_id": String(data["level_id"]),
 		"saved_at": int(data.get("saved_at", 0)),
 	}

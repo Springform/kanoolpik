@@ -16,10 +16,16 @@ const CONTAINERS_PATH := "res://data/catalog/containers.json"
 var catalog: Catalog
 var state: WorldState
 var processor: CommandProcessor
-var progression: Progression
 var transport: Transport
 var level: Dictionary = {}
 var level_id: String = ""
+
+## The party's skill points and abilities. Since ADR 0010 this lives inside the
+## replicated [WorldState]; the accessor stays so callers did not have to change.
+## Read it freely; change it only by submitting a command.
+var progression: Progression:
+	get:
+		return state.progression if state != null else null
 
 var _running := false
 ## Autosave after each container is packed. Tests turn this off.
@@ -43,7 +49,7 @@ func start_level(p_level_id: String, level_seed: int = -1, p_transport: Transpor
 		cat, lvl.get("container_positions", {}), float(lvl.get("container_clearance", 0.4)))
 	var fresh := MessGenerator.generate(
 		use_seed, cat, lvl["spawn_zones"], float(lvl.get("ground_y", 0.0)), exclusions)
-	_begin(p_level_id, lvl, cat, fresh, Progression.new(), p_transport)
+	_begin(p_level_id, lvl, cat, fresh, p_transport)
 
 
 ## Resume a saved run instead of generating a new mess.
@@ -59,7 +65,7 @@ func load_save(slot: String = SaveGame.DEFAULT_SLOT) -> bool:
 		push_error("Save refers to an unknown level: %s" % saved_level_id)
 		return false
 	_begin(saved_level_id, lvl, Catalog.load_from_files(ITEMS_PATH, CONTAINERS_PATH),
-		unpacked["state"], unpacked["progression"], null)
+		unpacked["state"], null)
 	return true
 
 
@@ -67,7 +73,7 @@ func load_save(slot: String = SaveGame.DEFAULT_SLOT) -> bool:
 func save(slot: String = SaveGame.DEFAULT_SLOT) -> bool:
 	if state == null or level_id.is_empty():
 		return false
-	return SaveGame.write(slot, SaveGame.pack(state, progression, level_id))
+	return SaveGame.write(slot, SaveGame.pack(state, level_id))
 
 
 func has_save(slot: String = SaveGame.DEFAULT_SLOT) -> bool:
@@ -76,12 +82,15 @@ func has_save(slot: String = SaveGame.DEFAULT_SLOT) -> bool:
 
 ## Shared tail of start_level and load_save: adopt these objects as the running game.
 func _begin(p_level_id: String, p_level: Dictionary, p_catalog: Catalog,
-		p_state: WorldState, p_progression: Progression, p_transport: Transport) -> void:
+		p_state: WorldState, p_transport: Transport) -> void:
 	level_id = p_level_id
 	level = p_level
 	catalog = p_catalog
 	state = p_state
-	progression = p_progression
+	# The core clamps summoned items to walkable ground, so it needs to know
+	# where the ground ends. A freshly generated state does not carry it.
+	state.island_radius = island_radius()
+	state.ground_y = ground_y()
 	processor = CommandProcessor.new(catalog)
 	transport = p_transport if p_transport != null else LocalTransport.new(processor, state)
 	transport.command_applied.connect(_on_command_applied)
@@ -115,7 +124,7 @@ func submit(command: Dictionary) -> void:
 
 
 func base_capacity() -> int:
-	return 3 + (progression.capacity_bonus() if progression != null else 0)
+	return progression.capacity() if progression != null else Progression.BASE_CAPACITY
 
 
 static func load_level(p_level_id: String) -> Dictionary:
@@ -150,7 +159,6 @@ func _on_command_applied(_command: Dictionary, result: Dictionary) -> void:
 	var pack_completed := false
 	for event in result["events"]:
 		if event["type"] == "container_completed":
-			progression.credit_container(event["container_id"])
 			pack_completed = true
 		GameEvents.publish(event)
 	# Autosave only at a natural milestone — never on a tick, never mid-placement.

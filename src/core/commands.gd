@@ -11,6 +11,8 @@ const DROP := "drop"
 const PLACE := "place"
 const TAKE_OUT := "take_out"
 const TICK := "tick"
+const UNLOCK := "unlock"
+const SUMMON := "summon"
 
 
 static func pick_up(player_id: int, item_id: String) -> Dictionary:
@@ -28,6 +30,17 @@ static func place(player_id: int, item_id: String, container_id: String, slot: i
 ## Take a placed item back out of a container into the player's hands.
 static func take_out(player_id: int, item_id: String) -> Dictionary:
 	return {"type": TAKE_OUT, "player_id": player_id, "item_id": item_id}
+
+
+## Buy an ability with the party's shared skill points (ADR 0010).
+static func unlock(player_id: int, ability_id: String) -> Dictionary:
+	return {"type": UNLOCK, "player_id": player_id, "ability_id": ability_id}
+
+
+## "Råb på en kammerat": bring every loose member of [param series] to
+## [param position]. Once per series; the position is clamped to the island.
+static func summon(player_id: int, series: String, position: Vector3) -> Dictionary:
+	return {"type": SUMMON, "player_id": player_id, "series": series, "position": position}
 
 
 ## Advance the simulation clock (host only, once per fixed step).

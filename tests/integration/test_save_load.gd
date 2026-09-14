@@ -153,7 +153,7 @@ func test_continue_falls_back_to_a_fresh_game_rather_than_stranding_the_player()
 
 func test_a_save_naming_an_unknown_level_is_refused() -> void:
 	_play_a_bit()
-	var packed := SaveGame.pack(GameSession.state, GameSession.progression, "island_that_never_was")
+	var packed := SaveGame.pack(GameSession.state, "island_that_never_was")
 	SaveGame.write(SLOT, packed)
 	assert_bool(GameSession.load_save(SLOT)).is_false()
 
@@ -167,3 +167,40 @@ func test_a_finished_or_paused_session_can_still_be_saved() -> void:
 	GameSession.stop_level()
 	assert_bool(GameSession.save(SLOT)).is_true()
 	assert_dict(SaveGame.unpack(SaveGame.read(SLOT))["state"].to_dict()).is_equal(before)
+
+
+# --- Abilities survive a save (WP-3.0 / ADR 0010) ----------------------------
+
+func test_what_the_party_bought_and_shouted_for_survives_a_resume() -> void:
+	var pid := GameSession.local_player_id()
+	_play_a_bit()
+	# Points are earned by packing; hand them over directly so the test is about
+	# saving, not about finishing a container.
+	GameSession.state.progression.points = 4
+	GameSession.submit(Commands.unlock(pid, "call_mate"))
+	GameSession.submit(Commands.unlock(pid, "steady_hands"))
+	GameSession.submit(Commands.summon(pid, "tent_poles", Vector3(1, 0, 1)))
+	assert_bool(GameSession.progression.has("call_mate")).is_true()
+	var capacity := GameSession.state.player_capacity(pid)
+	assert_int(capacity).is_equal(Progression.BASE_CAPACITY + 2)
+	var before := GameSession.state.to_dict()
+
+	GameSession.save(SLOT)
+	main.start_game(424242) # a different run in between
+	assert_bool(main.continue_game(SLOT)).is_true()
+
+	assert_dict(GameSession.state.to_dict()).is_equal(before)
+	assert_bool(GameSession.progression.has("call_mate")).is_true()
+	assert_bool(GameSession.progression.has("steady_hands")).is_true()
+	assert_bool(GameSession.progression.can_summon("tent_poles")).is_false()
+	assert_int(GameSession.state.player_capacity(pid)).is_equal(capacity)
+	# The accessor points at the state's own progression, not a stale copy.
+	assert_object(GameSession.progression).is_same(GameSession.state.progression)
+
+
+func test_unlocking_reaches_the_event_bus() -> void:
+	var pid := GameSession.local_player_id()
+	GameSession.state.progression.points = 1
+	var monitor := monitor_signals(GameEvents)
+	GameSession.submit(Commands.unlock(pid, "insight"))
+	await assert_signal(monitor).is_emitted("ability_unlocked", ["insight", pid, 0])

@@ -24,18 +24,18 @@ func _a_run() -> Dictionary:
 	state.set_placed("pole_1", "tent_bag", 0)
 	state.bump_stat("placements", 7)
 	state.bump_stat("wrong_placements", 2)
-	var prog := Progression.new()
-	prog.credit_container("tent_bag")
-	prog.credit_container("cooler")
-	prog.unlock("insight")
-	return {"state": state, "progression": prog}
+	# Since ADR 0010 the progression is part of the state, not a sibling of it.
+	state.progression.credit_container("tent_bag")
+	state.progression.credit_container("cooler")
+	state.progression.unlock("insight")
+	return {"state": state, "progression": state.progression}
 
 
 # --- Round trip -------------------------------------------------------------------
 
 func test_pack_then_unpack_returns_an_identical_run() -> void:
 	var run := _a_run()
-	var packed := SaveGame.pack(run["state"], run["progression"], "island_01")
+	var packed := SaveGame.pack(run["state"], "island_01")
 	var back := SaveGame.unpack(packed)
 	assert_dict(back["state"].to_dict()).is_equal(run["state"].to_dict())
 	assert_dict(back["progression"].to_dict()).is_equal(run["progression"].to_dict())
@@ -46,7 +46,7 @@ func test_survives_a_trip_through_actual_json() -> void:
 	# JSON has one number type: every int comes back a float. If the casts in
 	# from_dict() ever go missing, this is what catches it.
 	var run := _a_run()
-	var packed := SaveGame.pack(run["state"], run["progression"], "island_01")
+	var packed := SaveGame.pack(run["state"], "island_01")
 	var text := JSON.stringify(packed)
 	var parsed: Variant = JSON.parse_string(text)
 	assert_object(parsed).is_not_null()
@@ -67,7 +67,7 @@ func test_pick_up_order_survives_a_save() -> void:
 	state.set_carried("pole_1", 1)
 	state.set_carried("can_a1", 1)
 	state.set_carried("peg_1", 1)
-	var packed: Variant = JSON.parse_string(JSON.stringify(SaveGame.pack(state, Progression.new(), "island_01")))
+	var packed: Variant = JSON.parse_string(JSON.stringify(SaveGame.pack(state, "island_01")))
 	var back := SaveGame.unpack(packed)
 	assert_array(back["state"].carried_by(1)).is_equal(["pole_1", "can_a1", "peg_1"])
 	assert_str(back["state"].active_item(1)).is_equal("peg_1")
@@ -75,7 +75,7 @@ func test_pick_up_order_survives_a_save() -> void:
 
 func test_pack_records_the_schema_and_a_timestamp() -> void:
 	var run := _a_run()
-	var packed := SaveGame.pack(run["state"], run["progression"], "island_01")
+	var packed := SaveGame.pack(run["state"], "island_01")
 	assert_int(packed["schema"]).is_equal(SaveGame.SCHEMA_VERSION)
 	assert_int(packed["saved_at"]).is_greater(0)
 
@@ -91,7 +91,7 @@ func test_unusable_data_yields_nothing_rather_than_half_a_game() -> void:
 
 func test_a_save_from_another_schema_version_is_refused() -> void:
 	var run := _a_run()
-	var packed := SaveGame.pack(run["state"], run["progression"], "island_01")
+	var packed := SaveGame.pack(run["state"], "island_01")
 	packed["schema"] = SaveGame.SCHEMA_VERSION + 1
 	assert_bool(SaveGame.is_usable(packed)).is_false()
 	assert_dict(SaveGame.unpack(packed)).is_empty()
@@ -104,7 +104,7 @@ func test_a_save_from_another_schema_version_is_refused() -> void:
 func test_write_read_and_erase_a_slot() -> void:
 	var run := _a_run()
 	assert_bool(SaveGame.has_save(SLOT)).is_false()
-	assert_bool(SaveGame.write(SLOT, SaveGame.pack(run["state"], run["progression"], "island_01"))).is_true()
+	assert_bool(SaveGame.write(SLOT, SaveGame.pack(run["state"], "island_01"))).is_true()
 	assert_bool(SaveGame.has_save(SLOT)).is_true()
 	var back := SaveGame.unpack(SaveGame.read(SLOT))
 	assert_dict(back["state"].to_dict()).is_equal(run["state"].to_dict())
