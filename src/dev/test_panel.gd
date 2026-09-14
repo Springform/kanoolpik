@@ -28,6 +28,10 @@ extends CanvasLayer
 const ACTION := "ui_test_panel" # F1, declared in project.godot
 const WIDTH := 380.0
 const MARGIN := 12.0
+## Clear of the HUD clock, which lives in the top-right corner.
+const TOP_OFFSET := 74.0
+## Leave a strip of the world visible at the bottom rather than running to the edge.
+const BOTTOM_MARGIN := 40.0
 ## Clock jumps offered as buttons, in minutes. Par is 20 and max is 40, so these
 ## straddle every grade boundary worth looking at.
 const CLOCK_JUMPS: Array[int] = [5, 15, 25, 45]
@@ -239,8 +243,13 @@ func _build() -> void:
 	_root.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_root.offset_left = -WIDTH - MARGIN
 	_root.offset_right = -MARGIN
-	_root.offset_top = MARGIN
-	_root.offset_bottom = 620.0
+	_root.offset_top = TOP_OFFSET
+	_root.anchor_bottom = 1.0
+	_root.offset_bottom = -BOTTOM_MARGIN
+	# Same reasoning as the skill menu: a panel of text over the island needs an
+	# opaque backing, or the world reads through it. The shared theme's 62% alpha
+	# is for corner readouts.
+	_root.add_theme_stylebox_override("panel", SkillMenu.opaque_panel_style())
 	add_child(_root)
 
 	var scroll := ScrollContainer.new()

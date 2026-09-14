@@ -44,6 +44,7 @@ var _mouse_mode_request := Input.MOUSE_MODE_VISIBLE
 
 func _ready() -> void:
 	visible = false
+	$Center/Panel.add_theme_stylebox_override("panel", opaque_panel_style())
 	_order = display_order()
 	_build_rows()
 	_apply_texts()
@@ -195,6 +196,23 @@ func can_buy(ability_id: String) -> bool:
 
 
 # --- Building ----------------------------------------------------------------------
+
+## The shared theme paints panels at 62% alpha, which is right for a readout in
+## a corner of the screen and wrong for a panel full of text sitting over 162
+## labelled objects: on screen the world reads straight through the words. A
+## modal panel gets its own opaque style rather than changing the theme, so the
+## HUD keeps the translucency it was designed with.
+static func opaque_panel_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	# Fully opaque. At 0.97 the item labels behind it still ghosted through the
+	# words, which is the problem this style exists to solve.
+	style.bg_color = Color(0.05, 0.09, 0.13, 1.0)
+	style.border_color = Color(0.55, 0.62, 0.68, 0.9)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(6)
+	style.set_content_margin_all(18)
+	return style
+
 
 func _build_rows() -> void:
 	for id in _order:

@@ -19,7 +19,11 @@ const SWELL_FACTOR := 1.45
 const SWELL_MARGIN := 0.10
 ## Warm gold — the same family as the HUD's "you have this" colour, and it reads
 ## against grass, sand and water alike.
-const GLOW_COLOR := Color(1.0, 0.82, 0.25, 0.5)
+## Amber, and opaque enough to read. The first pass was (1, 0.82, 0.25, 0.5),
+## which on screen came out a pale cream that vanished against bright grass and
+## the white placeholder boxes — the ability's whole promise is that the fourth
+## tent pole is a glance rather than a hunt, and at that contrast it was neither.
+const GLOW_COLOR := Color(1.0, 0.62, 0.05, 0.85)
 ## Above the world, below the in-hand item ([ItemPalette] uses 10): the thing you
 ## are holding must never be hidden behind a hint about where its siblings are.
 const RENDER_PRIORITY := 9

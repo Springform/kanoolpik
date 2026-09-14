@@ -185,3 +185,23 @@ func test_item_labels_only_show_close_to_the_camera() -> void:
 	camera.global_position = node.global_position + Vector3(0, 0, 1.5)
 	node.refresh_label()
 	assert_bool(node.label.visible).override_failure_message("a nearby name is not drawn").is_true()
+
+
+func test_item_labels_only_show_for_what_the_player_is_facing() -> void:
+	# Distance alone was not enough. Looked at on screen from the spawn point,
+	# a 3.5 m radius put 31 names up at once and the island read as a word cloud
+	# again — the exact thing the radius was introduced to stop. A name behind
+	# your shoulder was never readable, so it is not drawn.
+	var node: PickupItem = island.get_node("Items/Item_can_tuborg_1")
+	var camera: Camera3D = auto_free(Camera3D.new())
+	add_child(camera)
+	camera.current = true
+	camera.global_position = node.global_position + Vector3(0, 0, 1.5)
+	node.refresh_label()
+	assert_bool(node.label.visible).override_failure_message(
+		"the item is close and straight ahead, so it should be named").is_true()
+	# Same spot, turned around: the item is now behind the camera.
+	camera.rotation.y = PI
+	node.refresh_label()
+	assert_bool(node.label.visible).override_failure_message(
+		"a name behind the player is still being drawn").is_false()
