@@ -240,3 +240,23 @@ func test_restarting_does_not_leave_a_second_set_of_abilities() -> void:
 	await get_tree().process_frame
 	assert_array(_abilities_under(main, "InsightAbility")).has_size(1)
 	assert_array(_abilities_under(main, "CallMateAbility")).has_size(1)
+
+
+func test_starting_a_game_installs_the_wave_two_abilities() -> void:
+	# Same reasoning as the wave-1 check above: every one of these has its own
+	# passing suite that builds the node itself, and none of them would notice
+	# if the game stopped creating one.
+	main.start_game(1234)
+	await get_tree().process_frame
+	for type_name in ["MapSenseAbility", "AutoPlaceAbility", "CollectibleSpawner"]:
+		assert_array(_abilities_under(main, type_name)).override_failure_message(
+			"%s is never created, so it does nothing in the real game" % type_name).has_size(1)
+
+
+func test_restarting_does_not_duplicate_the_wave_two_abilities() -> void:
+	main.start_game(1234)
+	await get_tree().process_frame
+	main.restart_new_mess()
+	await get_tree().process_frame
+	for type_name in ["MapSenseAbility", "AutoPlaceAbility", "CollectibleSpawner"]:
+		assert_array(_abilities_under(main, type_name)).has_size(1)

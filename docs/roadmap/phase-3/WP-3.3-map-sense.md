@@ -1,6 +1,6 @@
 # WP-3.3 — Stedsans: an arrow toward the right container
 
-**Phase:** 3 · **Lane:** abilities · **Size:** S · **Status:** unclaimed · **Depends on:** WP-3.0, WP-3.1 (`Hud.ability_layer()`)
+**Phase:** 3 · **Lane:** abilities · **Size:** S · **Status:** **done** (2026-09-14, wave 2) · **Depends on:** WP-3.0, WP-3.1 (`Hud.ability_layer()`)
 
 ## Goal
 With Stedsans unlocked, a small arrow at the edge of the screen points at the container the held item belongs in, and fades when you are looking at it. Knowing *where* stops being the puzzle; deciding *what* still is.
@@ -32,3 +32,10 @@ With Stedsans unlocked, a small arrow at the edge of the screen points at the co
 
 ## Playtest checklist (human, 5 min)
 - [ ] Walk a full lap with it on — does it ever point at something wrong, or jitter when two containers are close together?
+
+## Notes / decisions
+- **Hysteresis, because the arrow flickered.** A rival container must be 15% nearer before the arrow swaps (`SWAP_MARGIN = 0.85`), and retargeting runs at most every 0.2 s rather than per frame. Without it the arrow jitters on the midline between the two coolers — which is exactly what the WP's playtest line asked about, found before a human had to.
+- **A full container still gets pointed at.** `find_correct_slot()` returns -1 both for "wrong container" and "right container, no free slot", so a strict reading makes the arrow vanish the moment the target fills up. It falls back to the container the series already lives in.
+- **Drawn as a polygon, not a glyph** — the missing-Dingbats lesson from phase 2.
+- **Behind the camera resolves to "down"**, the conventional compass answer, since containers are on the ground and the camera at head height.
+- Four mutations, four different tests caught them: farthest-instead-of-nearest, a flipped screen-y, re-implementing eligibility without the series rule, and pinning the arrow's rotation.

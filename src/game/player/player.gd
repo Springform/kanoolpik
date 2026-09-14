@@ -114,11 +114,31 @@ func carried_items() -> Array[String]:
 
 
 func _interact() -> void:
-	var target := aimed_target()
+	interact_with(aimed_target(), aimed_slot())
+
+
+## What one press of [E] does, given what the crosshair found. Split out of
+## [method _interact] so a test can drive a whole press — the Autopilot fallback
+## included — without simulating a raycast.
+##   a PickupItem     -> pick it up
+##   a ContainerNode  -> [method interact_with_container] at the aimed slot
+##   nothing          -> the press is free; offer it to Autopilot (WP-3.6)
+func interact_with(target: Node, slot: int) -> void:
 	if target is PickupItem:
 		GameSession.submit(Commands.pick_up(player_id, (target as PickupItem).item_id))
 	elif target is ContainerNode:
-		interact_with_container(target as ContainerNode, aimed_slot())
+		interact_with_container(target as ContainerNode, slot)
+	else:
+		_auto_place()
+
+
+## The ray found nothing, so there is no aim to override and no manual placement
+## on the table: hand the press to Autopilot (WP-3.6). The ability checks its own
+## unlock, so until the party buys it this is one group lookup and nothing else.
+func _auto_place() -> void:
+	var autopilot := AutoPlaceAbility.find_in_tree(self)
+	if autopilot != null:
+		autopilot.attempt(player_id, global_position)
 
 
 ## Split out from [method _interact] so tests can drive it without simulating a raycast.

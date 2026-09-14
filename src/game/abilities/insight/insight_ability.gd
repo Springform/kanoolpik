@@ -206,7 +206,12 @@ func _find_hud() -> HUD:
 	return null
 
 
-func _on_item_left_the_ground(item_id: String, _player_id: int) -> void:
+## Shared by two signals with different shapes: item_picked_up sends two
+## arguments and item_taken_out sends three. The third is optional so one handler
+## can take both — connecting a two-argument callable to the three-argument
+## signal fails at emit time, which is how taking an item out of a container
+## quietly stopped clearing its glow.
+func _on_item_left_the_ground(item_id: String, _player_id: int, _container_id: String = "") -> void:
 	_drop_highlight(item_id)
 
 

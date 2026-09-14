@@ -1,6 +1,6 @@
 # WP-3.6 — Autopilot: place without aiming
 
-**Phase:** 3 · **Lane:** abilities/player · **Size:** M · **Status:** unclaimed · **Depends on:** WP-3.0
+**Phase:** 3 · **Lane:** abilities/player · **Size:** M · **Status:** **done** (2026-09-14, wave 2) · **Depends on:** WP-3.0
 > **Schedule against [WP-1.7](../phase-1/WP-1.7-controller-feel.md):** both own `src/game/player/player.gd`. They must not run in parallel.
 
 ## Goal
@@ -39,3 +39,9 @@ Three skill points buy the end of aiming. Within 2 m of the container an item be
 ## Playtest checklist (human, 5 min)
 - [ ] Carry three cans to the pant bag and press E three times without looking down. Does it feel like help or like losing control?
 - [ ] Try to place something deliberately wrong while it is on — can you still?
+
+## Notes / decisions
+- **"E would otherwise do nothing useful" was defined as: the interaction ray found nothing at all.** Aiming at an item, a slot, *or a container body* all stay manual. That has a consequence worth playtesting: with Autopilot bought, looking straight at the wrong container still lets you place wrongly, while looking at nothing refuses to. It reads as "you asked for it", but it is a judgement call, not a rule the WP settled.
+- **Distance is measured flat (XZ).** `container_positions` are flat data that presentation lifts onto the terrain; counting the player's ~1.8 m eye height against a container's y=0 would silently spend half the 2 m budget. Pinned by a test.
+- **Nearest wins, ties by sorted container id** so it stays deterministic for phase 4. Flagged for playtest: the two canoes are 3.5 m apart and *are* different destinations (crew A vs crew B), so silently taking the nearer one for the first paddle of a series is the one case where "nearest" could pick wrong. It self-corrects after the first member, because the series rule then makes the other canoe `SPLIT_SERIES`.
+- `player.gd` changed only in the interact path: the old `_interact()` body moved verbatim into a public `interact_with(target, slot)` with one added `else` branch. The `PickupItem` and `ContainerNode` branches are byte-for-byte unchanged.

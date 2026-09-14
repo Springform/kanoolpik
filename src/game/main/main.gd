@@ -125,6 +125,11 @@ func _install_abilities() -> void:
 	call_mate.own_rejection_toasts = false
 	add_child(call_mate)
 	_abilities.append(call_mate)
+	_abilities.append(MapSenseAbility.install(self))
+	_abilities.append(AutoPlaceAbility.install(self))
+	# Not an ability, but the same lifetime problem: it listens to GameEvents and
+	# must not outlive a restart.
+	_abilities.append(CollectibleSpawner.install(self))
 
 
 ## Resume the autosave. Falls back to a fresh game when the slot turns out to be

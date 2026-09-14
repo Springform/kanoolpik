@@ -151,6 +151,44 @@
       -3.5
     ]
   },
+  "collectibles": [
+    {
+      "id": "trolley",
+      "position": [
+        3.9,
+        0,
+        14.2
+      ],
+      "note": "In the reeds behind the two canoes, where it was wheeled down to the water and left."
+    },
+    {
+      "id": "sunglasses",
+      "position": [
+        7.8,
+        0,
+        -7.3
+      ],
+      "note": "On the trampled ground between the fire pit and the glass crate, where everybody sat."
+    },
+    {
+      "id": "headlamp",
+      "position": [
+        -11.3,
+        0,
+        5.9
+      ],
+      "note": "In the long grass behind the tent bag, at the back of the tent pitch."
+    },
+    {
+      "id": "whistle",
+      "position": [
+        -11.3,
+        0,
+        -7.7
+      ],
+      "note": "Behind the lost-and-found crate, in the quiet corner of the island."
+    }
+  ],
   "player_spawns": [
     [
       0,
