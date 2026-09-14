@@ -68,4 +68,89 @@ def snore():
 
 
 write("snore", snore())
-print("wrote 5 files to", OUT)
+
+# --- Shout for a mate (WP-3.4) -------------------------------------------------
+# "Råb på en kammerat": a hungover man yelling across a Swedish lake at 09:00,
+# not a magic chime. So: a real voice model rather than a bell — a glottal pulse
+# train with a shouted pitch contour (up fast, then sagging because he has no
+# air left), pushed through gliding formants so the vowel opens from "haaa" to
+# "loo", plus the breath and rasp that make it a person. A slap-back off the far
+# shore puts him outdoors.
+#
+# One-shot, deliberately: it plays once per shout and never loops, so there is
+# no seam to check (contrast the snore above, which is periodic on purpose).
+SHOUT_DURATION = 0.95
+SHOUT_N = int(SR * SHOUT_DURATION)
+
+
+def resonator(sig, freqs, bw, gain=1.0):
+    """One gliding two-pole formant. freqs is per-sample centre frequency in Hz."""
+    r = np.exp(-np.pi * bw / SR)
+    out = np.zeros(len(sig))
+    y1 = y2 = 0.0
+    two_pi_sr = 2 * np.pi / SR
+    cosw = np.cos(two_pi_sr * freqs)
+    a1 = 2.0 * r * cosw
+    a2 = -(r * r)
+    norm = (1.0 - r * r) * gain
+    for i in range(len(sig)):
+        y = norm * sig[i] + a1[i] * y1 + a2 * y2
+        y2, y1 = y1, y
+        out[i] = y
+    return out
+
+
+def glide(a, b, t, curve=1.0):
+    """a -> b over the clip, following t (already 0..1), eased by curve."""
+    return a + (b - a) * (t ** curve)
+
+
+def shout():
+    rng = np.random.default_rng(31)
+    t = np.linspace(0, SHOUT_DURATION, SHOUT_N, endpoint=False)
+    u = t / SHOUT_DURATION  # 0..1 through the shout
+
+    # Pitch: a shove up to the top of his range, then a tired sag. Jitter and a
+    # slow drift keep it off a synthesiser's perfect pitch.
+    f0 = np.where(u < 0.12, 118 + 620 * u, 202 - 88 * (u - 0.12) / 0.88)
+    f0 *= 1.0 + 0.012 * np.sin(2 * np.pi * 5.5 * t) + 0.02 * rng.normal(size=SHOUT_N).cumsum() / SHOUT_N**0.5
+
+    # Glottal source: a pulse train, bright at the start (he is pushing) and
+    # duller as he runs out, which is what tiredness sounds like.
+    phase = 2 * np.pi * np.cumsum(f0) / SR
+    openness = glide(0.86, 0.45, u)
+    source = np.sin(phase) + openness * np.sin(2 * phase) + 0.55 * openness * np.sin(3 * phase) \
+        + 0.3 * openness * np.sin(4 * phase)
+    # Rasp: a hungover voice does not phonate cleanly.
+    source *= 1.0 - 0.22 * np.abs(np.sin(2 * np.pi * 23 * t))
+    source += 0.09 * rng.normal(size=SHOUT_N) * glide(1.0, 0.35, u)
+
+    # Vowel: /a/ ("haaa") opening into /o/ ("looo") in the last third.
+    v = np.clip((u - 0.45) / 0.45, 0, 1)
+    body = resonator(source, glide(720, 430, v), 95, 1.0)
+    body += resonator(source, glide(1180, 830, v), 120, 0.62)
+    body += resonator(source, glide(2500, 2620, v), 190, 0.26)
+    body += resonator(source, glide(3300, 3150, v), 260, 0.11)
+
+    # Two syllables: "Hal-LOO" — a short push, a dip, then the long one he
+    # leans on, dying away because there is nothing left in him.
+    env = np.minimum(1.0, u / 0.02) * np.exp(-1.1 * u)
+    env *= 0.75 + 0.25 * np.tanh(6 * np.sin(np.pi * np.clip(u / 0.3, 0, 1)))
+    dip = 1.0 - 0.45 * np.exp(-((u - 0.33) / 0.05) ** 2)
+    sig = body * env * dip
+
+    # The far shore answers about 120 ms later, quieter and duller.
+    echo = np.zeros(SHOUT_N)
+    delay = int(0.12 * SR)
+    echo[delay:] = sig[: SHOUT_N - delay] * 0.22
+    k = 64  # crude low-pass: the lake eats the top end
+    echo = np.convolve(echo, np.ones(k) / k, mode="same")
+    # Fade the MIX out, not just the voice: the echo is the voice delayed, so
+    # trimming only `sig` leaves the echo cut off mid-cycle — a click on the
+    # last sample of every shout. Test asserts the file ends near silence.
+    release = np.minimum(1.0, (1.0 - u) / 0.08)
+    return (sig + echo) * release
+
+
+write("shout_mate", shout())
+print("wrote 6 files to", OUT)

@@ -197,3 +197,46 @@ func _escape() -> InputEventAction:
 	event.action = "ui_cancel"
 	event.pressed = true
 	return event
+
+
+# --- Phase-3 abilities reach the running game (wave-1 integration) ------------
+#
+# Every ability test builds its own ability node, which proves the ability works
+# and proves nothing about whether the game ever creates one. Without the checks
+# below, the whole of wave 1 could ship as code no player can reach.
+
+func _abilities_under(node: Node, type_name: String) -> Array[Node]:
+	return node.find_children("*", type_name, true, false)
+
+
+func test_starting_a_game_installs_the_abilities() -> void:
+	main.start_game(1234)
+	await get_tree().process_frame
+	assert_array(_abilities_under(main, "InsightAbility")).override_failure_message(
+		"Klarsyn is never created, so F does nothing in the real game").has_size(1)
+	assert_array(_abilities_under(main, "CallMateAbility")).override_failure_message(
+		"Råb på en kammerat is never created, so R does nothing in the real game").has_size(1)
+
+
+func test_the_hud_owns_the_summon_rejection_message_not_the_ability() -> void:
+	# Both work packages wrote a rejection toast. HUD.error_key now maps the
+	# summon errors, so the ability's own fallback must be off or the player is
+	# told the same thing twice.
+	main.start_game(1234)
+	await get_tree().process_frame
+	var call_mate: CallMateAbility = _abilities_under(main, "CallMateAbility")[0]
+	assert_bool(call_mate.own_rejection_toasts).override_failure_message(
+		"the player gets two toasts for one refused shout").is_false()
+	assert_str(HUD.error_key(CommandProcessor.E_SERIES_SPENT)).is_equal(
+		"ui.error." + CommandProcessor.E_SERIES_SPENT)
+
+
+func test_restarting_does_not_leave_a_second_set_of_abilities() -> void:
+	# _build_playing_scene() runs again on every restart. Two Klarsyn nodes mean
+	# two sets of highlights and a doubled toast.
+	main.start_game(1234)
+	await get_tree().process_frame
+	main.restart_new_mess()
+	await get_tree().process_frame
+	assert_array(_abilities_under(main, "InsightAbility")).has_size(1)
+	assert_array(_abilities_under(main, "CallMateAbility")).has_size(1)

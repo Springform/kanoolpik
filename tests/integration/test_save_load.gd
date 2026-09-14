@@ -201,6 +201,8 @@ func test_what_the_party_bought_and_shouted_for_survives_a_resume() -> void:
 func test_unlocking_reaches_the_event_bus() -> void:
 	var pid := GameSession.local_player_id()
 	GameSession.state.progression.points = 1
-	var monitor := monitor_signals(GameEvents)
+	# false = do not auto_free the monitored object: GameEvents is an autoload,
+	# and freeing it takes the event bus down for every suite that runs after.
+	var monitor := monitor_signals(GameEvents, false)
 	GameSession.submit(Commands.unlock(pid, "insight"))
 	await assert_signal(monitor).is_emitted("ability_unlocked", ["insight", pid, 0])

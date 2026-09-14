@@ -239,3 +239,27 @@ item.sealed_carlsberg_5,Uåbnet Carlsberg,Unopened Carlsberg
 item.sealed_carlsberg_6,Uåbnet Carlsberg,Unopened Carlsberg
 container.can_cooler_1,Rød køleboks,Red cooler
 container.can_cooler_2,Blå køleboks,Blue cooler
+ability.insight.desc,Hold en ting og se resten af serien lyse i 5 sekunder,Hold an item and watch the rest of its set glow for 5 seconds
+ability.map_sense.desc,En pil mod den beholder den holdte ting hører til i,An arrow toward the container the held item belongs in
+ability.call_mate.desc,Råb og resten af serien kommer flyvende. Én gang per serie,Shout and the rest of the set comes flying. Once per set
+ability.steady_hands.desc,+2 bæreevne for hele holdet,+2 carry capacity for the whole crew
+ability.auto_place.desc,Tæt på den rigtige beholder lægger [E] tingen på plads selv,Near the right container [E] puts the item away by itself
+ui.skills.title,Evner,Skills
+ui.skills.points,%d point til rest,%d points left
+ui.skills.cost,Koster %d,Costs %d
+ui.skills.owned,Købt,Owned
+ui.skills.buy,[Enter] Køb,[Enter] Buy
+ui.skills.cannot_afford,Ikke råd endnu,Not enough points yet
+ui.skills.hint,[Tab] luk,[Tab] close
+ui.skills.empty,Pak en beholder for at tjene et point,Pack a container to earn a point
+ui.ability.unlocked,%s er låst op,%s unlocked
+ui.ability.no_series,Den hører ikke til en serie,That one isn't part of a set
+ui.ability.insight,Klarsyn,Insight
+ui.ability.called,Du råber på en kammerat,You shout for a mate
+ui.error.ability_locked,Den evne har I ikke købt endnu,You haven't bought that ability yet
+ui.error.unknown_ability,Den evne findes ikke,No such ability
+ui.error.already_unlocked,Den har I allerede,You already have that one
+ui.error.not_enough_points,Ikke nok point,Not enough points
+ui.error.unknown_series,Den serie findes ikke,No such set
+ui.error.series_already_summoned,Du har allerede råbt efter dem,You already shouted for those
+ui.error.nothing_to_summon,Der ligger ikke flere af dem,There are none of those left lying about

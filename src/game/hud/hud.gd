@@ -2,13 +2,19 @@ class_name HUD
 extends CanvasLayer
 ## In-game HUD v1 (WP-1.4).
 ##
-## Top-left: progress + bar + containers packed. Top-right: elapsed time.
-## Bottom-left: carrying load with capacity squares and the held item names
-## (last = active, marked with »). Centre: crosshair + contextual prompt.
-## Top-centre: stacking toast queue (max [const MAX_TOASTS]) coloured by verdict.
+## Top-left: progress + bar + containers packed + skill points. Top-right:
+## elapsed time. Bottom-left: carrying load with capacity squares and the held
+## item names (last = active, marked with »). Centre: crosshair + contextual
+## prompt. Top-centre: stacking toast queue (max [const MAX_TOASTS]) coloured by
+## verdict. Tab opens the [SkillMenu] (WP-3.1).
 ##
 ## Reads state via GameSession (read-only) and reacts to GameEvents. Other
 ## features can call [method show_toast]. Every string goes through tr().
+##
+## [method ability_layer] is the extension point ability WPs hang their overlays
+## on, so nobody else has to edit this file or its scene.
+
+const SKILL_MENU := preload("res://src/game/hud/skills/skill_menu.tscn")
 
 const MAX_TOASTS := 3
 const TOAST_SECONDS := 2.2
@@ -22,18 +28,30 @@ const COLOR_ERROR := Color(1.0, 0.6, 0.4)
 @onready var progress_label: Label = $Root/TopLeft/VBox/Progress
 @onready var progress_bar: ProgressBar = $Root/TopLeft/VBox/ProgressBar
 @onready var containers_label: Label = $Root/TopLeft/VBox/Containers
+@onready var points_label: Label = $Root/TopLeft/VBox/Points
 @onready var time_label: Label = $Root/TopRight/Time
 @onready var carrying_label: Label = $Root/BottomLeft/VBox/Carrying
 @onready var slots_box: HBoxContainer = $Root/BottomLeft/VBox/Slots
 @onready var held_label: Label = $Root/BottomLeft/VBox/Held
+@onready var crosshair_label: Label = $Root/Crosshair
 @onready var prompt_label: Label = $Root/Prompt
 @onready var toasts_box: VBoxContainer = $Root/Toasts
+@onready var _ability_layer: Control = $Root/AbilityLayer
+
+## The Tab panel. Built here rather than in the scene so hud.tscn stays thin.
+var skill_menu: SkillMenu
 
 var _player: Player
 var _last_progress: Dictionary = {}
 
 
 func _ready() -> void:
+	skill_menu = SKILL_MENU.instantiate()
+	# Last child of Root: the panel draws over everything else the HUD shows.
+	$Root.add_child(skill_menu)
+	skill_menu.purchase_refused.connect(_on_purchase_refused)
+	GameEvents.points_awarded.connect(_on_points_awarded)
+	GameEvents.ability_unlocked.connect(_on_ability_unlocked)
 	GameEvents.progress_changed.connect(_on_progress)
 	GameEvents.item_placed.connect(_on_item_placed)
 	GameEvents.container_completed.connect(_on_container_completed)
@@ -47,6 +65,9 @@ func _ready() -> void:
 		_player = existing
 	prompt_label.text = ""
 	held_label.text = ""
+	# Read rather than wait for an event: a resumed save has already awarded its
+	# points, and no points_awarded is coming for them.
+	_refresh_points()
 	if GameSession.catalog != null:
 		_on_progress(Evaluation.progress(GameSession.catalog, GameSession.state))
 		_refresh_carrying()
@@ -55,6 +76,13 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if GameSession.state != null:
 		time_label.text = format_time(GameSession.state.elapsed_ticks / Evaluation.TICKS_PER_SECOND)
+	# Nothing is being aimed at while the panel is up, and the crosshair would
+	# show through its translucent background.
+	var shopping := skill_menu != null and skill_menu.is_open()
+	crosshair_label.visible = not shopping
+	if shopping:
+		prompt_label.text = ""
+		return
 	if _player == null:
 		return
 	_refresh_carrying()
@@ -62,6 +90,14 @@ func _process(_delta: float) -> void:
 
 
 # --- Public ----------------------------------------------------------------------
+
+## A full-rect, mouse-ignoring container that ability WPs add their own overlays
+## to (WP-3.3's arrow, for one). It exists for the whole life of the HUD, whether
+## or not the skill panel is open, so an overlay can be added at any time and
+## nothing but its own WP has to touch this file.
+func ability_layer() -> Control:
+	return _ability_layer
+
 
 ## Show a toast for [param seconds]. Oldest toast is dropped beyond MAX_TOASTS.
 func show_toast(text: String, seconds: float = TOAST_SECONDS, color: Color = COLOR_INFO) -> void:
@@ -98,11 +134,17 @@ static func format_time(total_seconds: int) -> String:
 	return "%02d:%02d" % [m, s]
 
 
-## i18n key for a CommandProcessor error id.
+## i18n key for a CommandProcessor error id. Ids listed here have a row of their
+## own in the CSV; anything else falls back to a polite generic line rather than
+## showing the player a raw identifier.
 static func error_key(error_id: String) -> String:
 	match error_id:
 		CommandProcessor.E_HANDS_FULL, CommandProcessor.E_BAD_SLOT, CommandProcessor.E_NOT_ON_GROUND, \
-		CommandProcessor.E_NOT_CARRIED, CommandProcessor.E_NOT_PLACED:
+		CommandProcessor.E_NOT_CARRIED, CommandProcessor.E_NOT_PLACED, \
+		CommandProcessor.E_UNKNOWN_ABILITY, CommandProcessor.E_ALREADY_UNLOCKED, \
+		CommandProcessor.E_NOT_ENOUGH_POINTS, CommandProcessor.E_ABILITY_LOCKED, \
+		CommandProcessor.E_UNKNOWN_SERIES, CommandProcessor.E_SERIES_SPENT, \
+		CommandProcessor.E_NOTHING_TO_SUMMON:
 			return "ui.error." + error_id
 		_:
 			return "ui.error.generic"
@@ -185,3 +227,25 @@ func _on_respawned(player_id: int) -> void:
 
 func _on_rejected(_cmd: Dictionary, error: String) -> void:
 	show_toast(tr(error_key(error)), 1.5, COLOR_ERROR)
+
+
+func _on_points_awarded(_container_id: String, _points: int, total_available: int) -> void:
+	points_label.text = tr("ui.skills.points") % total_available
+
+
+## The counter also drops when a point is spent — and it is the event that says
+## so, not the click, so a mate's purchase moves it too.
+func _on_ability_unlocked(ability_id: String, _player_id: int, points_left: int) -> void:
+	points_label.text = tr("ui.skills.points") % points_left
+	var meta: Dictionary = Progression.ABILITIES.get(ability_id, {})
+	var name_key: String = meta.get("name_key", ability_id)
+	show_toast(tr("ui.ability.unlocked") % tr(name_key), TOAST_SECONDS, VerdictStyle.COLOR_COMPLETE)
+
+
+func _on_purchase_refused(_ability_id: String, error_id: String) -> void:
+	show_toast(tr(error_key(error_id)), 1.5, COLOR_ERROR)
+
+
+func _refresh_points() -> void:
+	var p := GameSession.progression
+	points_label.text = tr("ui.skills.points") % (p.available_points() if p != null else 0)

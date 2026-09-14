@@ -29,6 +29,9 @@ const LEVEL_DEFAULT_SEED := -1
 
 var state := State.TITLE
 var island: Island
+## Phase-3 ability nodes for the running scene, tracked so [method _tear_down]
+## can free them — they subscribe to GameEvents and must not outlive a restart.
+var _abilities: Array[Node] = []
 var player: Player
 var hud: HUD
 var evaluation: EvaluationScreen
@@ -94,7 +97,28 @@ func _build_playing_scene() -> void:
 	pause_menu.title_requested.connect(to_title, CONNECT_DEFERRED)
 	evaluation = EVALUATION.instantiate()
 	add_child(evaluation)
+	_install_abilities()
 	GameEvents.island_clean.connect(_on_island_clean)
+
+
+## Phase-3 abilities. Each one checks [Progression] itself and does nothing until
+## the party has bought it, so they are installed unconditionally and the skill
+## menu is the only thing that decides whether they fire.
+##
+## They live on [Main] rather than on the player: [method _tear_down] frees this
+## subtree between runs, which is what stops a restart from leaving two sets of
+## highlights behind.
+func _install_abilities() -> void:
+	_abilities.append(InsightAbility.install(self))
+	var call_mate := CallMateAbility.new()
+	call_mate.name = "CallMateAbility"
+	# The HUD now maps every summon error itself (WP-3.1 extended
+	# [method HUD.error_key]), so the ability's own fallback toast would be the
+	# second one the player sees. This is the switch WP-3.4 left for exactly
+	# this moment.
+	call_mate.own_rejection_toasts = false
+	add_child(call_mate)
+	_abilities.append(call_mate)
 
 
 ## Resume the autosave. Falls back to a fresh game when the slot turns out to be
@@ -148,10 +172,13 @@ func _tear_down() -> void:
 		GameEvents.island_clean.disconnect(_on_island_clean)
 	GameSession.stop_level()
 	get_tree().paused = false
-	for node: Node in [evaluation, pause_menu, hud, player, title_screen, backdrop, island]:
+	# Abilities first: they hold connections to GameEvents, and one that outlives
+	# a restart animates the next shout twice.
+	for node: Node in _abilities + [evaluation, pause_menu, hud, player, title_screen, backdrop, island]:
 		if is_instance_valid(node):
 			remove_child(node)
 			node.free()
+	_abilities.clear()
 	island = null
 	player = null
 	hud = null

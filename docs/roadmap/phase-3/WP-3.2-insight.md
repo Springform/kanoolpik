@@ -1,6 +1,6 @@
 # WP-3.2 — Klarsyn: series siblings glow
 
-**Phase:** 3 · **Lane:** abilities · **Size:** S · **Status:** unclaimed · **Depends on:** WP-3.0
+**Phase:** 3 · **Lane:** abilities · **Size:** S · **Status:** **done** (2026-09-14, wave 1) · **Depends on:** WP-3.0
 
 ## Goal
 Holding an item and pressing Q makes every other member of its series glow through walls and terrain for 5 seconds. The fourth tent pole stops being a hunt across the island and becomes a glance.
@@ -35,3 +35,10 @@ Holding an item and pressing Q makes every other member of its series glow throu
 ## Playtest checklist (human, 5 min)
 - [ ] Stand among 150 items with a pole in hand and press Q — can you pick the three siblings out of the mess at a glance?
 - [ ] Look at it from 20 m and through a hill.
+
+## Notes / decisions
+Built by an agent in an isolated tree; integrated by hand afterwards.
+
+- **Highlights are separate overlay nodes**, parented to the `PickupItem` they wrap, never a tint on the item's own material — an imported glTF multiplies its albedo, so a tint would have darkened the thing it was meant to pick out.
+- **`InsightAbility.install(parent)` is idempotent**: it frees any existing ability under the same parent first. That is what keeps a restart from leaving two sets of highlights behind.
+- The ability node is created by `Main._build_playing_scene()`; the WP itself does not own that file, so the hook was added at integration. Nothing in the ability's own tests would have caught its absence — see the wave-1 note in WP-3.4.

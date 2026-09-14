@@ -1,6 +1,6 @@
 # WP-3.1 — Skill point UI and unlock menu (Tab)
 
-**Phase:** 3 · **Lane:** hud · **Size:** M · **Status:** unclaimed · **Depends on:** WP-3.0
+**Phase:** 3 · **Lane:** hud · **Size:** M · **Status:** **done** (2026-09-14, wave 1) · **Depends on:** WP-3.0
 
 ## Goal
 Tab opens a panel listing the five abilities in Danish: name, cost, one line of what it does, and whether it is owned, affordable or out of reach. Spending a point is one click or one key. The HUD shows the available points at all times, so a player who has just packed a container sees the reward without opening anything.
@@ -40,3 +40,11 @@ Tab opens a panel listing the five abilities in Danish: name, cost, one line of 
 - [ ] Pack a container, see the counter tick up without opening anything.
 - [ ] Open Tab mid-carry: nothing is dropped, nothing is lost.
 - [ ] Read every line at 1920×1080 and at a narrow window — no truncation, no missing glyphs (see the font lesson in CLAUDE.md).
+
+## Notes / decisions
+Built by an agent in an isolated tree; integrated by hand afterwards.
+
+- **`Hud.ability_layer()` is in place** and empty, waiting for WP-3.3's arrow. It is the reason this WP owned `hud.gd` alone this wave.
+- **`HUD.error_key()` now maps all seven WP-3.0 error ids**, so a refused unlock or shout says what actually went wrong instead of falling through to `ui.error.generic`. That has a knock-on: WP-3.4 wrote its own fallback toast for the same errors and its `own_rejection_toasts` flag is now switched off at install, or the player would be told the same thing twice.
+- **The HUD toasts every `ability_unlocked`.** Harmless in play, but it broke two of the other agents' tests, which asserted "the HUD said nothing" after a setup step that bought an ability. Both were narrowed to ask about the message under test rather than about an empty HUD.
+- The i18n rows this WP was to own were added up front instead, before the three agents started, so that none of them had to touch `strings.csv`. Same reasoning as WP-3.0 owning the input actions.
