@@ -21,6 +21,7 @@ extends RefCounted
 ##   ability_unlocked { ability_id, player_id, points_left }
 ##   capacity_changed { player_id, capacity }
 ##   item_summoned    { item_id, player_id, position }
+##   points_granted   { player_id, points, total_available }
 ##   island_clean     {}
 ##   ticked           { elapsed_ticks }
 
@@ -39,12 +40,18 @@ const E_ABILITY_LOCKED := "ability_locked"
 const E_UNKNOWN_SERIES := "unknown_series"
 const E_SERIES_SPENT := "series_already_summoned"
 const E_NOTHING_TO_SUMMON := "nothing_to_summon"
+const E_DEBUG_DISABLED := "debug_disabled"
 
 ## Where summoned items land, as a ring around the caller's feet: close enough
 ## to reach without moving, far enough apart that six paddles do not z-fight.
 const SUMMON_RING_RADIUS := 1.1
 
 var catalog: Catalog
+## Whether test-mode commands are accepted. Off by default, and off in every
+## unit test that does not deliberately turn it on: a debug command must never
+## be something a build can do by accident. [GameSession] sets it from
+## [method TestMode.is_enabled].
+var allow_debug_commands := false
 
 
 func _init(p_catalog: Catalog) -> void:
@@ -65,6 +72,8 @@ func apply(state: WorldState, cmd: Dictionary) -> Dictionary:
 			return _unlock(state, cmd)
 		Commands.SUMMON:
 			return _summon(state, cmd)
+		Commands.GRANT_POINTS:
+			return _grant_points(state, cmd)
 		Commands.TICK:
 			state.elapsed_ticks += int(cmd.get("ticks", 1))
 			return _ok([{"type": "ticked", "elapsed_ticks": state.elapsed_ticks}])
@@ -223,6 +232,21 @@ func _summon(state: WorldState, cmd: Dictionary) -> Dictionary:
 		state.set_on_ground(loose[i], spot)
 		events.append({"type": "item_summoned", "item_id": loose[i], "player_id": pid, "position": spot})
 	return _ok(events)
+
+
+## Test mode: skill points without the packing. See [method Commands.grant_points].
+func _grant_points(state: WorldState, cmd: Dictionary) -> Dictionary:
+	if not allow_debug_commands:
+		return _fail(E_DEBUG_DISABLED)
+	var pid := int(cmd["player_id"])
+	if not state.has_player(pid):
+		return _fail(E_UNKNOWN_PLAYER)
+	var points := maxi(0, int(cmd.get("points", 0)))
+	state.progression.points += points
+	return _ok([{
+		"type": "points_granted", "player_id": pid, "points": points,
+		"total_available": state.progression.available_points(),
+	}])
 
 
 # --- Helpers -----------------------------------------------------------------

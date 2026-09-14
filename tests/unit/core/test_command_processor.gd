@@ -356,3 +356,44 @@ func test_two_peers_agree_on_a_run_that_includes_an_unlock_and_a_shout() -> void
 	assert_bool(a.progression.has("call_mate")).is_true()
 	assert_bool(a.progression.has("auto_place")).is_false()
 	assert_bool(a.progression.can_summon("poles")).is_false()
+
+
+# --- Test-mode commands (WP-3.10) --------------------------------------------
+
+func test_granting_points_is_refused_unless_debug_is_on() -> void:
+	# The default matters more than the feature: a build must not be able to
+	# cheat by accident.
+	assert_bool(proc.allow_debug_commands).is_false()
+	var r := proc.apply(state, Commands.grant_points(1, 5))
+	assert_bool(r["ok"]).is_false()
+	assert_str(r["error"]).is_equal(CommandProcessor.E_DEBUG_DISABLED)
+	assert_int(state.progression.available_points()).is_equal(0)
+
+
+func test_granting_points_works_when_debug_is_on() -> void:
+	proc.allow_debug_commands = true
+	var r := proc.apply(state, Commands.grant_points(1, 5))
+	assert_bool(r["ok"]).is_true()
+	assert_int(state.progression.available_points()).is_equal(5)
+	assert_int(r["events"][0]["total_available"]).is_equal(5)
+	# And the points are ordinary points: they buy an ability the ordinary way.
+	assert_bool(proc.apply(state, Commands.unlock(1, "auto_place"))["ok"]).is_true()
+
+
+func test_granted_points_cannot_be_negative() -> void:
+	proc.allow_debug_commands = true
+	proc.apply(state, Commands.grant_points(1, -10))
+	assert_int(state.progression.available_points()).is_equal(0)
+
+
+func test_a_granted_point_replays_the_same_on_two_peers() -> void:
+	# A cheat still has to be deterministic, or test mode becomes useless in
+	# exactly the place it would be most useful (ADR 0010).
+	var a := TestFixtures.ground_state(cat)
+	var b := TestFixtures.ground_state(cat)
+	proc.allow_debug_commands = true
+	for c in [Commands.grant_points(1, 3), Commands.unlock(1, "call_mate"), Commands.tick(10)]:
+		proc.apply(a, c)
+		proc.apply(b, c)
+	assert_dict(a.to_dict()).is_equal(b.to_dict())
+	assert_bool(a.progression.has("call_mate")).is_true()

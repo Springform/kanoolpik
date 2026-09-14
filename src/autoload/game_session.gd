@@ -92,6 +92,10 @@ func _begin(p_level_id: String, p_level: Dictionary, p_catalog: Catalog,
 	state.island_radius = island_radius()
 	state.ground_y = ground_y()
 	processor = CommandProcessor.new(catalog)
+	# Test mode is a property of this build, decided once, here. In multiplayer
+	# that makes it the host's call — a client cannot talk the authority into
+	# accepting a debug command it has not enabled itself.
+	processor.allow_debug_commands = TestMode.is_enabled()
 	transport = p_transport if p_transport != null else LocalTransport.new(processor, state)
 	transport.command_applied.connect(_on_command_applied)
 	transport.command_rejected.connect(_on_command_rejected)

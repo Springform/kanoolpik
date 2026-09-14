@@ -38,6 +38,8 @@ var evaluation: EvaluationScreen
 var title_screen: TitleScreen
 var pause_menu: PauseMenu
 var backdrop: BackdropCamera
+## The test-mode admin panel, when this build has one (WP-3.10).
+var test_panel: TestPanel
 
 
 func _ready() -> void:
@@ -98,6 +100,10 @@ func _build_playing_scene() -> void:
 	evaluation = EVALUATION.instantiate()
 	add_child(evaluation)
 	_install_abilities()
+	if TestMode.is_enabled():
+		test_panel = TestPanel.new()
+		test_panel.name = "TestPanel"
+		add_child(test_panel)
 	GameEvents.island_clean.connect(_on_island_clean)
 
 
@@ -174,13 +180,14 @@ func _tear_down() -> void:
 	get_tree().paused = false
 	# Abilities first: they hold connections to GameEvents, and one that outlives
 	# a restart animates the next shout twice.
-	for node: Node in _abilities + [evaluation, pause_menu, hud, player, title_screen, backdrop, island]:
+	for node: Node in _abilities + [test_panel, evaluation, pause_menu, hud, player, title_screen, backdrop, island]:
 		if is_instance_valid(node):
 			remove_child(node)
 			node.free()
 	_abilities.clear()
 	island = null
 	player = null
+	test_panel = null
 	hud = null
 	evaluation = null
 	title_screen = null
