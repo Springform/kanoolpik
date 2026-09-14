@@ -22,6 +22,11 @@ const LOCALES: Array[String] = ["da", "en"]
 @onready var start_button: Button = $Root/Panel/VBox/Start
 @onready var language_button: Button = $Root/Panel/VBox/Language
 
+## Test-mode toggle, built in code because it exists only in a build that offers
+## test mode at all (WP-3.10). A node in the scene would have to be hidden in
+## every other build, which is the same thing said less clearly.
+var test_mode_button: Button
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -32,6 +37,12 @@ func _ready() -> void:
 	start_button.pressed.connect(_on_start)
 	seed_input.text_submitted.connect(func(_t: String) -> void: _on_start())
 	language_button.pressed.connect(toggle_language)
+	if TestMode.is_available():
+		test_mode_button = Button.new()
+		test_mode_button.name = "TestMode"
+		test_mode_button.pressed.connect(_toggle_test_mode)
+		language_button.get_parent().add_child(test_mode_button)
+		_apply_test_mode_text()
 	if continue_button.visible:
 		continue_button.grab_focus()
 	else:
@@ -64,6 +75,20 @@ func apply_texts() -> void:
 	continue_button.text = tr("ui.title.continue")
 	start_button.text = tr("ui.title.start")
 	language_button.text = "%s: %s" % [tr("ui.title.language"), TranslationServer.get_locale().to_upper()]
+	_apply_test_mode_text()
+
+
+func _toggle_test_mode() -> void:
+	TestMode.set_enabled(not TestMode.is_enabled())
+	_apply_test_mode_text()
+
+
+func _apply_test_mode_text() -> void:
+	if test_mode_button == null:
+		return
+	var on := TestMode.is_enabled()
+	test_mode_button.text = tr("ui.title.test_mode_on") if on else tr("ui.title.test_mode_off")
+	test_mode_button.tooltip_text = tr("ui.test.hint") if on else ""
 
 
 func _on_start() -> void:

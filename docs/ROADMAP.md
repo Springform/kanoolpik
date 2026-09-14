@@ -79,8 +79,11 @@ WP files: [`docs/roadmap/phase-3/`](roadmap/phase-3/). **WP-3.0 blocks everythin
 | [3.7](roadmap/phase-3/WP-3.7-collectibles.md) | Hidden collectibles (4 per island) | content | `src/game/collectibles/`, `data/` | 3.0 |
 | [3.8](roadmap/phase-3/WP-3.8-evaluation-tuning.md) | Evaluation tuning from measured runs | content | `data/levels/`, `assets/i18n/` | 3.1–3.7 + playtest |
 | [3.9](roadmap/phase-3/WP-3.9-hvalen-design-questions.md) | "Hvalen" — open design questions | design | — | a decision session |
+| [3.10](roadmap/phase-3/WP-3.10-test-mode.md) ✅ | Test mode: admin panel (F1), win-condition tool | tooling | `src/dev/` | 3.0 |
 
 **WP-3.5 (Rolige hænder) is gone as a separate package.** Capacity is `WorldState`, so the unlock effect belongs in 3.0; showing it belongs in 3.1. A WP that owns neither its data nor its display is a coordination cost with nothing in it.
+
+**WP-3.10 (test mode) is done and serves every remaining WP**: F1 opens a panel that packs the island bar one item, hands out points, buys abilities, jumps the clock and teleports. Use it rather than playing a full round to reach the thing under test — and note that the win condition is now asserted in CI because of it.
 
 **Waves.** 3.0 alone first. Then {3.1, 3.2, 3.4} in parallel — disjoint folders, no shared files. Then {3.3, 3.6, 3.7}. 3.8 after a human plays; 3.9 after a design session.
 

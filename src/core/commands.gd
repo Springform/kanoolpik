@@ -13,6 +13,7 @@ const TAKE_OUT := "take_out"
 const TICK := "tick"
 const UNLOCK := "unlock"
 const SUMMON := "summon"
+const GRANT_POINTS := "grant_points"
 
 
 static func pick_up(player_id: int, item_id: String) -> Dictionary:
@@ -41,6 +42,18 @@ static func unlock(player_id: int, ability_id: String) -> Dictionary:
 ## [param position]. Once per series; the position is clamped to the island.
 static func summon(player_id: int, series: String, position: Vector3) -> Dictionary:
 	return {"type": SUMMON, "player_id": player_id, "series": series, "position": position}
+
+
+## Test-mode only: put skill points in the party's pocket without packing
+## anything. Refused unless [member CommandProcessor.allow_debug_commands] is on,
+## which [GameSession] sets from [method TestMode.is_enabled] — so in
+## multiplayer the host decides whether the party may cheat, and it decides once.
+##
+## It is a command rather than a poke at the progression for the same reason
+## everything else is (ADR 0010): a peer that replays the command list must end
+## up in the same place, cheats included.
+static func grant_points(player_id: int, points: int) -> Dictionary:
+	return {"type": GRANT_POINTS, "player_id": player_id, "points": points}
 
 
 ## Advance the simulation clock (host only, once per fixed step).

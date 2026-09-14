@@ -263,3 +263,20 @@ ui.error.not_enough_points,Ikke nok point,Not enough points
 ui.error.unknown_series,Den serie findes ikke,No such set
 ui.error.series_already_summoned,Du har allerede råbt efter dem,You already shouted for those
 ui.error.nothing_to_summon,Der ligger ikke flere af dem,There are none of those left lying about
+ui.test.title,Testtilstand,Test mode
+ui.test.win_condition,Sejrsbetingelse,Win condition
+ui.test.pack_all_but_one,Pak alt på nær én ting,Pack everything but one
+ui.test.show_evaluation,Vis vurderingen nu,Show the evaluation now
+ui.test.left_behind,Tilbage på øen: %s,Left on the island: %s
+ui.test.nothing_left,Der var ikke noget at pakke,There was nothing left to pack
+ui.test.points,Point og evner,Points and abilities
+ui.test.unlock,Lås op: %s,Unlock: %s
+ui.test.clock,Uret,Clock
+ui.test.containers,Beholdere,Containers
+ui.test.go,Hop derhen,Go there
+ui.test.status_items,Ting på plads: %d af %d,Items away: %d of %d
+ui.test.status_points,Point til rest: %d · evner købt: %d,Points left: %d · abilities bought: %d
+ui.test.status_clock,Tid: %s · forkerte placeringer: %d,Time: %s · wrong placements: %d
+ui.test.hint,[F1] åbner testpanelet,[F1] opens the test panel
+ui.title.test_mode_on,Testtilstand: til,Test mode: on
+ui.title.test_mode_off,Testtilstand: fra,Test mode: off
