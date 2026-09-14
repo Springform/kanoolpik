@@ -14,6 +14,7 @@ const TICK := "tick"
 const UNLOCK := "unlock"
 const SUMMON := "summon"
 const GRANT_POINTS := "grant_points"
+const COLLECT := "collect"
 
 
 static func pick_up(player_id: int, item_id: String) -> Dictionary:
@@ -42,6 +43,13 @@ static func unlock(player_id: int, ability_id: String) -> Dictionary:
 ## [param position]. Once per series; the position is clamped to the island.
 static func summon(player_id: int, series: String, position: Vector3) -> Dictionary:
 	return {"type": SUMMON, "player_id": player_id, "series": series, "position": position}
+
+
+## Pick up a hidden collectible (WP-3.7). Like everything else that changes the
+## world it is a command, so a find replicates and survives a save — and so the
+## capacity a trolley grants is the host's arithmetic, not each client's.
+static func collect(player_id: int, collectible_id: String) -> Dictionary:
+	return {"type": COLLECT, "player_id": player_id, "collectible_id": collectible_id}
 
 
 ## Test-mode only: put skill points in the party's pocket without packing

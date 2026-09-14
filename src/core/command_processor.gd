@@ -22,6 +22,7 @@ extends RefCounted
 ##   capacity_changed { player_id, capacity }
 ##   item_summoned    { item_id, player_id, position }
 ##   points_granted   { player_id, points, total_available }
+##   collectible_found { collectible_id, player_id }
 ##   island_clean     {}
 ##   ticked           { elapsed_ticks }
 
@@ -41,6 +42,8 @@ const E_UNKNOWN_SERIES := "unknown_series"
 const E_SERIES_SPENT := "series_already_summoned"
 const E_NOTHING_TO_SUMMON := "nothing_to_summon"
 const E_DEBUG_DISABLED := "debug_disabled"
+const E_UNKNOWN_COLLECTIBLE := "unknown_collectible"
+const E_ALREADY_FOUND := "already_found"
 
 ## Where summoned items land, as a ring around the caller's feet: close enough
 ## to reach without moving, far enough apart that six paddles do not z-fight.
@@ -74,6 +77,8 @@ func apply(state: WorldState, cmd: Dictionary) -> Dictionary:
 			return _summon(state, cmd)
 		Commands.GRANT_POINTS:
 			return _grant_points(state, cmd)
+		Commands.COLLECT:
+			return _collect(state, cmd)
 		Commands.TICK:
 			state.elapsed_ticks += int(cmd.get("ticks", 1))
 			return _ok([{"type": "ticked", "elapsed_ticks": state.elapsed_ticks}])
@@ -193,11 +198,7 @@ func _unlock(state: WorldState, cmd: Dictionary) -> Dictionary:
 		"points_left": state.progression.available_points(),
 	}]
 	# Capacity is a party upgrade: everyone in the state gets it, now and on join.
-	var capacity := state.progression.capacity()
-	for other in state.player_ids():
-		if state.player_capacity(other) != capacity:
-			state.set_player_capacity(other, capacity)
-			events.append({"type": "capacity_changed", "player_id": other, "capacity": capacity})
+	events.append_array(_resync_capacity(state))
 	return _ok(events)
 
 
@@ -232,6 +233,38 @@ func _summon(state: WorldState, cmd: Dictionary) -> Dictionary:
 		state.set_on_ground(loose[i], spot)
 		events.append({"type": "item_summoned", "item_id": loose[i], "player_id": pid, "position": spot})
 	return _ok(events)
+
+
+## Find a hidden collectible. A second find of the same one is refused rather
+## than ignored, so the presentation layer can tell a real find from a stale
+## trigger and only celebrate the first.
+func _collect(state: WorldState, cmd: Dictionary) -> Dictionary:
+	var pid := int(cmd["player_id"])
+	var collectible_id := String(cmd.get("collectible_id", ""))
+	if not state.has_player(pid):
+		return _fail(E_UNKNOWN_PLAYER)
+	if not Progression.COLLECTIBLES.has(collectible_id):
+		return _fail(E_UNKNOWN_COLLECTIBLE)
+	if not state.progression.collect(collectible_id):
+		return _fail(E_ALREADY_FOUND)
+	var events: Array[Dictionary] = [{
+		"type": "collectible_found", "collectible_id": collectible_id, "player_id": pid,
+	}]
+	events.append_array(_resync_capacity(state))
+	return _ok(events)
+
+
+## Bring every player's capacity back in line with what the party owns. Shared
+## by the two things that change it — buying Rolige hænder and finding the
+## trolley — so the arithmetic lives in exactly one place.
+func _resync_capacity(state: WorldState) -> Array[Dictionary]:
+	var events: Array[Dictionary] = []
+	var capacity := state.progression.capacity()
+	for pid in state.player_ids():
+		if state.player_capacity(pid) != capacity:
+			state.set_player_capacity(pid, capacity)
+			events.append({"type": "capacity_changed", "player_id": pid, "capacity": capacity})
+	return events
 
 
 ## Test mode: skill points without the packing. See [method Commands.grant_points].

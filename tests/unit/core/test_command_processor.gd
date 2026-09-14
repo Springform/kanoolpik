@@ -397,3 +397,55 @@ func test_a_granted_point_replays_the_same_on_two_peers() -> void:
 		proc.apply(b, c)
 	assert_dict(a.to_dict()).is_equal(b.to_dict())
 	assert_bool(a.progression.has("call_mate")).is_true()
+
+
+# --- Collectibles (pre-placed for WP-3.7) ------------------------------------
+
+func test_finding_a_collectible_is_recorded_once() -> void:
+	var r := proc.apply(state, Commands.collect(1, "trolley"))
+	assert_bool(r["ok"]).is_true()
+	assert_bool(state.progression.has_found("trolley")).is_true()
+	var again := proc.apply(state, Commands.collect(1, "trolley"))
+	assert_bool(again["ok"]).is_false()
+	assert_str(again["error"]).is_equal(CommandProcessor.E_ALREADY_FOUND)
+
+
+func test_something_that_is_not_a_collectible_is_refused() -> void:
+	var r := proc.apply(state, Commands.collect(1, "golden_paddle"))
+	assert_bool(r["ok"]).is_false()
+	assert_str(r["error"]).is_equal(CommandProcessor.E_UNKNOWN_COLLECTIBLE)
+
+
+func test_the_trolley_and_steady_hands_add_up() -> void:
+	# The whole point of computing capacity in one place: finding the trolley
+	# after buying Rolige hænder must not throw the +2 away.
+	state.set_player_capacity(1, Progression.BASE_CAPACITY)
+	state.progression.points = 2
+	proc.apply(state, Commands.unlock(1, "steady_hands"))
+	assert_int(state.player_capacity(1)).is_equal(Progression.BASE_CAPACITY + 2)
+	proc.apply(state, Commands.collect(1, "trolley"))
+	assert_int(state.player_capacity(1)).override_failure_message(
+		"the trolley replaced the steady hands instead of adding to them"
+	).is_equal(Progression.BASE_CAPACITY + 5)
+	# And the other way round, which is the order that actually breaks things.
+	var other := TestFixtures.ground_state(cat, Progression.BASE_CAPACITY)
+	other.progression.points = 2
+	proc.apply(other, Commands.collect(1, "trolley"))
+	proc.apply(other, Commands.unlock(1, "steady_hands"))
+	assert_int(other.player_capacity(1)).is_equal(Progression.BASE_CAPACITY + 5)
+
+
+func test_a_collectible_with_no_capacity_effect_changes_no_capacity() -> void:
+	state.set_player_capacity(1, Progression.BASE_CAPACITY)
+	var r := proc.apply(state, Commands.collect(1, "whistle"))
+	assert_array(_event_types(r)).contains_exactly(["collectible_found"])
+	assert_int(state.player_capacity(1)).is_equal(Progression.BASE_CAPACITY)
+
+
+func test_what_the_party_found_survives_serialisation() -> void:
+	proc.apply(state, Commands.collect(1, "trolley"))
+	proc.apply(state, Commands.collect(1, "headlamp"))
+	var back := WorldState.from_dict(state.to_dict())
+	assert_array(back.progression.found_collectibles()).contains_exactly(["headlamp", "trolley"])
+	assert_int(back.progression.capacity()).is_equal(Progression.BASE_CAPACITY + 3)
+	assert_dict(back.to_dict()).is_equal(state.to_dict())

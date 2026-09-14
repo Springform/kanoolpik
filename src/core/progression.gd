@@ -20,12 +20,30 @@ const ABILITIES := {
 	"map_sense": {"cost": 1, "name_key": "ability.map_sense"}, # Arrow towards the container for the held item.
 }
 
+## Hidden collectibles (WP-3.7). Four per island, found rather than bought, and
+## deliberately not items: they never count toward completion or the island-clean
+## check. The effects table lives here for the same reason [constant ABILITIES]
+## does — the core has to know what finding one changes. Where they hide and what
+## they look like is level data and presentation, and belongs to WP-3.7.
+##
+## `capacity_bonus` composes with Rolige hænder rather than replacing it; see
+## [method capacity_bonus]. The other two are flags phase 5 and phase 4 will read
+## and do nothing today, which is deliberate: finding one should already stick.
+const COLLECTIBLES := {
+	"trolley": {"capacity_bonus": 3, "name_key": "collectible.trolley"}, # +3 carry capacity.
+	"sunglasses": {"capacity_bonus": 0, "name_key": "collectible.sunglasses"}, # Phase 5: eases the hangover blur.
+	"headlamp": {"capacity_bonus": 0, "name_key": "collectible.headlamp"}, # Phase 5: light.
+	"whistle": {"capacity_bonus": 0, "name_key": "collectible.whistle"}, # Phase 4: calls the crew to you.
+}
+
 var points: int = 0
 var spent: int = 0
 var unlocked: Array[String] = []
 var _credited_containers: Dictionary = {}
 ## Series already summoned by "call a mate" — once each, for the whole party.
 var _summoned_series: Dictionary = {}
+## Collectibles the party has found. Shared, like the points.
+var _found: Dictionary = {}
 
 
 ## Credit a completed container once. Returns true if points were awarded.
@@ -81,14 +99,42 @@ func summoned_series() -> Array[String]:
 	return out
 
 
+## Has this collectible been found yet?
+func has_found(collectible_id: String) -> bool:
+	return _found.has(collectible_id)
+
+
+## Record a find. False when the id is unknown or it was already found, so the
+## caller can tell "nothing happened" from "something did".
+func collect(collectible_id: String) -> bool:
+	if not COLLECTIBLES.has(collectible_id) or has_found(collectible_id):
+		return false
+	_found[collectible_id] = true
+	return true
+
+
+## Everything found, sorted — order matters for determinism and for diffs.
+func found_collectibles() -> Array[String]:
+	var out: Array[String] = []
+	for k in _found.keys():
+		out.append(String(k))
+	out.sort()
+	return out
+
+
 ## The capacity every player should have right now, given what the party owns.
 func capacity() -> int:
 	return BASE_CAPACITY + capacity_bonus()
 
 
 ## Carry capacity bonus granted by abilities.
+## Bought and found bonuses add up. Computed in ONE place on purpose: a second
+## place that knows "+2 for steady hands" is a second place to forget the trolley.
 func capacity_bonus() -> int:
-	return 2 if has("steady_hands") else 0
+	var bonus := 2 if has("steady_hands") else 0
+	for collectible_id in found_collectibles():
+		bonus += int(COLLECTIBLES[collectible_id]["capacity_bonus"])
+	return bonus
 
 
 func to_dict() -> Dictionary:
@@ -98,6 +144,7 @@ func to_dict() -> Dictionary:
 		"unlocked": unlocked.duplicate(),
 		"credited": _credited_containers.keys(),
 		"summoned": summoned_series(),
+		"found": found_collectibles(),
 	}
 
 
@@ -111,4 +158,6 @@ static func from_dict(d: Dictionary) -> Progression:
 		p._credited_containers[String(c)] = true
 	for s in d.get("summoned", []):
 		p._summoned_series[String(s)] = true
+	for f in d.get("found", []):
+		p._found[String(f)] = true
 	return p
