@@ -8,6 +8,8 @@ extends RefCounted
 ## Serialisable so it can be part of a save / multiplayer state.
 
 const POINTS_PER_CONTAINER := 1
+## Carry capacity every player starts with (GAME_DESIGN §4). Abilities add to it.
+const BASE_CAPACITY := 3
 
 ## id -> { cost, name_key }
 const ABILITIES := {
@@ -22,6 +24,8 @@ var points: int = 0
 var spent: int = 0
 var unlocked: Array[String] = []
 var _credited_containers: Dictionary = {}
+## Series already summoned by "call a mate" — once each, for the whole party.
+var _summoned_series: Dictionary = {}
 
 
 ## Credit a completed container once. Returns true if points were awarded.
@@ -55,6 +59,33 @@ func unlock(ability_id: String) -> bool:
 	return true
 
 
+## Has this series already been summoned? "Råb på en kammerat" works once per series.
+func can_summon(series: String) -> bool:
+	return not series.is_empty() and not _summoned_series.has(series)
+
+
+## Spend the summon for this series. Returns false if it was already spent.
+func mark_summoned(series: String) -> bool:
+	if not can_summon(series):
+		return false
+	_summoned_series[series] = true
+	return true
+
+
+## Series spent on summons, sorted — order matters for determinism and diffs.
+func summoned_series() -> Array[String]:
+	var out: Array[String] = []
+	for k in _summoned_series.keys():
+		out.append(String(k))
+	out.sort()
+	return out
+
+
+## The capacity every player should have right now, given what the party owns.
+func capacity() -> int:
+	return BASE_CAPACITY + capacity_bonus()
+
+
 ## Carry capacity bonus granted by abilities.
 func capacity_bonus() -> int:
 	return 2 if has("steady_hands") else 0
@@ -66,6 +97,7 @@ func to_dict() -> Dictionary:
 		"spent": spent,
 		"unlocked": unlocked.duplicate(),
 		"credited": _credited_containers.keys(),
+		"summoned": summoned_series(),
 	}
 
 
@@ -77,4 +109,6 @@ static func from_dict(d: Dictionary) -> Progression:
 		p.unlocked.append(String(a))
 	for c in d.get("credited", []):
 		p._credited_containers[String(c)] = true
+	for s in d.get("summoned", []):
+		p._summoned_series[String(s)] = true
 	return p

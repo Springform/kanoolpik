@@ -17,6 +17,13 @@ signal item_taken_out(item_id: String, player_id: int, container_id: String)
 signal container_completed(container_id: String)
 signal island_clean()
 
+## Progression (ADR 0010) — all four come out of [CommandProcessor], never from
+## a local button press, so multiplayer gets the same fan-out for free.
+signal points_awarded(container_id: String, points: int, total_available: int)
+signal ability_unlocked(ability_id: String, player_id: int, points_left: int)
+signal capacity_changed(player_id: int, capacity: int)
+signal item_summoned(item_id: String, player_id: int, position: Vector3)
+
 ## Presentation-only signals.
 signal level_loaded(level_id: String)
 signal local_player_spawned(player: Node3D)
@@ -41,3 +48,11 @@ func publish(event: Dictionary) -> void:
 			container_completed.emit(event["container_id"])
 		"island_clean":
 			island_clean.emit()
+		"points_awarded":
+			points_awarded.emit(event["container_id"], event["points"], event["total_available"])
+		"ability_unlocked":
+			ability_unlocked.emit(event["ability_id"], event["player_id"], event["points_left"])
+		"capacity_changed":
+			capacity_changed.emit(event["player_id"], event["capacity"])
+		"item_summoned":
+			item_summoned.emit(event["item_id"], event["player_id"], event["position"])

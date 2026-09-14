@@ -78,3 +78,45 @@ func test_pick_up_order_survives_serialisation() -> void:
 	assert_array(copy.carried_by(1)).is_equal(["z", "a"])
 	copy.set_carried("b", 1)
 	assert_array(copy.carried_by(1)).is_equal(["z", "a", "b"])
+
+
+# --- Progression and bounds ride in the snapshot (WP-3.0 / ADR 0010) ---------
+
+func test_progression_survives_a_state_round_trip() -> void:
+	var state := WorldState.new()
+	state.add_player(1, 3)
+	state.progression.points = 3
+	state.progression.unlock("insight")
+	state.progression.mark_summoned("poles")
+	var back := WorldState.from_dict(state.to_dict())
+	assert_bool(back.progression.has("insight")).is_true()
+	assert_int(back.progression.available_points()).is_equal(2)
+	assert_bool(back.progression.can_summon("poles")).is_false()
+	assert_dict(back.to_dict()).is_equal(state.to_dict())
+
+
+func test_a_duplicated_state_does_not_share_its_progression() -> void:
+	var state := WorldState.new()
+	state.progression.points = 1
+	var copy := state.duplicate_state()
+	copy.progression.unlock("insight")
+	assert_bool(state.progression.has("insight")).is_false()
+
+
+func test_an_unbounded_state_leaves_positions_alone() -> void:
+	var state := WorldState.new()
+	assert_vector(state.clamp_to_island(Vector3(500, 7, -500))).is_equal(Vector3(500, 7, -500))
+
+
+func test_clamping_pulls_a_position_back_onto_the_island() -> void:
+	var state := WorldState.new()
+	state.island_radius = 10.0
+	state.ground_y = 1.5
+	var clamped := state.clamp_to_island(Vector3(30, 99, 40)) # 50 m out
+	assert_float(Vector2(clamped.x, clamped.z).length()).is_equal_approx(10.0, 0.001)
+	assert_float(clamped.y).is_equal_approx(1.5, 0.001)
+	# A position already inside keeps its x/z and is set down on the ground.
+	var inside := state.clamp_to_island(Vector3(1, 99, 2))
+	assert_float(inside.x).is_equal_approx(1.0, 0.001)
+	assert_float(inside.z).is_equal_approx(2.0, 0.001)
+	assert_float(inside.y).is_equal_approx(1.5, 0.001)

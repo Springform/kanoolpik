@@ -66,32 +66,25 @@ Exit criterion — "the island looks like a place; 150+ items; loads in < 10 s o
 
 *Exit criterion: completing containers feels rewarding; every ability is usable and tested.*
 
-| WP | Title | Owns |
-|---|---|---|
-| 3.1 | Skill point UI + unlock menu (Tab) | `src/game/hud/skills/` |
-| 3.2 | Klarsyn (Insight): series siblings glow | `src/game/abilities/insight/` |
-| 3.3 | Stedsans (Map sense): HUD arrow | `src/game/abilities/map_sense/` |
-| 3.4 | Råb på en kammerat (Call a mate): items fly to you — needs a core `summon` command | `src/core/` (new command), `src/game/abilities/call_mate/` |
-| 3.5 | Rolige hænder: capacity bonus applied live | `src/autoload/` (capacity refresh), tests |
-| 3.6 | Autopilot: proximity auto-place | `src/game/abilities/auto_place/` |
-| 3.7 | Hidden collectibles (4 per island) | `data/`, `src/game/collectibles/` |
-| 3.8 | Evaluation tuning: par times from playtests, grade copy | `data/levels/`, `assets/i18n/` |
-| 3.9 | **Hvalen** — timed beer-bong call (see below) | `src/core/` (new command + consumed state), `src/game/events/` |
+WP files: [`docs/roadmap/phase-3/`](roadmap/phase-3/). **WP-3.0 blocks everything else** — it implements [ADR 0010](adr/0010-progression-is-replicated-state.md), which moves progression inside the replicated state so abilities that touch the world go through commands.
 
-3.1 first (others plug into it); 3.4 and 3.9 both need core changes → do those first in the core lane.
+| WP | Title | Lane | Owns | Depends on |
+|---|---|---|---|---|
+| [3.0](roadmap/phase-3/WP-3.0-progression-core.md) | Progression as replicated state; `unlock` + `summon` commands; all phase-3 input actions | core/infra | `src/core/`, `src/autoload/`, `project.godot` | — |
+| [3.1](roadmap/phase-3/WP-3.1-skill-menu.md) | Skill point UI + unlock menu (Tab); provides `Hud.ability_layer()` | hud | `src/game/hud/skills/`, `hud.gd` | 3.0 |
+| [3.2](roadmap/phase-3/WP-3.2-insight.md) | Klarsyn: series siblings glow | abilities | `src/game/abilities/insight/` | 3.0 |
+| [3.3](roadmap/phase-3/WP-3.3-map-sense.md) | Stedsans: HUD arrow | abilities | `src/game/abilities/map_sense/` | 3.0, 3.1 |
+| [3.4](roadmap/phase-3/WP-3.4-call-a-mate.md) | Råb på en kammerat: the series flies to you | abilities | `src/game/abilities/call_mate/` | 3.0 |
+| [3.6](roadmap/phase-3/WP-3.6-auto-place.md) | Autopilot: proximity auto-place | abilities/player | `src/game/abilities/auto_place/`, `player.gd` | 3.0 |
+| [3.7](roadmap/phase-3/WP-3.7-collectibles.md) | Hidden collectibles (4 per island) | content | `src/game/collectibles/`, `data/` | 3.0 |
+| [3.8](roadmap/phase-3/WP-3.8-evaluation-tuning.md) | Evaluation tuning from measured runs | content | `data/levels/`, `assets/i18n/` | 3.1–3.7 + playtest |
+| [3.9](roadmap/phase-3/WP-3.9-hvalen-design-questions.md) | "Hvalen" — open design questions | design | — | a decision session |
 
-### WP-3.9 — Hvalen (captured, not yet designed)
+**WP-3.5 (Rolige hænder) is gone as a separate package.** Capacity is `WorldState`, so the unlock effect belongs in 3.0; showing it belongs in 3.1. A WP that owns neither its data nor its display is a coordination cost with nothing in it.
 
-KA's idea, noted as-is: **a sound plays; the crew then has ~30 s to find "Hvalen" (a beer bong) which spawns somewhere random on the island, plus an unopened beer. A player holding both before the timer runs out drinks a beer bong.** Reward: possibly a skill unlock. Failure: a random container empties back out onto the island.
+**Waves.** 3.0 alone first. Then {3.1, 3.2, 3.4} in parallel — disjoint folders, no shared files. Then {3.3, 3.6, 3.7}. 3.8 after a human plays; 3.9 after a design session.
 
-Worth thinking about before this gets written up properly:
-
-- **The penalty is the first mechanic that can undo work.** The pant bag holds 34 items; dumping it could erase ten minutes. Scaling it — the smallest packed container, or N items rather than a whole one — is probably the difference between tension and a rage quit.
-- **30 s for something you have never seen** is tight on a 32 m island at 4.5 m/s. Either the Hvalen announces itself (glow, sound), or the window is longer, or both.
-- **The beer has to come from somewhere.** All twelve unopened beers live in the two coolers. Late in a run, answering the call means taking one back out and un-completing a cooler — an interesting trade, or an annoying one. Worth deciding deliberately rather than discovering.
-- **Drinking removes an item from the world**, which breaks "the island is clean when every item is placed". Cleanest fix is a `CONSUMED` state in `WorldState` that counts as cleared; the alternative (the empty can it leaves behind becomes a new item to tidy) is more fun and more work.
-- **It must be deterministic and go through a command**, like everything else in `src/core/` — the call time and the Hvalen's spawn come from the seed, or six browsers will disagree about whether anyone made it.
-- **Frequency:** two or three calls in a 20-minute run, never in the first few minutes, never in the last.
+**Scheduling constraint:** WP-3.6 and the parked [WP-1.7](roadmap/phase-1/WP-1.7-controller-feel.md) both own `src/game/player/player.gd`. Run one or the other, never both — the phase-2 lesson was that agent conflicts are semantic, and two agents rewriting the same interact path is the textual kind on top.
 
 ## Phase 4 — Multiplayer (≤ 6, host-authoritative WebRTC)
 

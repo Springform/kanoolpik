@@ -22,6 +22,14 @@ var rng_seed: int = 0
 var elapsed_ticks: int = 0 ## Simulation ticks since level start (fixed step), for scoring.
 ## Cumulative counters used by [Evaluation]. Keys: placements, wrong_placements, pickups.
 var stats: Dictionary = {"placements": 0, "wrong_placements": 0, "pickups": 0}
+## Skill points and unlocked abilities — party-wide, and part of the replicated
+## snapshot since ADR 0010. Only [CommandProcessor] may change it during play.
+var progression: Progression = Progression.new()
+## Walkable bounds, copied from the level so the core can keep commands that
+## move items from putting them in the lake. radius <= 0 means "unbounded",
+## which is what a bare WorldState in a unit test gets.
+var island_radius: float = 0.0
+var ground_y: float = 0.0
 
 
 func bump_stat(key: String, amount: int = 1) -> void:
@@ -53,6 +61,17 @@ func player_capacity(player_id: int) -> int:
 func set_player_capacity(player_id: int, capacity: int) -> void:
 	if _players.has(player_id):
 		_players[player_id]["capacity"] = capacity
+
+
+## Pull a position back onto walkable ground. Unbounded states return it as-is,
+## so unit tests that never set bounds behave exactly as they did before.
+func clamp_to_island(position: Vector3) -> Vector3:
+	if island_radius <= 0.0:
+		return position
+	var flat := Vector2(position.x, position.z)
+	if flat.length() > island_radius:
+		flat = flat.normalized() * island_radius
+	return Vector3(flat.x, ground_y, flat.y)
 
 
 func player_ids() -> Array[int]:
@@ -174,7 +193,17 @@ func to_dict() -> Dictionary:
 	var players := {}
 	for pid in player_ids():
 		players[str(pid)] = _players[pid].duplicate()
-	return {"rng_seed": rng_seed, "elapsed_ticks": elapsed_ticks, "carry_counter": _carry_counter, "stats": stats.duplicate(), "locations": locs, "players": players}
+	return {
+		"rng_seed": rng_seed,
+		"elapsed_ticks": elapsed_ticks,
+		"carry_counter": _carry_counter,
+		"stats": stats.duplicate(),
+		"locations": locs,
+		"players": players,
+		"progression": progression.to_dict(),
+		"island_radius": island_radius,
+		"ground_y": ground_y,
+	}
 
 
 static func from_dict(d: Dictionary) -> WorldState:
@@ -196,7 +225,10 @@ static func from_dict(d: Dictionary) -> WorldState:
 			"carry_seq": int(loc.get("carry_seq", -1)),
 		}
 	for pid in d.get("players", {}).keys():
-		state._players[int(pid)] = {"capacity": int(d["players"][pid].get("capacity", 3))}
+		state._players[int(pid)] = {"capacity": int(d["players"][pid].get("capacity", Progression.BASE_CAPACITY))}
+	state.progression = Progression.from_dict(d.get("progression", {}))
+	state.island_radius = float(d.get("island_radius", 0.0))
+	state.ground_y = float(d.get("ground_y", 0.0))
 	return state
 
 
