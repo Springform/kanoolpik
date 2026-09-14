@@ -23,6 +23,8 @@ signal points_awarded(container_id: String, points: int, total_available: int)
 signal ability_unlocked(ability_id: String, player_id: int, points_left: int)
 signal capacity_changed(player_id: int, capacity: int)
 signal item_summoned(item_id: String, player_id: int, position: Vector3)
+signal points_granted(player_id: int, points: int, total_available: int)
+signal collectible_found(collectible_id: String, player_id: int)
 
 ## Presentation-only signals.
 signal level_loaded(level_id: String)
@@ -56,3 +58,7 @@ func publish(event: Dictionary) -> void:
 			capacity_changed.emit(event["player_id"], event["capacity"])
 		"item_summoned":
 			item_summoned.emit(event["item_id"], event["player_id"], event["position"])
+		"points_granted":
+			points_granted.emit(event["player_id"], event["points"], event["total_available"])
+		"collectible_found":
+			collectible_found.emit(event["collectible_id"], event["player_id"])

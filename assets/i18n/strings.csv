@@ -280,3 +280,19 @@ ui.test.status_clock,Tid: %s · forkerte placeringer: %d,Time: %s · wrong place
 ui.test.hint,[F1] åbner testpanelet,[F1] opens the test panel
 ui.title.test_mode_on,Testtilstand: til,Test mode: on
 ui.title.test_mode_off,Testtilstand: fra,Test mode: off
+collectible.trolley,Sækkevogn,Trolley
+collectible.sunglasses,Solbriller,Sunglasses
+collectible.headlamp,Pandelampe,Headlamp
+collectible.whistle,Fløjte,Whistle
+collectible.trolley.desc,Bær tre ting mere,Carry three more things
+collectible.sunglasses.desc,Morgenen gør mindre ondt,The morning hurts less
+collectible.headlamp.desc,Lys i krogene,Light in the corners
+collectible.whistle.desc,Kalder makkerne hen til dig,Calls the crew over to you
+ui.collectible.found,Du fandt: %s,You found: %s
+ui.collectible.found_all,Alle fire fundet,All four found
+ui.error.unknown_collectible,Den findes ikke,No such thing
+ui.error.already_found,Den har I allerede fundet,You already found that one
+ui.ability.map_sense_on,Stedsans til,Map sense on
+ui.ability.map_sense_off,Stedsans fra,Map sense off
+ui.ability.auto_placed,Autopilot lagde %s på plads,Autopilot put %s away
+ui.ability.nothing_nearby,Ikke tæt nok på den rigtige beholder,Not close enough to the right container
