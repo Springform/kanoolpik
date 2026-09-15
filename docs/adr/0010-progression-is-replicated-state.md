@@ -1,6 +1,6 @@
 # ADR 0010 — Progression is replicated state, and unlocking is a command
 
-**Status:** Proposed · 2026-09-14 · **Extends [ADR 0003](0003-pure-core-command-pattern.md)**
+**Status:** Accepted · 2026-09-14 (implemented by WP-3.0) · **Extends [ADR 0003](0003-pure-core-command-pattern.md)**
 
 ## Context
 [`Progression`](../../src/core/progression.gd) exists and is tested, but it sits outside the simulation. `GameSession._on_command_applied()` watches the event stream and calls `progression.credit_container()` as a side effect; `SaveGame.pack()` stores it next to the `WorldState` rather than inside it. That was the right shape while abilities were a phase-3 promise: nothing read progression back into the world.

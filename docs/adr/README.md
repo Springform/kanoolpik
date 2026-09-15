@@ -13,4 +13,5 @@ One file per decision, numbered, never deleted — superseded ADRs get a "Supers
 | [0007](0007-web-export-no-threads.md) | Web export with threads disabled, GL Compatibility renderer | Accepted |
 | [0008](0008-procedural-assets.md) | Assets are generated in code, not downloaded | Accepted (amended by 0009) |
 | [0009](0009-third-party-models.md) | Third-party models allowed, with tracked attribution | Accepted |
-| [0010](0010-progression-is-replicated-state.md) | Progression is replicated state; unlocking is a command | Proposed |
+| [0010](0010-progression-is-replicated-state.md) | Progression is replicated state; unlocking is a command | Accepted |
+| [0011](0011-websocket-relay.md) | Multiplayer over a WebSocket relay, not WebRTC | Accepted (supersedes 0002 transport) |

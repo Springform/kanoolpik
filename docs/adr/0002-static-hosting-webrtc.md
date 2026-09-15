@@ -1,6 +1,6 @@
 # ADR 0002 — Static hosting; multiplayer via WebRTC with a player as host
 
-**Status:** Accepted · 2026-09-13
+**Status:** Accepted · 2026-09-13 · **Transport clause superseded by [ADR 0011](0011-websocket-relay.md)** — static hosting and host authority still stand; WebRTC does not.
 
 ## Context
 The owner does not want to operate a server. The game must be shareable as a URL. Multiplayer (≤ 6) is essential eventually.

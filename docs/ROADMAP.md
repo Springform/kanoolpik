@@ -89,21 +89,27 @@ WP files: [`docs/roadmap/phase-3/`](roadmap/phase-3/). **WP-3.0 blocks everythin
 
 **Scheduling constraint:** WP-3.6 and the parked [WP-1.7](roadmap/phase-1/WP-1.7-controller-feel.md) both own `src/game/player/player.gd`. Run one or the other, never both — the phase-2 lesson was that agent conflicts are semantic, and two agents rewriting the same interact path is the textual kind on top.
 
-## Phase 4 — Multiplayer (≤ 6, host-authoritative WebRTC)
+## Phase 4 — Multiplayer (≤ 6, host-authoritative)
 
 *Exit criterion: six browsers on different networks finish Island 01 together via a room code.*
 
-| WP | Title | Owns |
-|---|---|---|
-| 4.1 | Signalling service (Cloudflare Worker) + protocol doc | `infra/signalling/`, `docs/NETWORKING.md` |
-| 4.2 | `WebRtcTransport`: command relay, event broadcast, snapshot on join, ordering guarantees | `src/net/` |
-| 4.3 | Simulated multi-peer test harness (N processors, one authority, in-process) | `tests/net/`, `src/net/sim_transport.gd` |
-| 4.4 | Lobby: create/join by room code, player list, ready-up, seed sync | `src/game/lobby/` |
-| 4.5 | Remote player avatars: `MultiplayerSynchronizer` transforms, name tags, held items | `src/game/player/remote/` |
-| 4.6 | Join/leave/reconnect, host-left handling, dropped items on disconnect | `src/net/`, `src/autoload/` |
-| 4.7 | Multiplayer HUD: who placed what, shared toasts, ping | `src/game/hud/` |
+WP files: [`docs/roadmap/phase-4/`](roadmap/phase-4/). **[ADR 0011](adr/0011-websocket-relay.md) replaces WebRTC with a WebSocket relay** — same GitHub Pages hosting, same host-authoritative design, but the real transport can be exercised in CI and on a desktop, and no friend is excluded by their NAT. Stock Godot cannot create a WebRTC peer at all (`No default WebRTC extension configured`), which is what settled it.
 
-Order: 4.3 (harness) and 4.1 first and in parallel; 4.2 uses 4.3; 4.4/4.5/4.7 after 4.2.
+| WP | Title | Lane | Owns | Depends on |
+|---|---|---|---|---|
+| [4.3](roadmap/phase-4/WP-4.3-sim-harness.md) | Simulated multi-peer harness (N peers, one authority, in-process) | net/test | `src/net/sim_transport.gd`, `tests/net/` | — |
+| [4.1](roadmap/phase-4/WP-4.1-relay.md) | The relay: Cloudflare Worker, room codes, protocol doc | infra | `infra/relay/`, `docs/NETWORKING.md` | — |
+| [4.2](roadmap/phase-4/WP-4.2-websocket-transport.md) | `WebSocketTransport`: commands up, events down, snapshot on join | net | `src/net/websocket_transport.gd` | 4.3, 4.1 |
+| [4.4](roadmap/phase-4/WP-4.4-lobby.md) | Lobby: create/join by room code, player list, seed sync | flow/hud | `src/game/lobby/` | 4.2 |
+| [4.5](roadmap/phase-4/WP-4.5-remote-avatars.md) | Remote avatars, name tags, held items | player | `src/game/player/remote/` | 4.2 |
+| [4.6](roadmap/phase-4/WP-4.6-join-leave-reconnect.md) | Join/leave/reconnect, host-left, dropped items | net | `src/net/`, `src/autoload/` | 4.2, 4.4 |
+| [4.7](roadmap/phase-4/WP-4.7-multiplayer-hud.md) | Who did what, shared toasts, ping | hud | `src/game/hud/` | 4.2, 4.5 |
+
+**Waves.** {4.3, 4.1} in parallel — neither needs the other and neither touches `src/game/`. Then 4.2 alone, with the harness as its oracle. Then {4.4, 4.5, 4.7} in parallel, and 4.6 after 4.4.
+
+**The seam already exists.** `src/net/transport.gd` was written in phase 0 for this, and `LocalTransport` is the proof it works: gameplay submits commands and listens for events, and has no idea whether a network is involved. Phase 4 adds a second implementation; `src/core/` and `src/game/` should barely change.
+
+**Free has a shape.** ADR 0011 does the arithmetic: player transforms are the only traffic that matters, and the rate decides whether the free plan covers an evening's play. WP-4.5 owns that constant.
 
 ## Phase 5 — Polish & release to friends
 
