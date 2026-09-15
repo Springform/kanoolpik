@@ -369,3 +369,43 @@ func test_every_progression_error_has_a_message_of_its_own() -> void:
 		assert_str(key).is_equal("ui.error." + id)
 		assert_str(tr(key)).is_not_equal(key) # the row really is in the CSV
 	assert_str(HUD.error_key("something_new")).is_equal("ui.error.generic")
+
+
+# --- The key that actually fires it -------------------------------------------
+
+func test_every_ability_says_which_key_uses_it() -> void:
+	# The panel described what each ability does and never said how to use it,
+	# which is the panel failing at its one job: a player who buys Klarsyn and
+	# then has to ask which key it is on has been sold a mystery.
+	assert_str(menu.key_hint("insight")).is_equal("[F]")
+	assert_str(menu.key_hint("call_mate")).is_equal("[R]")
+	assert_str(menu.key_hint("map_sense")).is_equal("[C]")
+	# Autopilot has no key of its own — it changes what interact already does.
+	assert_str(menu.key_hint("auto_place")).contains("E")
+	# Rolige hænder has nothing to press at all.
+	assert_str(menu.key_hint("steady_hands")).is_equal(tr("ui.skills.passive"))
+
+
+func test_the_key_is_read_from_the_input_map_not_written_out() -> void:
+	# A hard-coded "[F]" would quietly lie the day somebody rebinds the action.
+	# Rebind it here and the label must follow.
+	var original := InputMap.action_get_events("ability_insight")
+	var event := InputEventKey.new()
+	event.physical_keycode = KEY_J
+	InputMap.action_erase_events("ability_insight")
+	InputMap.action_add_event("ability_insight", event)
+	assert_str(menu.key_hint("insight")).override_failure_message(
+		"the key label is hard-coded and would lie after a rebind").is_equal("[J]")
+	InputMap.action_erase_events("ability_insight")
+	for e in original:
+		InputMap.action_add_event("ability_insight", e)
+	assert_str(menu.key_hint("insight")).is_equal("[F]")
+
+
+func test_an_ability_with_no_binding_at_all_says_nothing_rather_than_lying() -> void:
+	var original := InputMap.action_get_events("ability_call_mate")
+	InputMap.action_erase_events("ability_call_mate")
+	assert_str(menu.key_hint("call_mate")).override_failure_message(
+		"an unbound action should show no key, not a stale one").is_empty()
+	for e in original:
+		InputMap.action_add_event("ability_call_mate", e)

@@ -26,6 +26,23 @@ const RIGHT_COLUMN_WIDTH := 200.0
 const COLOR_OWNED := Color(0.55, 0.85, 0.55)
 const COLOR_AFFORDABLE := Color(0.96, 0.96, 0.94)
 const COLOR_LOCKED := Color(0.72, 0.69, 0.63)
+const KEY_FONT_SIZE := 17
+const COLOR_KEY := Color(1.0, 0.78, 0.35)
+
+## Which input action fires each ability, so the panel can tell the player how to
+## use what they just bought. Read from the [InputMap] rather than written out as
+## text: a rebind then moves the label with it instead of quietly lying.
+##
+## Two do not have a key of their own and say so instead:
+##   steady_hands — passive, it just raises your capacity
+##   auto_place   — no new key; it changes what `interact` already does
+const ABILITY_ACTIONS := {
+	"insight": "ability_insight",
+	"map_sense": "ability_map_sense",
+	"call_mate": "ability_call_mate",
+	"auto_place": "interact",
+	"steady_hands": "",
+}
 
 @onready var title_label: Label = $Center/Panel/VBox/Title
 @onready var points_label: Label = $Center/Panel/VBox/Points
@@ -222,13 +239,23 @@ func _build_rows() -> void:
 
 		var left := VBoxContainer.new()
 		left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var name_row := HBoxContainer.new()
+		name_row.add_theme_constant_override("separation", 10)
 		var name_label := Label.new()
 		name_label.add_theme_font_size_override("font_size", NAME_FONT_SIZE)
+		# How you actually use it. Buying an ability and then having to ask which
+		# key it is on is the panel failing at its one job.
+		var key_label := Label.new()
+		key_label.add_theme_font_size_override("font_size", KEY_FONT_SIZE)
+		key_label.add_theme_color_override("font_color", COLOR_KEY)
+		key_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		name_row.add_child(name_label)
+		name_row.add_child(key_label)
 		var desc_label := Label.new()
 		desc_label.add_theme_font_size_override("font_size", DESC_FONT_SIZE)
 		desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		desc_label.custom_minimum_size = Vector2(DESC_MIN_WIDTH, 0)
-		left.add_child(name_label)
+		left.add_child(name_row)
 		left.add_child(desc_label)
 
 		var right := VBoxContainer.new()
@@ -252,7 +279,7 @@ func _build_rows() -> void:
 		rows_box.add_child(row)
 		buy_button.pressed.connect(_on_buy_pressed.bind(id))
 		_rows[id] = {
-			"name": name_label, "desc": desc_label, "cost": cost_label,
+			"name": name_label, "key": key_label, "desc": desc_label, "cost": cost_label,
 			"buy": buy_button, "status": status_label,
 		}
 
@@ -269,6 +296,36 @@ func _apply_texts() -> void:
 		(row["desc"] as Label).text = tr(name_key + ".desc")
 		(row["cost"] as Label).text = tr("ui.skills.cost") % int(Progression.ABILITIES[id]["cost"])
 		(row["buy"] as Button).text = tr("ui.skills.buy")
+		(row["key"] as Label).text = key_hint(id)
+
+
+## What to press, in square brackets, or a word when there is nothing to press.
+## Public so a test can pin it — an ability whose key label goes stale is worse
+## than no label, because the player believes it.
+func key_hint(ability_id: String) -> String:
+	var action := String(ABILITY_ACTIONS.get(ability_id, ""))
+	if action.is_empty():
+		return tr("ui.skills.passive")
+	var key := first_key_of(action)
+	if key.is_empty():
+		return ""
+	if action == "interact":
+		# Autopilot has no key of its own; it changes what interact already does.
+		return tr("ui.skills.same_key") % key
+	return "[%s]" % key
+
+
+## The first keyboard key bound to an action, as the player sees it printed on
+## the keyboard. Taken from the live [InputMap] so a rebind moves the label too.
+static func first_key_of(action: String) -> String:
+	if not InputMap.has_action(action):
+		return ""
+	for event in InputMap.action_get_events(action):
+		if event is InputEventKey:
+			var code: Key = event.physical_keycode if event.physical_keycode != KEY_NONE else event.keycode
+			if code != KEY_NONE:
+				return OS.get_keycode_string(DisplayServer.keyboard_get_label_from_physical(code))
+	return ""
 
 
 func _request_mouse_mode(mode: Input.MouseMode) -> void:

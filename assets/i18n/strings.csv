@@ -296,3 +296,5 @@ ui.ability.map_sense_on,Stedsans til,Map sense on
 ui.ability.map_sense_off,Stedsans fra,Map sense off
 ui.ability.auto_placed,Autopilot lagde %s på plads,Autopilot put %s away
 ui.ability.nothing_nearby,Ikke tæt nok på den rigtige beholder,Not close enough to the right container
+ui.skills.passive,passiv,passive
+ui.skills.same_key,samme [%s],same [%s]
