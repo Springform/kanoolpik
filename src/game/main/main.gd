@@ -10,7 +10,7 @@ extends Node
 ## nodes away and build again" — no stale node reacting to the next level's
 ## events. Everything it owns is listed in [method _tear_down].
 
-enum State { TITLE, PLAYING, EVALUATION }
+enum State { TITLE, LOBBY, PLAYING, EVALUATION }
 
 const ISLAND := preload("res://src/game/island/island.tscn")
 const PLAYER := preload("res://src/game/player/player.tscn")
@@ -18,6 +18,7 @@ const HUD := preload("res://src/game/hud/hud.tscn")
 const EVALUATION := preload("res://src/game/hud/evaluation/evaluation_screen.tscn")
 const TITLE_SCREEN := preload("res://src/game/title/title_screen.tscn")
 const PAUSE_MENU := preload("res://src/game/title/pause_menu.tscn")
+const LOBBY_SCREEN := preload("res://src/game/lobby/lobby_screen.tscn")
 
 ## Passed to GameSession as "use the level's own default".
 const LEVEL_DEFAULT_SEED := -1
@@ -40,6 +41,10 @@ var pause_menu: PauseMenu
 var backdrop: BackdropCamera
 ## The test-mode admin panel, when this build has one (WP-3.10).
 var test_panel: TestPanel
+## Multiplayer waiting room (WP-4.4). Both are null in a single-player run —
+## "Start alene" never constructs either, so no socket exists to leak.
+var lobby: LobbyController
+var lobby_screen: LobbyScreen
 
 
 func _ready() -> void:
@@ -68,7 +73,58 @@ func to_title() -> void:
 	# locked emitting this very signal.
 	title_screen.start_requested.connect(start_game, CONNECT_DEFERRED)
 	title_screen.continue_requested.connect(continue_game, CONNECT_DEFERRED)
+	title_screen.host_requested.connect(to_lobby.bind(""), CONNECT_DEFERRED)
+	title_screen.join_requested.connect(to_lobby, CONNECT_DEFERRED)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+## The multiplayer waiting room (WP-4.4). An empty [param room] means "host a
+## new one"; anything else is a code somebody read aloud.
+##
+## The screen goes up before the relay has answered, so a slow Worker looks like
+## a room that has not filled yet rather than a button that did nothing.
+func to_lobby(room: String) -> void:
+	_tear_down()
+	state = State.LOBBY
+	# The island keeps drifting behind the lobby exactly as it does behind the
+	# title: the backdrop is presentation, and the lobby's own world is built by
+	# LobbyController the moment a code exists.
+	island = ISLAND.instantiate()
+	add_child(island)
+	backdrop = BackdropCamera.new()
+	add_child(backdrop)
+	lobby_screen = LOBBY_SCREEN.instantiate()
+	add_child(lobby_screen)
+	lobby_screen.show_status("ui.lobby.connecting")
+	lobby_screen.back_pressed.connect(to_title, CONNECT_DEFERRED)
+	lobby = LobbyController.new()
+	lobby.name = "LobbyController"
+	lobby.level_id = level_id
+	add_child(lobby)
+	lobby.room_opened.connect(_on_room_opened)
+	lobby.peers_changed.connect(_on_peers_changed)
+	lobby.failed.connect(_on_lobby_failed)
+	lobby.closed.connect(_on_lobby_failed)
+	lobby.game_started.connect(start_multiplayer, CONNECT_DEFERRED)
+	lobby_screen.start_pressed.connect(lobby.start_game)
+	if room.is_empty():
+		lobby.host_new_room()
+	else:
+		lobby.join(room)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func _on_room_opened(room: String, is_host: bool) -> void:
+	lobby_screen.show_room(room, is_host, lobby.transport.peer_id())
+	lobby_screen.show_status("")
+
+
+func _on_peers_changed(peers: Array) -> void:
+	lobby_screen.set_peers(peers)
+
+
+func _on_lobby_failed(reason_key: String) -> void:
+	lobby_screen.show_status(reason_key)
 
 
 ## Build (or rebuild) a playable level. [param seed] < 0 uses the level default.
@@ -76,6 +132,20 @@ func start_game(seed: int = LEVEL_DEFAULT_SEED) -> void:
 	_tear_down()
 	state = State.PLAYING
 	GameSession.start_level(level_id, seed)
+	_build_playing_scene()
+
+
+## Leave the lobby for the island (WP-4.4).
+##
+## [LobbyController] has already called [method GameSession.start_level] with
+## the live transport, so this must [b]not[/b] start a level of its own: doing
+## so would build a [LocalTransport] over a fresh world and drop the socket on
+## the floor, and the symptom would be a multiplayer game in which nobody else
+## exists. The scene is torn down without stopping the session for the same
+## reason.
+func start_multiplayer() -> void:
+	_tear_down(false)
+	state = State.PLAYING
 	_build_playing_scene()
 
 
@@ -178,14 +248,24 @@ func _on_island_clean() -> void:
 
 ## Free the level's nodes immediately rather than deferring: a queued node is
 ## still connected to GameEvents and would react to the next level's events.
-func _tear_down() -> void:
+## [param stop_session] false keeps the running level alive while its nodes are
+## replaced — the one caller is [method start_multiplayer], where the session
+## already owns a live socket that stopping would silence.
+func _tear_down(stop_session: bool = true) -> void:
 	if GameEvents.island_clean.is_connected(_on_island_clean):
 		GameEvents.island_clean.disconnect(_on_island_clean)
-	GameSession.stop_level()
+	if stop_session:
+		# Ending the session means ending the room with it. Leaving the socket
+		# to be closed whenever the transport happens to be collected would keep
+		# a departed player in everyone else's list for as long as that took.
+		if is_instance_valid(lobby):
+			lobby.leave()
+		GameSession.stop_level()
 	get_tree().paused = false
 	# Abilities first: they hold connections to GameEvents, and one that outlives
 	# a restart animates the next shout twice.
-	for node: Node in _abilities + [test_panel, evaluation, pause_menu, hud, player, title_screen, backdrop, island]:
+	for node: Node in _abilities + [test_panel, evaluation, pause_menu, hud, player,
+			title_screen, lobby_screen, lobby, backdrop, island]:
 		if is_instance_valid(node):
 			remove_child(node)
 			node.free()
@@ -198,3 +278,5 @@ func _tear_down() -> void:
 	title_screen = null
 	pause_menu = null
 	backdrop = null
+	lobby = null
+	lobby_screen = null

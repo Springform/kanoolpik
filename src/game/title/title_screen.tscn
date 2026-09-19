@@ -24,9 +24,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -260.0
-offset_top = -170.0
+offset_top = -232.0
 offset_right = 260.0
-offset_bottom = 170.0
+offset_bottom = 232.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -75,6 +75,26 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Start"
+
+[node name="Host" type="Button" parent="Root/Panel/VBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Lav et hold"
+
+[node name="JoinRow" type="HBoxContainer" parent="Root/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="RoomInput" type="LineEdit" parent="Root/Panel/VBox/JoinRow"]
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+max_length = 7
+
+[node name="Join" type="Button" parent="Root/Panel/VBox/JoinRow"]
+layout_mode = 2
+text = "Join"
 
 [node name="Language" type="Button" parent="Root/Panel/VBox"]
 layout_mode = 2

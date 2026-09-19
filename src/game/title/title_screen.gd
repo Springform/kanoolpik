@@ -10,6 +10,10 @@ extends CanvasLayer
 signal start_requested(seed: int)
 ## Emitted when the player wants to resume the autosave.
 signal continue_requested()
+## Emitted when the player wants to open a room for friends (WP-4.4).
+signal host_requested()
+## Emitted when the player typed a room code and wants in.
+signal join_requested(code: String)
 
 const LEVEL_DEFAULT_SEED := -1
 const LOCALES: Array[String] = ["da", "en"]
@@ -21,6 +25,10 @@ const LOCALES: Array[String] = ["da", "en"]
 @onready var continue_button: Button = $Root/Panel/VBox/Continue
 @onready var start_button: Button = $Root/Panel/VBox/Start
 @onready var language_button: Button = $Root/Panel/VBox/Language
+@onready var panel: PanelContainer = $Root/Panel
+@onready var host_button: Button = $Root/Panel/VBox/Host
+@onready var room_input: LineEdit = $Root/Panel/VBox/JoinRow/RoomInput
+@onready var join_button: Button = $Root/Panel/VBox/JoinRow/Join
 
 ## Test-mode toggle, built in code because it exists only in a build that offers
 ## test mode at all (WP-3.10). A node in the scene would have to be hidden in
@@ -36,6 +44,13 @@ func _ready() -> void:
 	continue_button.pressed.connect(continue_requested.emit)
 	start_button.pressed.connect(_on_start)
 	seed_input.text_submitted.connect(func(_t: String) -> void: _on_start())
+	host_button.pressed.connect(host_requested.emit)
+	join_button.pressed.connect(_on_join)
+	room_input.text_submitted.connect(func(_t: String) -> void: _on_join())
+	# The relay's alphabet has no vowels and no lookalikes, so a lower-case "b"
+	# is simply the same character said quietly. Uppercase it as they type
+	# rather than refusing it later.
+	room_input.text_changed.connect(_on_room_text_changed)
 	language_button.pressed.connect(toggle_language)
 	if TestMode.is_available():
 		test_mode_button = Button.new()
@@ -47,6 +62,19 @@ func _ready() -> void:
 		continue_button.grab_focus()
 	else:
 		start_button.grab_focus()
+	_fit_panel.call_deferred()
+
+
+## Size the panel to whatever is actually in it, rather than to a number typed
+## into the scene file.
+##
+## WP-4.4 added two buttons and a row, and the content grew past the fixed
+## offsets: the background stopped halfway down and the last three controls sat
+## on the island with nothing behind them. Every string assertion passed. The
+## same thing waits for anyone who adds a row here, or whose language makes a
+## label wrap, so the number is gone rather than raised.
+func _fit_panel() -> void:
+	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_MINSIZE)
 
 
 func _notification(what: int) -> void:
@@ -74,8 +102,14 @@ func apply_texts() -> void:
 	seed_input.placeholder_text = tr("ui.title.seed_hint")
 	continue_button.text = tr("ui.title.continue")
 	start_button.text = tr("ui.title.start")
+	host_button.text = tr("ui.title.host")
+	join_button.text = tr("ui.title.join")
+	room_input.placeholder_text = tr("ui.title.room_hint")
 	language_button.text = "%s: %s" % [tr("ui.title.language"), TranslationServer.get_locale().to_upper()]
 	_apply_test_mode_text()
+	# A longer language can change the panel's minimum size, so re-fit after the
+	# labels have had a frame to measure themselves.
+	_fit_panel.call_deferred()
 
 
 func _toggle_test_mode() -> void:
@@ -93,3 +127,19 @@ func _apply_test_mode_text() -> void:
 
 func _on_start() -> void:
 	start_requested.emit(chosen_seed())
+
+
+func _on_room_text_changed(text: String) -> void:
+	var upper := text.to_upper()
+	if upper == text:
+		return
+	var caret := room_input.caret_column
+	room_input.text = upper
+	room_input.caret_column = caret
+
+
+## Emits whatever was typed, valid or not. [LobbyController] owns the verdict —
+## the title screen saying "that is not a code" and the lobby saying it too
+## would be two places to keep one sentence.
+func _on_join() -> void:
+	join_requested.emit(RoomCode.normalize(room_input.text))
