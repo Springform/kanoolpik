@@ -132,3 +132,34 @@ wake up for.
 
 See `infra/relay/README.md`. Short version: `npx wrangler deploy` on a free
 account, then point the client at the resulting `https://…workers.dev` host.
+
+**It is deployed.** Since 2026-09-19:
+
+```
+wss://kanoolpik-relay.kennet-hoejmark.workers.dev
+```
+
+Verified at the HTTP layer — `/new` returns a room code with
+`Access-Control-Allow-Origin: *` (the game is served from a different origin, so
+that header is not decoration), and `/room/aaaaaa` is refused with `400` because
+`A` is not in the alphabet.
+
+**The host is stated in two places and will shortly be three.** The repository
+variable `KANOOLPIK_RELAY_URL` feeds the `net-live` workflow; this document
+names it for humans; WP-4.4 will bake it into the build as a constant. When it
+does, `net-live` should read that constant and the variable should go away —
+`compatibility_date` was stated twice and the test copy won in silence, and this
+is the same shape.
+
+## The only test that can catch the fake drifting
+
+`tests/net/` runs against `FakeRelay` by default. `KANOOLPIK_RELAY_URL` points
+it at a real relay instead, and the suite then scales its patience ×12 and waits
+on conditions rather than turn counts, so it survives real latency.
+
+Nothing on a developer machine runs it that way — it needs Godot and real
+network access at once. `.github/workflows/net-live.yml` is where it actually
+happens: on changes to `src/net/`, `tests/net/` or `infra/relay/`, weekly, and
+on demand. A red run there means the client and the live relay disagree, which
+is a different claim from "the code is broken" — hence its own workflow rather
+than a job in `ci.yml`.
