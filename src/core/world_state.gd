@@ -42,11 +42,18 @@ func add_player(player_id: int, capacity: int = 3) -> void:
 	_players[player_id] = {"capacity": capacity}
 
 
-func remove_player(player_id: int) -> void:
-	# Anything the player was carrying falls to the ground at origin — the
-	# presentation layer should reposition it via a DropCommand first.
+## Take a player out of the world. Anything still in their hands falls to the
+## ground at [param drop_at].
+##
+## [b]The default is the origin, and on a 60-metre island that is a pile in the
+## middle of nowhere[/b] — which is what this did unconditionally until WP-4.6.
+## Prefer the [code]leave[/code] command, which lays the armful out in a ring at
+## a real position and emits an [code]item_dropped[/code] for each piece, so the
+## presentation layer sees a friend putting things down rather than items
+## teleporting.
+func remove_player(player_id: int, drop_at: Vector3 = Vector3.ZERO) -> void:
 	for item_id in carried_by(player_id):
-		set_on_ground(item_id, Vector3.ZERO)
+		set_on_ground(item_id, drop_at)
 	_players.erase(player_id)
 
 

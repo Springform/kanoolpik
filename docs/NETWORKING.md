@@ -51,7 +51,7 @@ relay.
 | `welcome` | `id`, `host` (bool), `peers` (ids already here) | immediately on connect |
 | `join` | `id` | somebody arrived |
 | `leave` | `id` | a client went away |
-| `hostgone` | — | the host went away; the relay then closes your socket |
+| `hostgone` | — | the host went away; the relay then closes your socket — **on a later turn, never in the same breath.** Godot discards buffered packets the moment a socket reaches `STATE_CLOSED`, so a farewell sent and closed together is lost and the client tells its player their own connection dropped. `FakeRelay` had exactly this bug until WP-4.6 |
 | `m` | `from`, `d` | a payload, from the host or from a client |
 | `err` | `code`, `msg` | your last frame was refused (see below) |
 
@@ -104,10 +104,18 @@ single-player run and a host's run are indistinguishable to the core.
 4. **Stamp broadcasts with the authority's state hash** and check it after
    applying. A peer that lands on a different number has diverged and should ask
    for a snapshot rather than carry on. `SimNetwork` does this already.
-5. **A late joiner gets `WorldState.to_dict()`** and nothing else — the same
+5. **Being in the room is not being in the world.** The host turns the relay's
+   `join` and `leave` into `join`/`leave` commands and broadcasts them like any
+   other, so every peer adds and removes the same players in the same order
+   (WP-4.6). A peer that adds itself locally has a state the host does not, and
+   the hashes part company one command later with nothing able to say why.
+   A client may send these frames and it does not matter: the host stamps
+   `player_id` with the sender's peer id, so `join` asks to add somebody already
+   there and `leave` can only remove the sender.
+6. **A late joiner gets `WorldState.to_dict()`** and nothing else — the same
    snapshot a save writes, which is why ADR 0010 put progression inside the
    state.
-6. **Nobody ships item positions at level start.** Since WP-4.4 the seed does
+7. **Nobody ships item positions at level start.** Since WP-4.4 the seed does
    not even travel: `RoomCode.seed_for()` derives it from the six characters
    every peer already has, so a client that connects before the host has
    generated anything is already on the right island. The late-join snapshot in

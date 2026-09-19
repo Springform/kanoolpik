@@ -105,8 +105,19 @@ func _begin(p_level_id: String, p_level: Dictionary, p_catalog: Catalog,
 	transport.command_applied.connect(_on_command_applied)
 	transport.command_rejected.connect(_on_command_rejected)
 	transport.state_replaced.connect(_on_state_replaced)
+	# WP-4.6. Being in the room is not being in the world: somebody has to turn
+	# the relay's arrivals and departures into commands, and it has to be the
+	# authority, because a peer that adds itself has a state the host does not.
+	transport.peer_joined.connect(_on_peer_joined)
+	transport.peer_left.connect(_on_peer_left)
 	# A loaded state already knows its players (and their earned capacity).
-	if not state.has_player(transport.local_player_id()):
+	#
+	# This one direct mutation stays: it is how a world gets its first player,
+	# and on the host that player is the authority itself — there is nobody to
+	# ask. A CLIENT does not do this. It waits for the host's `join` broadcast,
+	# because adding itself locally is exactly the divergence the hash exists to
+	# catch, and it would catch it one command later with no way to say why.
+	if transport.is_authority() and not state.has_player(transport.local_player_id()):
 		state.add_player(transport.local_player_id(), base_capacity())
 	_running = true
 	GameEvents.level_loaded.emit(level_id)
@@ -179,6 +190,57 @@ func _on_command_applied(_command: Dictionary, result: Dictionary) -> void:
 
 func _on_command_rejected(command: Dictionary, error: String) -> void:
 	GameEvents.command_rejected.emit(command, error)
+
+
+## Put everybody already in the room into the world (WP-4.6).
+##
+## The lobby fills up before the host presses Afgang, and those peers produced
+## their `peer_joined` while no level was running — so without this the patient
+## ones would stand on the island unable to pick anything up.
+##
+## [b]It is a separate call, not part of [method _begin], because of the order
+## it has to come in.[/b] A caller that hands [method start_level] a live
+## transport has to point that transport at the new [WorldState] first;
+## [LobbyController.adopt_into_session] does exactly that. Doing this inside
+## [method _begin] applied the joins to the world the transport was still
+## holding — the lobby's copy — and broadcast them from there, so the host's
+## real state never gained the players and every client got the same join twice.
+## Idempotent: a peer already in the world is skipped.
+func admit_present_peers() -> void:
+	if not _running or transport == null or not transport.is_authority() or state == null:
+		return
+	for peer_id in transport.known_peers():
+		if not state.has_player(peer_id):
+			transport.submit_command(Commands.join(peer_id))
+
+
+## Somebody arrived. Only the authority acts: everyone else will be told.
+##
+## The snapshot has already gone out by the time this runs (the transport sends
+## it on the same frame), so the newcomer receives the world and then the
+## command that puts it in the world — in that order, which is the order every
+## other peer applies too.
+func _on_peer_joined(peer_id: int) -> void:
+	if not _running or transport == null or not transport.is_authority():
+		return
+	if state != null and state.has_player(peer_id):
+		return
+	transport.submit_command(Commands.join(peer_id))
+
+
+## Somebody left. Their armful lands where they were standing.
+##
+## [b]Except we do not know where that is.[/b] Positions are presentation and
+## the core has never carried them; WP-4.5 replicates transforms and should pass
+## the real one here. Until then the level's first spawn point is used: wrong,
+## but wrong somewhere a person walks past on the way to the canoes, rather than
+## at the origin, which on this island is the middle of nowhere.
+func _on_peer_left(peer_id: int) -> void:
+	if not _running or transport == null or not transport.is_authority():
+		return
+	if state == null or not state.has_player(peer_id):
+		return
+	transport.submit_command(Commands.leave(peer_id, player_spawn(0)))
 
 
 func _on_state_replaced(new_state: WorldState) -> void:

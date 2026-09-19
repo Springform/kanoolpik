@@ -44,15 +44,13 @@ var code := ""
 var is_host := false
 var level_id := DEFAULT_LEVEL
 
-## Everyone we know is in the room, us included, lowest first.
+## Everyone in the room, us included, lowest first — mirrored from
+## [method Transport.known_peers], which is the relay's fact rather than the
+## game's.
 ##
-## [b]On the host this is the whole room; on a client it is not.[/b] The relay's
-## `welcome` frame carries the ids already present, and [WebSocketTransport]
-## does not pass them on — so a client that arrives fourth learns about peers
-## two and three only if they leave. The host's screen is the one being read
-## aloud from, so that is where the roster is shown. Completing it is one
-## accessor in the transport and belongs to WP-4.6 with the rest of
-## join/leave/reconnect.
+## WP-4.4 could only fill this on the host, because the ids in the relay's
+## `welcome` frame were read and discarded. WP-4.6 kept them, so a client that
+## arrives fourth now sees peers two and three as well.
 var peers: Array[int] = []
 
 var _adopted := false
@@ -118,7 +116,7 @@ func _on_joined(peer_id: int, relay_says_host: bool) -> void:
 		failed.emit(E_NO_SUCH_ROOM)
 		return
 	is_host = relay_says_host
-	peers = [peer_id]
+	peers = transport.known_peers()
 	if not is_host:
 		# A client is in the game from the moment it is connected: the host's
 		# broadcasts have to land somewhere, and the transport can only apply
@@ -129,25 +127,34 @@ func _on_joined(peer_id: int, relay_says_host: bool) -> void:
 	peers_changed.emit(peers)
 
 
-func _on_peer_joined(peer_id: int) -> void:
-	if not peers.has(peer_id):
-		peers.append(peer_id)
-		peers.sort()
-		peers_changed.emit(peers)
+func _on_peer_joined(_peer_id: int) -> void:
+	_refresh_peers()
 
 
-func _on_peer_left(peer_id: int) -> void:
-	if peers.has(peer_id):
-		peers.erase(peer_id)
+func _on_peer_left(_peer_id: int) -> void:
+	_refresh_peers()
+
+
+## One source for the roster. Reading it back from the transport each time beats
+## keeping a parallel list in step with it — the `welcome` burst arrives as
+## several signals and a list built by appending would have to be right about
+## every one of them.
+func _refresh_peers() -> void:
+	var fresh := transport.known_peers()
+	if fresh != peers:
+		peers = fresh
 		peers_changed.emit(peers)
 
 
 func _on_disconnected(reason: String) -> void:
 	set_process(false)
-	closed.emit(_reason_key(reason))
+	closed.emit(reason_key(reason))
 
 
-static func _reason_key(reason: String) -> String:
+## A [WebSocketTransport] disconnect reason as something to show a person.
+## Public and static because [Main] needs the same mapping when the socket dies
+## mid-round, and two copies of it would drift the day a reason is added.
+static func reason_key(reason: String) -> String:
 	match reason:
 		WebSocketTransport.R_HOST_GONE:
 			return "ui.lobby.error.host_left"
@@ -189,6 +196,9 @@ func adopt_into_session() -> void:
 	GameSession.start_level(level_id, RoomCode.seed_for(code), transport)
 	transport.state = GameSession.state
 	transport.processor = GameSession.processor
+	# Only now — the joins are applied to whatever world the transport is
+	# holding, and until the two lines above it was still holding the lobby's.
+	GameSession.admit_present_peers()
 
 
 func leave() -> void:

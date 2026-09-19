@@ -102,16 +102,18 @@ WP files: [`docs/roadmap/phase-4/`](roadmap/phase-4/). **[ADR 0011](adr/0011-web
 | [4.2](roadmap/phase-4/WP-4.2-websocket-transport.md) ✅ | `WebSocketTransport`: commands up, events down, snapshot on join | net | `src/net/websocket_transport.gd` | 4.3, 4.1 |
 | [4.4](roadmap/phase-4/WP-4.4-lobby.md) ✅ | Lobby: create/join by room code, player list, the island the code names | flow/hud | `src/game/lobby/` | 4.2 |
 | [4.5](roadmap/phase-4/WP-4.5-remote-avatars.md) | Remote avatars, name tags, held items | player | `src/game/player/remote/` | 4.2 |
-| [4.6](roadmap/phase-4/WP-4.6-join-leave-reconnect.md) | Join/leave/reconnect, host-left, dropped items | net | `src/net/`, `src/autoload/` | 4.2, 4.4 |
+| [4.6](roadmap/phase-4/WP-4.6-join-leave-reconnect.md) ◐ | Join/leave, host-left, dropped items ✅ — **reconnect is not done** | net | `src/net/`, `src/autoload/`, `src/core/` (declared) | 4.2, 4.4 |
 | [4.7](roadmap/phase-4/WP-4.7-multiplayer-hud.md) | Who did what, shared toasts, ping | hud | `src/game/hud/` | 4.2, 4.5 |
 
 **Status: 4.3, 4.1 and 4.2 are done, and the relay is deployed** at `wss://kanoolpik-relay.kennet-hoejmark.workers.dev`. `.github/workflows/net-live.yml` runs `tests/net/` against it — the only check that can catch `FakeRelay` drifting from the Worker.
 
 **The relay URL is baked into the build** and stated once, in `RelayEndpoint.HOST`. `net-live` greps that line; the repository variable `KANOOLPIK_RELAY_URL` is gone and should be deleted from the repository settings.
 
-**WP-4.4 decided the seed is the room code.** Nothing about the island travels, and the same code is always the same island. It also stopped where it should: everyone is in the room and on the same terrain, but **peers are not yet players in the replicated state**, so nobody but the host can pick anything up until WP-4.6 adds an `add_player` command. That is the next thing to build.
+**WP-4.4 decided the seed is the room code.** Nothing about the island travels, and the same code is always the same island.
 
-**Waves.** {4.3, 4.1} in parallel — neither needs the other and neither touches `src/game/`. Then 4.2 alone, with the harness as its oracle. Then 4.4. **4.6 is now the one that matters**: until it lands, a multiplayer round is six people standing on the same island unable to touch anything. {4.5, 4.7} can run beside it.
+**WP-4.6 made peers into players.** `join` and `leave` are commands, issued by the host and broadcast like everything else, so six people can now actually pick things up. A leaver's armful lands in a ring where they stood; the host leaving says so and returns everyone to the title. **Reconnect is the piece left**, and it is left because it needs a number nobody has played enough to choose: how long a dropped player keeps their seat.
+
+**Waves.** {4.3, 4.1} in parallel — neither needs the other and neither touches `src/game/`. Then 4.2 alone, with the harness as its oracle. Then 4.4, then 4.6. **{4.5, 4.7} are next and can run in parallel** — disjoint folders. WP-4.5 also owns the transform rate that decides whether the free plan covers an evening, and it should hand `GameSession._on_peer_left` a real position while it is there: the leave currently drops an armful at the spawn point because nothing replicates where anyone is standing.
 
 **The seam already exists.** `src/net/transport.gd` was written in phase 0 for this, and `LocalTransport` is the proof it works: gameplay submits commands and listens for events, and has no idea whether a network is involved. Phase 4 adds a second implementation; `src/core/` and `src/game/` should barely change.
 

@@ -15,6 +15,8 @@ const UNLOCK := "unlock"
 const SUMMON := "summon"
 const GRANT_POINTS := "grant_points"
 const COLLECT := "collect"
+const JOIN := "join"
+const LEAVE := "leave"
 
 
 static func pick_up(player_id: int, item_id: String) -> Dictionary:
@@ -62,6 +64,37 @@ static func collect(player_id: int, collectible_id: String) -> Dictionary:
 ## up in the same place, cheats included.
 static func grant_points(player_id: int, points: int) -> Dictionary:
 	return {"type": GRANT_POINTS, "player_id": player_id, "points": points}
+
+
+## Put a peer into the world as a player (WP-4.6).
+##
+## Being in the room is not the same as being in the world: until this lands, a
+## peer has no capacity and cannot pick anything up. It is a command rather than
+## a local [method WorldState.add_player] for the usual reason — a peer that adds
+## itself has a state the host does not, and the two hashes part company at that
+## instant with nobody able to say why.
+##
+## **The host issues it, and the stamp is what makes that safe.** A client that
+## sends one gets [code]player_id[/code] overwritten with its own peer id by
+## [WebSocketTransport], so the worst it can do is ask to be added when it
+## already is — which is refused. Capacity is deliberately not a field: it comes
+## from the party's [Progression], so nobody can negotiate their own pockets.
+static func join(player_id: int) -> Dictionary:
+	return {"type": JOIN, "player_id": player_id}
+
+
+## Take a peer out of the world, dropping whatever they were carrying at
+## [param position] (WP-4.6).
+##
+## The position is the command's, not the state's, because the core does not
+## know where anybody is standing — positions are presentation. Until WP-4.5
+## replicates transforms, the host passes the level's spawn point: wrong, but
+## wrong somewhere a person will walk past, rather than at the origin.
+##
+## Stamped like [method join], so a client sending one can only remove itself —
+## which it can already do by closing the tab.
+static func leave(player_id: int, position: Vector3) -> Dictionary:
+	return {"type": LEAVE, "player_id": player_id, "position": position}
 
 
 ## Advance the simulation clock (host only, once per fixed step).

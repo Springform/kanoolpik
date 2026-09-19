@@ -25,6 +25,8 @@ extends RefCounted
 ##   collectible_found { collectible_id, player_id }
 ##   island_clean     {}
 ##   ticked           { elapsed_ticks }
+##   player_joined    { player_id, capacity }
+##   player_left      { player_id }
 
 const E_UNKNOWN_TYPE := "unknown_command"
 const E_UNKNOWN_PLAYER := "unknown_player"
@@ -44,6 +46,12 @@ const E_NOTHING_TO_SUMMON := "nothing_to_summon"
 const E_DEBUG_DISABLED := "debug_disabled"
 const E_UNKNOWN_COLLECTIBLE := "unknown_collectible"
 const E_ALREADY_FOUND := "already_found"
+const E_ALREADY_JOINED := "already_joined"
+
+## A leaver's armful lands in a ring rather than in one point: six things at one
+## coordinate are one unclickable pile, and the person who has to tidy up after
+## the friend whose wifi died should not have to guess how deep it goes.
+const DROP_RING_RADIUS := 0.7
 
 ## Where summoned items land, as a ring around the caller's feet: close enough
 ## to reach without moving, far enough apart that six paddles do not z-fight.
@@ -79,6 +87,10 @@ func apply(state: WorldState, cmd: Dictionary) -> Dictionary:
 			return _grant_points(state, cmd)
 		Commands.COLLECT:
 			return _collect(state, cmd)
+		Commands.JOIN:
+			return _join(state, cmd)
+		Commands.LEAVE:
+			return _leave(state, cmd)
 		Commands.TICK:
 			state.elapsed_ticks += int(cmd.get("ticks", 1))
 			return _ok([{"type": "ticked", "elapsed_ticks": state.elapsed_ticks}])
@@ -280,6 +292,49 @@ func _grant_points(state: WorldState, cmd: Dictionary) -> Dictionary:
 		"type": "points_granted", "player_id": pid, "points": points,
 		"total_available": state.progression.available_points(),
 	}])
+
+
+## A peer becomes a player (WP-4.6). Capacity comes from the party's
+## [Progression], never from the command — see [method Commands.join].
+func _join(state: WorldState, cmd: Dictionary) -> Dictionary:
+	var pid := int(cmd["player_id"])
+	if pid <= 0:
+		# Peer ids start at 1; -1 is what an unstamped command carries, and 0 is
+		# what a transport that has not been welcomed yet reports.
+		return _fail(E_UNKNOWN_PLAYER)
+	if state.has_player(pid):
+		return _fail(E_ALREADY_JOINED)
+	var capacity := state.progression.capacity()
+	state.add_player(pid, capacity)
+	return _ok([{"type": "player_joined", "player_id": pid, "capacity": capacity}])
+
+
+## A player leaves and their armful hits the ground where they stood (WP-4.6).
+##
+## The drops are separate events on purpose: every peer already knows how to
+## animate an [code]item_dropped[/code], so a friend's wifi dying looks like
+## them putting things down rather than like items teleporting.
+func _leave(state: WorldState, cmd: Dictionary) -> Dictionary:
+	var pid := int(cmd["player_id"])
+	if not state.has_player(pid):
+		return _fail(E_UNKNOWN_PLAYER)
+	var at: Vector3 = cmd.get("position", Vector3.ZERO)
+	var events: Array[Dictionary] = []
+	# carried_by() is in pick-up order, so the ring is laid out deterministically
+	# and every peer computes the same coordinates from the same command.
+	var carried := state.carried_by(pid)
+	for i in carried.size():
+		var angle := TAU * float(i) / float(maxi(carried.size(), 1))
+		var spot := state.clamp_to_island(
+			at + Vector3(cos(angle), 0.0, sin(angle)) * DROP_RING_RADIUS)
+		state.set_on_ground(carried[i], spot)
+		events.append({"type": "item_dropped", "item_id": carried[i], "player_id": pid, "position": spot})
+	# Nothing is carried by now, so the legacy origin-drop inside remove_player
+	# has nothing to reach — but it is passed the position anyway, because a
+	# future caller that skips the loop above should not land items in the lake.
+	state.remove_player(pid, at)
+	events.append({"type": "player_left", "player_id": pid})
+	return _ok(events)
 
 
 # --- Helpers -----------------------------------------------------------------

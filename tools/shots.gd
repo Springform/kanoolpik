@@ -174,6 +174,11 @@ func _run() -> void:
 		var title: TitleScreen = load("res://src/game/title/title_screen.tscn").instantiate()
 		main.add_child(title)
 		await _shot("title-multiplayer")
+		# WP-4.6: why we are back here when we did not choose to be. The notice
+		# is the only thing standing between "the host went home" and a player
+		# assuming the game crashed.
+		title.show_notice("ui.lobby.error.host_left")
+		await _shot("title-host-left")
 		main.remove_child(title)
 		title.free()
 

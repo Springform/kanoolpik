@@ -41,15 +41,12 @@ extends Transport
 ##   GameSession.start_level("island_01", seed, t)
 ## [/codeblock]
 
-## Somebody arrived. The host answers with a snapshot; the lobby (WP-4.4) draws
-## a name.
-signal peer_joined(peer_id: int)
-signal peer_left(peer_id: int)
 ## Connected and issued a peer id by the relay. Until this, commands queue.
+## [signal Transport.peer_joined], [signal Transport.peer_left] and
+## [signal Transport.disconnected] are declared on the seam, not here: WP-4.6
+## made [GameSession] a listener too, and a signal that exists only on one
+## implementation forces every listener to ask which one it has.
 signal joined(peer_id: int, is_host: bool)
-## The socket is gone and is not coming back on its own: host left, room full,
-## network died. Carries a reason fit to show a person.
-signal disconnected(reason: String)
 ## Our state stopped matching the host's at this command. Not recoverable by
 ## carrying on — WP-4.6 will ask for a snapshot; for now it is loud.
 signal diverged(command: Dictionary, expected_hash: int, actual_hash: int)
@@ -81,6 +78,13 @@ var _peer_id := 0
 var _is_host: bool
 var _joined := false
 var _closed := false
+## Everyone the relay says is in the room, us included.
+##
+## The ids in `welcome` used to be read and thrown away, so a client arriving
+## fourth never learned about peers two and three and WP-4.4 had to draw a
+## roster it knew was incomplete. Kept here instead — it is the relay's fact,
+## not the game's, and this is the only place that hears it.
+var _known_peers: Array[int] = []
 ## Commands submitted before the relay answered `welcome`. Sent in order once it
 ## does; dropping them instead would lose the first thing an eager player does.
 var _outbox: Array[Dictionary] = []
@@ -118,6 +122,10 @@ func peer_id() -> int:
 	return _peer_id
 
 
+func known_peers() -> Array[int]:
+	return _known_peers.duplicate()
+
+
 ## Fire-and-forget, as the seam promises. On the host this applies immediately
 ## (it is the authority); on a client it goes to the host and comes back.
 func submit_command(command: Dictionary) -> void:
@@ -148,14 +156,30 @@ func poll() -> void:
 	if _closed:
 		return
 	_socket.poll()
+	# Drain before deciding anything, whatever the ready state (WP-4.6).
+	#
+	# [b]This is a guard with no test, and that is not an oversight.[/b] It was
+	# added believing it fixed the host-left message; it does not. Godot discards
+	# buffered packets when a socket reaches STATE_CLOSED, and it goes there
+	# from STATE_OPEN in a single poll — so by the time the close is visible the
+	# farewell is already gone, and no ordering here can recover it. What
+	# actually protects that message is the relay sending and closing on
+	# separate turns; `test_the_farewell_goes_out_before_the_socket_goes_down`
+	# is what pins it.
+	#
+	# The reordering stays because reacting to a close while unread bytes are
+	# sitting there is wrong regardless, and STATE_CLOSING is reachable on paths
+	# this game does not exercise today. It is one line of caution, labelled
+	# rather than dressed up as a fix.
+	while _socket.get_available_packet_count() > 0:
+		_receive(_socket.get_packet().get_string_from_utf8())
+		if _closed:
+			# `hostgone` has already ended us, with the better reason.
+			return
 	match _socket.get_ready_state():
-		WebSocketPeer.STATE_OPEN:
-			while _socket.get_available_packet_count() > 0:
-				_receive(_socket.get_packet().get_string_from_utf8())
 		WebSocketPeer.STATE_CLOSED, WebSocketPeer.STATE_CLOSING:
-			# The relay closes the room when the host leaves, so a close we did
-			# not ask for usually means exactly that. `hostgone` normally
-			# arrives first and sets a better reason.
+			# A close nobody explained. Our end of the wire, as far as we can
+			# tell from here.
 			_die(R_SOCKET_CLOSED)
 		_:
 			pass
@@ -183,6 +207,7 @@ func _receive(text: String) -> void:
 			_welcome(frame)
 		"join":
 			var id := int(frame.get("id", 0))
+			_remember(id)
 			peer_joined.emit(id)
 			if _is_host:
 				# A late joiner gets WorldState.to_dict() and nothing else — the
@@ -191,7 +216,9 @@ func _receive(text: String) -> void:
 				# points and abilities, not just item positions.
 				_send({"k": K_SNAPSHOT, "s": state.to_dict()}, id)
 		"leave":
-			peer_left.emit(int(frame.get("id", 0)))
+			var gone := int(frame.get("id", 0))
+			_known_peers.erase(gone)
+			peer_left.emit(gone)
 		"hostgone":
 			_die(R_HOST_GONE)
 		"err":
@@ -210,7 +237,18 @@ func _welcome(frame: Dictionary) -> void:
 		push_error("asked to be host=%s but the relay made us host=%s" % [_is_host, relay_says_host])
 		_is_host = relay_says_host
 	_joined = true
+	# Everyone already here, plus us. Emitted as joins after `joined` so a
+	# listener that only knows how to add a row does not need a second code
+	# path for "the ones who were here before me".
+	_known_peers.clear()
+	_remember(_peer_id)
+	var already: Array = frame.get("peers", [])
 	joined.emit(_peer_id, _is_host)
+	for other in already:
+		var id := int(other)
+		if id != _peer_id:
+			_remember(id)
+			peer_joined.emit(id)
 	var queued := _outbox.duplicate()
 	_outbox.clear()
 	for command in queued:
@@ -295,6 +333,12 @@ func _apply_broadcast(d: Dictionary) -> void:
 		# Rule 3. We applied it and landed somewhere else. Carrying on from here
 		# only makes the difference bigger.
 		diverged.emit(command, expected, actual)
+
+
+func _remember(id: int) -> void:
+	if id > 0 and not _known_peers.has(id):
+		_known_peers.append(id)
+		_known_peers.sort()
 
 
 # --- Plumbing ------------------------------------------------------------------

@@ -47,6 +47,14 @@ text = ""
 horizontal_alignment = 1
 autowrap_mode = 3
 
+[node name="Notice" type="Label" parent="Root/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 3
+visible = false
+
 [node name="Separator" type="HSeparator" parent="Root/Panel/VBox"]
 layout_mode = 2
 
