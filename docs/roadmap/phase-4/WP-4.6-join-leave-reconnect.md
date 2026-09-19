@@ -64,9 +64,24 @@ place.** Remove them at once and a ten-second tunnel costs somebody their
 armful; hold their seat and a room of six can be full of ghosts. The answer is a
 number somebody has to play with, and nobody has played this in multiplayer yet.
 
-## Two findings
+## Three findings
 
-**The fake was lying about the commonest way a round ends.** `FakeRelay` sent
+**`net-live` earned its keep on its first real run.** The suite was green on
+`FakeRelay` and red against Cloudflare, with
+`asked to be host=true but the relay made us host=false` in the log. The tests
+opened the host's socket and a guest's back to back, so the two were racing to
+be the first socket in the room — and on loopback the host always won. The game
+never has this race: the host mints a code and reads it aloud, so a person sits
+between the two connections. The tests now join in order (`_open_room()`, then
+`_add_guest()`), which is the protocol's own rule restated.
+
+The same run killed a fixed `_pump(40)` — 80 ms, a comfortable round trip on
+loopback and nothing over the internet. One of those two tests asserted only
+that the bad thing had not happened, so against a dead relay it would have
+passed while proving nothing. Both now wait on an observable effect.
+
+
+**The fake was also lying about the commonest way a round ends.** `FakeRelay` sent
 `hostgone` and closed the socket in the same breath — and
 [method WebSocketPeer.send_text] only queues, so the farewell was written into a
 buffer nobody emptied. Every client saw an unexplained close and told its player

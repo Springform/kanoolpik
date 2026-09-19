@@ -42,14 +42,14 @@ func test_a_late_arrival_learns_about_everyone_already_here() -> void:
 	# The gap WP-4.4 wrote down and left open: the ids in the relay's `welcome`
 	# frame were read and thrown away, so the fourth person to arrive saw an
 	# empty room. They are kept now.
-	var host := _join(true)
-	var second := _join(false)
+	var host: WebSocketTransport = await _open_room()
+	var second: WebSocketTransport = await _add_guest()
 	# Held in a variable so it stays connected for the duration of the test —
 	# nothing else refers to it, hence the underscore.
-	var _third := _join(false)
+	var _third: WebSocketTransport = await _add_guest()
 	await _until(func() -> bool: return host.known_peers().size() == 3)
 
-	var fourth := _join(false)
+	var fourth: WebSocketTransport = await _add_guest()
 	await _until(func() -> bool: return fourth.known_peers().size() == 4)
 	assert_array(fourth.known_peers()).override_failure_message(
 		"the fourth arrival cannot see peers 2 and 3").is_equal([1, 2, 3, 4])
@@ -57,8 +57,8 @@ func test_a_late_arrival_learns_about_everyone_already_here() -> void:
 
 
 func test_somebody_who_closes_their_tab_leaves_the_roster() -> void:
-	var host := _join(true)
-	var guest := _join(false)
+	var host: WebSocketTransport = await _open_room()
+	var guest: WebSocketTransport = await _add_guest()
 	await _until(func() -> bool: return host.known_peers().size() == 2)
 	guest.close()
 	await _until(func() -> bool: return host.known_peers().size() == 1)
@@ -68,11 +68,10 @@ func test_somebody_who_closes_their_tab_leaves_the_roster() -> void:
 # --- The host is the one who decides who is playing ---------------------------------
 
 func test_the_host_puts_an_arrival_into_the_world() -> void:
-	var host := _join(true)
-	await _until(func() -> bool: return host.is_joined())
+	var host: WebSocketTransport = await _open_room()
 	# What GameSession does on peer_joined, done here directly: this suite is
 	# about the transport, and test_lobby covers the wiring.
-	var guest := _join(false)
+	var guest: WebSocketTransport = await _add_guest()
 	await _until(func() -> bool: return host.known_peers().size() == 2)
 
 	host.submit_command(Commands.join(2))
@@ -84,9 +83,9 @@ func test_the_host_puts_an_arrival_into_the_world() -> void:
 
 
 func test_a_leaver_looks_the_same_on_every_peer() -> void:
-	var host := _join(true)
-	var _guest := _join(false)
-	var watcher := _join(false)
+	var host: WebSocketTransport = await _open_room()
+	var _guest: WebSocketTransport = await _add_guest()
+	var watcher: WebSocketTransport = await _add_guest()
 	await _until(func() -> bool: return host.known_peers().size() == 3)
 	host.submit_command(Commands.join(2))
 	host.submit_command(Commands.join(3))
@@ -108,8 +107,8 @@ func test_a_client_cannot_remove_another_player() -> void:
 	# who hears it is in. The stamp is what stops them being a problem: the host
 	# overwrites player_id with the SENDER's peer id, so this frame can only
 	# remove the sender.
-	var host := _join(true)
-	var attacker := _join(false)
+	var host: WebSocketTransport = await _open_room()
+	var attacker: WebSocketTransport = await _add_guest()
 	await _until(func() -> bool: return host.known_peers().size() == 2)
 	host.submit_command(Commands.join(2))
 	await _until(func() -> bool: return host.state.has_player(2))
@@ -131,8 +130,8 @@ func test_a_client_cannot_add_a_player_of_its_choosing() -> void:
 	# the verdict. The stamp turns `join(5)` into `join(2)`, peer 2 is already a
 	# player, so the host refuses it and tells the sender — and that refusal is
 	# the signal this waits on.
-	var host := _join(true)
-	var attacker := _join(false)
+	var host: WebSocketTransport = await _open_room()
+	var attacker: WebSocketTransport = await _add_guest()
 	await _until(func() -> bool: return host.known_peers().size() == 2)
 	host.submit_command(Commands.join(2))
 	await _until(func() -> bool: return host.state.has_player(2))
@@ -164,9 +163,8 @@ func test_a_client_cannot_give_itself_bigger_pockets() -> void:
 # --- The host walking off ---------------------------------------------------------
 
 func test_the_host_leaving_tells_everyone_rather_than_freezing_them() -> void:
-	var host := _join(true)
-	var guest := _join(false)
-	await _until(func() -> bool: return guest.is_joined())
+	var host: WebSocketTransport = await _open_room()
+	var guest: WebSocketTransport = await _add_guest()
 	var reasons: Array[String] = []
 	guest.disconnected.connect(func(reason: String) -> void: reasons.append(reason))
 
@@ -196,9 +194,8 @@ func test_the_farewell_goes_out_before_the_socket_goes_down() -> void:
 		# Needs a relay this test can crank by hand; against a live one the two
 		# come whenever Cloudflare sends them.
 		return
-	var host := _join(true)
-	var guest := _join(false)
-	await _until(func() -> bool: return guest.is_joined())
+	var host: WebSocketTransport = await _open_room()
+	var guest: WebSocketTransport = await _add_guest()
 	var reasons: Array[String] = []
 	guest.disconnected.connect(func(reason: String) -> void: reasons.append(reason))
 
@@ -242,6 +239,32 @@ func _fresh_state() -> WorldState:
 	var state := TestFixtures.ground_state(_cat, Progression.BASE_CAPACITY)
 	state.island_radius = 20.0
 	return state
+
+
+## The room's host: the first socket in.
+##
+## [b]Nobody else may connect until this one has been welcomed.[/b] "The first
+## socket in a room is the host" is the relay's rule, so two sockets opened back
+## to back are racing to decide who the authority is. On loopback the host
+## always won, which is why every test here passed locally and `net-live` logged
+## "asked to be host=true but the relay made us host=false" — across the
+## Atlantic the guest's handshake can finish first.
+##
+## The game never has this problem: the host mints a code and reads it aloud, so
+## there is a person in the loop between the two connections. The tests have to
+## put that ordering back by hand.
+func _open_room() -> WebSocketTransport:
+	var host := _join(true)
+	await _until(func() -> bool: return host.is_joined())
+	return host
+
+
+## Somebody else, admitted only once the room has a host. Sequential, so the
+## peer ids come out 1, 2, 3, … in the order the tests ask for them.
+func _add_guest() -> WebSocketTransport:
+	var guest := _join(false)
+	await _until(func() -> bool: return guest.is_joined())
+	return guest
 
 
 ## Every peer starts from an identical world — in the real game that is
