@@ -13,37 +13,33 @@ name: net-live
 # not because anyone committed anything. Mixing that into the gate on every PR
 # would teach us to ignore a red CI.
 #
-# The relay host lives in the repository variable KANOOLPIK_RELAY_URL
-# (Settings → Secrets and variables → Actions → Variables). Not a secret: the
-# address is visible to anyone who opens the game. It is a variable rather than a
-# literal here because .github/workflows/ cannot be written through the device
-# bridge, so a hardcoded host would make every relay change a manual paste job.
+# THE RELAY HOST IS STATED ONCE, IN src/game/lobby/relay_endpoint.gd, and this
+# workflow reads it from there. It used to be the repository variable
+# KANOOLPIK_RELAY_URL; WP-4.4 baked the address into the build, which would have
+# made the variable a second statement of one fact. DELETE THAT VARIABLE
+# (Settings → Secrets and variables → Actions → Variables) — while it exists it
+# is a thing to forget, and compatibility_date is what that costs.
 #
-# WHEN WP-4.4 BAKES THE URL INTO THE BUILD, THIS BECOMES THE SECOND PLACE THE
-# HOST IS STATED. Fix it then by reading the GDScript constant here instead and
-# deleting the variable — the compatibility_date lesson, in a new costume.
+# The pattern below is pinned by test_lobby.gd
+# (test_the_net_live_workflow_can_still_read_the_relay_host), which runs it
+# against the same file. Reformat the constant and CI says so, rather than this
+# workflow silently probing an empty string.
 
 on:
   workflow_dispatch:
-    inputs:
-      relay_url:
-        description: "Override the relay URL. Point it somewhere dead (wss://127.0.0.1:1) to prove the suite really uses it — a GREEN run with a dead relay means it silently fell back to FakeRelay."
-        required: false
-        default: ""
   # Weekly, so drift is found by a scheduled run nobody is waiting on rather
   # than on the evening six people sit down to play.
   schedule:
     - cron: "17 6 * * 1"
   # And on the changes that can actually introduce drift: one side of the
-  # protocol moving without the other. On push to main, not pull_request —
-  # this project merges branches into main locally and pushes, so a
-  # pull_request trigger would simply never fire.
-  push:
-    branches: [main]
+  # protocol moving without the other.
+  pull_request:
     paths:
       - "src/net/**"
       - "tests/net/**"
       - "infra/relay/**"
+      # Where the host is now stated. A relay move is a change here.
+      - "src/game/lobby/relay_endpoint.gd"
       - ".github/workflows/net-live.yml"
 
 env:
@@ -61,38 +57,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The override exists so the wiring itself can be mutation-tested: dispatch
-      # with a dead address and the run MUST go red. A green one would mean the
-      # variable never reached the Godot process and every previous green run
-      # proved nothing — the sixth time this project would have been fooled by a
-      # suite that was watching nothing.
-      - name: Resolve relay URL
-        run: |
-          override="${{ inputs.relay_url }}"
-          if [ -n "$override" ]; then
-            echo "::warning::relay URL overridden to ${override} — this run is a wiring test, and it is expected to FAIL"
-            echo "RELAY=${override}" >> "$GITHUB_ENV"
-            echo "PROBE=no" >> "$GITHUB_ENV"
-          else
-            echo "RELAY=${{ vars.KANOOLPIK_RELAY_URL }}" >> "$GITHUB_ENV"
-            echo "PROBE=yes" >> "$GITHUB_ENV"
-          fi
-
       # Fails in five seconds with a readable message when the relay is simply
       # not there, instead of after a four-minute Godot download and a wall of
-      # socket timeouts that all look like test failures. Skipped for an
-      # override, whose whole point is to be unreachable.
+      # socket timeouts that all look like test failures.
       - name: Relay is answering
-        if: env.PROBE == 'yes'
+        id: relay
         run: |
-          host="$RELAY"
+          src="src/game/lobby/relay_endpoint.gd"
+          host="$(grep -oP '^const HOST := "\K[^"]+' "$src" || true)"
           if [ -z "$host" ]; then
-            echo "::error::repository variable KANOOLPIK_RELAY_URL is not set"
+            echo "::error::could not read the relay host out of ${src} — has the constant been reformatted?"
             exit 1
           fi
-          # wss://host → https://host, for the one plain HTTP endpoint.
-          https="${host/#wss:/https:}"
-          https="${https/#ws:/http:}"
+          echo "relay host: ${host}"
+          echo "ws=wss://${host}" >> "$GITHUB_OUTPUT"
+          https="https://${host}"
           echo "probing ${https}/new"
           body="$(curl -sS --fail-with-body --max-time 20 "${https}/new")" || {
             echo "::error::${https}/new did not answer — the relay is down or the host is wrong"
@@ -124,14 +103,15 @@ jobs:
       - name: Import project
         run: ~/godot/godot --headless --path . --import || true
 
-      # KANOOLPIK_RELAY_URL is what makes the suite skip FakeRelay entirely and
-      # scale its patience ×12 for real latency. Without it this step passes
-      # while touching nothing outside this runner — a green tick for a test
-      # that never left the building.
+      # KANOOLPIK_RELAY_URL here is the ENVIRONMENT variable the suite reads —
+      # not the repository variable, which is gone — and it is what makes the
+      # suite skip FakeRelay entirely and scale its patience ×12 for real
+      # latency. Without it this step passes while touching nothing outside
+      # this runner: a green tick for a test that never left the building.
       - name: Transport suite against the live relay
         env:
           GODOT_BIN: /home/runner/godot/godot
-          KANOOLPIK_RELAY_URL: ${{ env.RELAY }}
+          KANOOLPIK_RELAY_URL: ${{ steps.relay.outputs.ws }}
         run: bash tools/run_tests.sh res://tests/net/
 
       - name: Upload test report
