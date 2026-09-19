@@ -298,3 +298,25 @@ ui.ability.auto_placed,Autopilot lagde %s på plads,Autopilot put %s away
 ui.ability.nothing_nearby,Ikke tæt nok på den rigtige beholder,Not close enough to the right container
 ui.skills.passive,passiv,passive
 ui.skills.same_key,samme [%s],same [%s]
+ui.title.host,Lav et hold,Start a crew
+ui.title.join,Join,Join
+ui.title.room_hint,Rumkode,Room code
+ui.lobby.host_heading,Læs koden højt,Read the code aloud
+ui.lobby.client_heading,Du er med,You are in
+ui.lobby.joining_heading,Prøver at komme med,Trying to get in
+ui.lobby.copy,Kopiér koden,Copy the code
+ui.lobby.copied,Koden er kopieret,Code copied
+ui.lobby.connecting,Forbinder ...,Connecting ...
+ui.lobby.start,Afgang,Set off
+ui.lobby.leave,Tilbage,Back
+ui.lobby.waiting_for_host,Venter på at værten går i gang,Waiting for the host to set off
+ui.lobby.player_n,Spiller %d,Player %d
+ui.lobby.seats_left,%d pladser tilbage i kanoen,%d seats left in the canoe
+ui.lobby.error.bad_code,"Det er ikke en rumkode. Seks tegn, ingen vokaler.","That is not a room code. Six characters, no vowels."
+ui.lobby.error.no_such_room,"Ingen runde med den kode. Tjek den med den, der læste den op.",No round with that code. Check it with whoever read it out.
+ui.lobby.error.network,Kan ikke nå serveren. Er der net?,Cannot reach the server. Is there a connection?
+ui.lobby.error.relay,Serveren svarede noget uventet. Prøv igen.,The server answered something unexpected. Try again.
+ui.lobby.error.busy,Vent lige - der er allerede en forespørgsel i gang.,Hold on - a request is already on its way.
+ui.lobby.error.full,Kanoen er fuld. Der er plads til seks.,The canoe is full. There is room for six.
+ui.lobby.error.host_left,Værten forlod runden.,The host left the round.
+ui.lobby.error.lost,Forbindelsen blev afbrudt.,The connection dropped.

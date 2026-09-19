@@ -107,8 +107,11 @@ single-player run and a host's run are indistinguishable to the core.
 5. **A late joiner gets `WorldState.to_dict()`** and nothing else — the same
    snapshot a save writes, which is why ADR 0010 put progression inside the
    state.
-6. **Nobody ships item positions at level start.** The host's seed goes out in
-   the lobby and every client runs `MessGenerator` locally.
+6. **Nobody ships item positions at level start.** Since WP-4.4 the seed does
+   not even travel: `RoomCode.seed_for()` derives it from the six characters
+   every peer already has, so a client that connects before the host has
+   generated anything is already on the right island. The late-join snapshot in
+   rule 5 remains the mechanism for somebody arriving mid-game.
 
 ## What it costs
 
@@ -144,17 +147,26 @@ Verified at the HTTP layer — `/new` returns a room code with
 that header is not decoration), and `/room/aaaaaa` is refused with `400` because
 `A` is not in the alphabet.
 
-**The host is stated in two places and will shortly be three.** The repository
-variable `KANOOLPIK_RELAY_URL` feeds the `net-live` workflow; this document
-names it for humans; WP-4.4 will bake it into the build as a constant. When it
-does, `net-live` should read that constant and the variable should go away —
-`compatibility_date` was stated twice and the test copy won in silence, and this
-is the same shape.
+**The host is stated once**, in `src/game/lobby/relay_endpoint.gd`:
+
+```gdscript
+const HOST := "kanoolpik-relay.kennet-hoejmark.workers.dev"
+```
+
+WP-4.4 baked it into the build, `net-live.yml` greps that line rather than
+carrying a copy, and the repository variable `KANOOLPIK_RELAY_URL` is gone.
+`test_lobby.gd` runs the workflow's own pattern against the file, so reformatting
+the constant fails CI instead of leaving the workflow probing an empty string.
+The address above is a copy for humans and is not read by anything.
+
+Moving the relay is therefore one edit and one rebuild.
 
 ## The only test that can catch the fake drifting
 
-`tests/net/` runs against `FakeRelay` by default. `KANOOLPIK_RELAY_URL` points
-it at a real relay instead, and the suite then scales its patience ×12 and waits
+`tests/net/` runs against `FakeRelay` by default. The **environment** variable
+`KANOOLPIK_RELAY_URL` points it at a real relay instead (`KANOOLPIK_RELAY_HTTP`
+does the same for `GET /new`, and is derived from the first when only that is
+set — so a test cannot redirect the socket and go on minting live room codes), and the suite then scales its patience ×12 and waits
 on conditions rather than turn counts, so it survives real latency.
 
 Nothing on a developer machine runs it that way — it needs Godot and real

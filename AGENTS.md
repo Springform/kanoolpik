@@ -46,6 +46,7 @@ Scenes react ←  GameEvents.<signal>  ←  GameSession publishes events  ←  r
 - A `Shape3D` (or any resource) declared inside a `.tscn` is a **sub-resource shared by every instance** of that scene. 150 items all wrote to one `BoxShape3D` and the last to spawn decided collision for all of them. Build per-instance resources in `_ready()` with `.new()`.
 - Measure meshes with local transforms accumulated up to the node, never `global_transform` — the answer must not depend on whether the node is in the tree yet.
 - Tinting an imported glTF *multiplies* its albedo, so it darkens as much as it colours. Placeholders get the category colour; models keep their own unless the item asks for a tint.
+- **A panel whose height is typed into the `.tscn` outgrows its own background.** Adding two buttons to the title screen pushed three controls past the panel art and onto the island, with every string assertion green; the screenshot pass caught it. Use `set_anchors_and_offsets_preset(PRESET_CENTER, PRESET_MODE_MINSIZE)` and let the container measure itself.
 - `get_tree().paused` is right for a pause menu and wrong for "level finished". **No test may `await` while the tree is paused** — the awaited timer never fires and the suite hangs.
 
 ## How to pick up work

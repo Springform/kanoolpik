@@ -164,6 +164,36 @@ func _run() -> void:
 			call_mate[0].shout()
 		await _shot("summon", 40)
 
+	if _wants("lobby"):
+		# The two multiplayer screens (WP-4.4), drawn over the booted island but
+		# with no relay anywhere near them: LobbyScreen is a view, so the host's
+		# room is a code, a roster and a button whether or not a socket exists.
+		# What is being looked at is the 64 px code, whether the roster fits,
+		# and whether every glyph actually draws — Godot's default font has no
+		# Dingbats, which is why the "you" marker is a Latin-1 guillemet.
+		var title: TitleScreen = load("res://src/game/title/title_screen.tscn").instantiate()
+		main.add_child(title)
+		await _shot("title-multiplayer")
+		main.remove_child(title)
+		title.free()
+
+		var lobby: LobbyScreen = load("res://src/game/lobby/lobby_screen.tscn").instantiate()
+		main.add_child(lobby)
+		lobby.show_room("BCDFGH", true, 1)
+		lobby.set_peers([1, 2, 3])
+		await _shot("lobby-host")
+		lobby.show_room("BCDFGH", false, 4)
+		await _shot("lobby-client")
+		# A join that failed: no room was ever opened, so the heading must not
+		# say "Du er med" above a sentence explaining that we are not. It did.
+		lobby.is_open = false
+		lobby.code = ""
+		lobby.apply_texts()
+		lobby.show_status("ui.lobby.error.no_such_room")
+		await _shot("lobby-refused")
+		main.remove_child(lobby)
+		lobby.free()
+
 	if _wants("evaluation"):
 		_panel().pack_all_but_one()
 		_panel().set_clock_minutes(18)
