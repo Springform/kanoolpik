@@ -1,0 +1,3 @@
+# Godot must not scan this folder: node_modules alone is 400+ MB of JS the
+# engine has no business importing, and the editor grinds to a halt trying.
+# .gdignore makes the whole subtree invisible to the resource scanner.

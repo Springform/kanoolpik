@@ -33,7 +33,12 @@ var autosave_enabled := true
 
 
 func _physics_process(delta: float) -> void:
-	if _running and transport != null and transport.is_authority():
+	# Every transport is ticked, authority or not, and each decides for itself
+	# what that means. WP-4.2: draining a client's socket happens in tick(), so
+	# gating this on is_authority() left a WebSocketTransport client connected
+	# and then never hearing another word. LocalTransport is always authority
+	# and SimTransport checks for itself, so neither notices the change.
+	if _running and transport != null:
 		transport.tick(delta)
 
 

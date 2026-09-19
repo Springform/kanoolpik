@@ -1,0 +1,20 @@
+name = "kanoolpik-relay"
+main = "src/index.js"
+# Must never be later than the workerd bundled with the wrangler pinned in
+# package.json — currently 1.20250906.0. Ask for a later date and the TEST
+# runtime silently falls back to what it has, while a real DEPLOY gets the date
+# you asked for. The tests would then be proving things about a runtime that is
+# not the one in production, which is the quietest kind of lie a suite can tell.
+# CI fails on that fallback warning (see ci.yml). To move this date: upgrade
+# wrangler first, run the suite, then bump here.
+compatibility_date = "2025-09-06"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+# new_sqlite_classes, not new_classes: SQLite-backed Durable Objects are the
+# ones available on the free plan.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
