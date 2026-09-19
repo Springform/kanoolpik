@@ -26,6 +26,7 @@ const LOCALES: Array[String] = ["da", "en"]
 @onready var start_button: Button = $Root/Panel/VBox/Start
 @onready var language_button: Button = $Root/Panel/VBox/Language
 @onready var panel: PanelContainer = $Root/Panel
+@onready var notice_label: Label = $Root/Panel/VBox/Notice
 @onready var host_button: Button = $Root/Panel/VBox/Host
 @onready var room_input: LineEdit = $Root/Panel/VBox/JoinRow/RoomInput
 @onready var join_button: Button = $Root/Panel/VBox/JoinRow/Join
@@ -34,6 +35,8 @@ const LOCALES: Array[String] = ["da", "en"]
 ## test mode at all (WP-3.10). A node in the scene would have to be hidden in
 ## every other build, which is the same thing said less clearly.
 var test_mode_button: Button
+## Kept so a language toggle re-translates the notice instead of clearing it.
+var _notice_key := ""
 
 
 func _ready() -> void:
@@ -74,7 +77,16 @@ func _ready() -> void:
 ## same thing waits for anyone who adds a row here, or whose language makes a
 ## label wrap, so the number is gone rather than raised.
 func _fit_panel() -> void:
-	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_MINSIZE)
+	PanelFit.centre(panel)
+
+
+## Why we are back here, when we did not arrive by choice — the host left, the
+## connection died (WP-4.6). Empty clears it.
+func show_notice(reason_key: String) -> void:
+	_notice_key = reason_key
+	notice_label.text = tr(reason_key) if not reason_key.is_empty() else ""
+	notice_label.visible = not reason_key.is_empty()
+	_fit_panel.call_deferred()
 
 
 func _notification(what: int) -> void:
@@ -107,6 +119,7 @@ func apply_texts() -> void:
 	room_input.placeholder_text = tr("ui.title.room_hint")
 	language_button.text = "%s: %s" % [tr("ui.title.language"), TranslationServer.get_locale().to_upper()]
 	_apply_test_mode_text()
+	show_notice(_notice_key)
 	# A longer language can change the panel's minimum size, so re-fit after the
 	# labels have had a frame to measure themselves.
 	_fit_panel.call_deferred()

@@ -17,6 +17,9 @@ const ALL_TYPES := [
 	Commands.PICK_UP, Commands.DROP, Commands.PLACE, Commands.TAKE_OUT,
 	Commands.UNLOCK, Commands.SUMMON, Commands.COLLECT, Commands.TICK,
 	Commands.GRANT_POINTS,
+	# WP-4.6. Host-issued, but they travel like everything else — see the note
+	# in CommandCodec.SCHEMA for why a client sending one is harmless.
+	Commands.JOIN, Commands.LEAVE,
 ]
 
 
@@ -31,6 +34,8 @@ func _every_command() -> Array[Dictionary]:
 		Commands.collect(2, "sunglasses"),
 		Commands.tick(1),
 		Commands.grant_points(3, 5),
+		Commands.join(4),
+		Commands.leave(4, Vector3(2.5, 0.0, -1.25)),
 	]
 
 

@@ -56,6 +56,17 @@ const SCHEMA := {
 	# change that. Leaving it out of the schema instead would mean test mode
 	# stopped working the moment a second player joined.
 	Commands.GRANT_POINTS: {"points": I},
+	# WP-4.6. On the wire because the HOST has to broadcast them — every peer
+	# must add and remove the same players in the same order, and the host's own
+	# frames go through this codec like everyone else's.
+	#
+	# A client can send them and it does not matter, which is not luck: the host
+	# overwrites `player_id` with the sender's peer id, so `join` from a client
+	# asks to add somebody already there (refused) and `leave` removes only the
+	# sender — which they can do by closing the tab. Capacity is not a field, so
+	# nobody can negotiate their own pockets.
+	Commands.JOIN: {},
+	Commands.LEAVE: {"position": V},
 }
 
 ## An id longer than this is not an id, it is someone probing. Real ones look

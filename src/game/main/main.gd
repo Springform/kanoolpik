@@ -169,6 +169,11 @@ func _build_playing_scene() -> void:
 	pause_menu.title_requested.connect(to_title, CONNECT_DEFERRED)
 	evaluation = EVALUATION.instantiate()
 	add_child(evaluation)
+	# WP-4.6: the host walking off ends the round for everyone. Without this the
+	# island simply stops — no clock, no other players, nothing said — which
+	# reads as the game having crashed.
+	if GameSession.transport != null:
+		GameSession.transport.disconnected.connect(_on_connection_lost, CONNECT_DEFERRED)
 	_install_abilities()
 	if TestMode.is_enabled():
 		test_panel = TestPanel.new()
@@ -238,6 +243,18 @@ func current_seed() -> int:
 
 func is_paused() -> bool:
 	return pause_menu != null and pause_menu.is_open()
+
+
+## The socket died mid-round. There is no authority any more (ADR 0002), so
+## there is no round; say which of the two it was and go back to the title
+## rather than leaving people on a world nobody owns.
+func _on_connection_lost(reason: String) -> void:
+	if state != State.PLAYING:
+		return
+	var key := LobbyController.reason_key(reason)
+	to_title()
+	if title_screen != null:
+		title_screen.show_notice(key)
 
 
 func _on_island_clean() -> void:

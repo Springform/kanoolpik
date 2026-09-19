@@ -258,6 +258,73 @@ func test_the_clock_does_not_run_while_people_are_still_arriving() -> void:
 		"the lobby is ticking the world before anybody has set off").is_equal(ticks)
 
 
+# --- From the room into the world (WP-4.6) ---------------------------------------------------
+
+func test_somebody_who_was_already_in_the_lobby_is_not_left_a_spectator() -> void:
+	# The wiring test. Every piece below has its own unit test and none of them
+	# prove this: a peer that arrived before the host pressed Afgang produced no
+	# `peer_joined` for a running session, so without the catch-up in
+	# GameSession._begin the patient ones would stand there unable to pick
+	# anything up, with a green suite either way.
+	var room := await _hosted_room()
+	# Held so it stays connected for the test; nothing else refers to it.
+	var _guest_transport := _guest(room)
+	await _until(func() -> bool: return _lobby.peers.size() == 2)
+
+	_lobby.start_game()
+	await _until(func() -> bool: return GameSession.state.has_player(2))
+	assert_array(GameSession.state.player_ids()).is_equal([1, 2])
+	assert_int(GameSession.state.player_capacity(2)).override_failure_message(
+		"a player with no capacity cannot pick anything up").is_greater(0)
+
+
+func test_an_arrival_after_the_start_is_put_into_the_world_too() -> void:
+	var room := await _hosted_room()
+	_lobby.start_game()
+	await _pump(5)
+	var _late := _guest(room)
+	await _until(func() -> bool: return GameSession.state.has_player(2))
+	assert_array(GameSession.state.player_ids()).is_equal([1, 2])
+
+
+func test_a_departure_takes_the_player_back_out() -> void:
+	var room := await _hosted_room()
+	var guest := _guest(room)
+	await _until(func() -> bool: return _lobby.peers.size() == 2)
+	_lobby.start_game()
+	await _until(func() -> bool: return GameSession.state.has_player(2))
+
+	guest.close()
+	await _until(func() -> bool: return not GameSession.state.has_player(2))
+	assert_array(GameSession.state.player_ids()).is_equal([1])
+
+
+func test_a_client_ends_up_with_exactly_the_hosts_world() -> void:
+	# GameSession no longer writes the local player in when it is not the
+	# authority: a peer that adds itself has a state the host does not, and the
+	# hash parts company one command later with nothing able to say why.
+	#
+	# [b]A mutation that puts that line back survives this test[/b], and the
+	# reason is worth stating rather than hiding: the host answers every join
+	# with a snapshot, so the extra player is overwritten a frame later whatever
+	# the client did. The guard is correct and cheap, and it is not load-bearing
+	# while the snapshot is unconditional. What IS load-bearing — that a client
+	# finishes agreeing with the host — is what this asserts.
+	var room := _random_room()
+	var host := _raw_peer(room, true)
+	await _until(func() -> bool: return host.is_joined())
+	_new_lobby()
+	_lobby.join(room)
+	await _until(func() -> bool: return _lobby.transport != null and _lobby.transport.is_joined())
+	host.submit_command(Commands.join(2))
+	await _until(func() -> bool: return GameSession.state != null and GameSession.state.has_player(2))
+
+	assert_bool(GameSession.transport.is_authority()).is_false()
+	assert_str(JSON.stringify(GameSession.state.to_dict())).override_failure_message(
+		"the client is not standing in the host's world").is_equal(
+		JSON.stringify(host.state.to_dict()))
+
+
 # --- What the screen says ------------------------------------------------------------------
 
 func test_a_refused_join_does_not_claim_you_are_in() -> void:
@@ -283,6 +350,42 @@ func test_only_the_host_is_offered_the_button_that_starts_the_game() -> void:
 	assert_bool(screen.start_button.visible).is_true()
 	assert_str(screen.code_label.text).override_failure_message(
 		"the code is grouped for reading aloud").is_equal("BCD-FGH")
+
+
+func test_fitting_a_panel_twice_does_not_make_it_bigger() -> void:
+	# The bug that replaced PRESET_MODE_MINSIZE. Two deferred fits in one frame
+	# — which is what a screen does when it re-applies its texts and then shows
+	# a notice — took a 545 px panel to 1039 px, centred, with the title off the
+	# top of the screen. Every string assertion passed; the screenshot pass
+	# caught it.
+	var screen: TitleScreen = auto_free(load("res://src/game/title/title_screen.tscn").instantiate())
+	add_child(screen)
+	await get_tree().process_frame
+	screen.show_notice("ui.lobby.error.host_left")
+	await get_tree().process_frame
+	PanelFit.centre(screen.panel)
+	var once := screen.panel.size
+	PanelFit.centre(screen.panel)
+	PanelFit.centre(screen.panel)
+	assert_vector(screen.panel.size).override_failure_message(
+		"fitting the panel again changed its size, so it compounds").is_equal(once)
+	assert_float(screen.panel.size.y).override_failure_message(
+		"the panel is taller than the window it is centred in"
+	).is_less_equal(screen.panel.get_viewport_rect().size.y)
+
+
+func test_a_notice_survives_the_language_toggle() -> void:
+	# Re-applying texts used to clear it, so a player who switched to English to
+	# read the reason lost the reason.
+	var screen: TitleScreen = auto_free(load("res://src/game/title/title_screen.tscn").instantiate())
+	add_child(screen)
+	screen.show_notice("ui.lobby.error.host_left")
+	var danish := screen.notice_label.text
+	screen.toggle_language()
+	assert_bool(screen.notice_label.visible).is_true()
+	assert_str(screen.notice_label.text).is_not_empty()
+	assert_str(screen.notice_label.text).is_not_equal(danish)
+	TranslationServer.set_locale("da")
 
 
 func test_every_lobby_string_has_a_translation() -> void:
@@ -343,9 +446,15 @@ func _hosted_room() -> String:
 ## Another peer in the room, as a raw transport — there is one [GameSession] per
 ## process, so a second [LobbyController] would fight this one for it.
 func _guest(room: String) -> WebSocketTransport:
+	return _raw_peer(room, false)
+
+
+## A peer that is not this process's [GameSession] — used both for guests and,
+## in the client tests, for the host the lobby joins.
+func _raw_peer(room: String, as_host: bool) -> WebSocketTransport:
 	var processor := CommandProcessor.new(_cat)
 	var transport := WebSocketTransport.new(
-		RelayEndpoint.ws_base(), room, false, processor, TestFixtures.ground_state(_cat, 3))
+		RelayEndpoint.ws_base(), room, as_host, processor, TestFixtures.ground_state(_cat, 3))
 	_extra.append(transport)
 	return transport
 

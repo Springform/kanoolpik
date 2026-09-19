@@ -52,7 +52,7 @@ func _ready() -> void:
 ## sitting on the island with no background behind them.
 func _fit_panel() -> void:
 	if panel != null:
-		panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_MINSIZE)
+		PanelFit.centre(panel)
 
 
 func _notification(what: int) -> void:
@@ -116,15 +116,9 @@ func _draw_roster() -> void:
 		child.free()
 	if not is_open:
 		return
-	if not is_host:
-		# See the note on LobbyController.peers: a client is not told who else
-		# is already here, so it would draw a roster that is quietly wrong.
-		# Better to say what we do know.
-		var waiting := Label.new()
-		waiting.text = tr("ui.lobby.waiting_for_host")
-		waiting.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		roster.add_child(waiting)
-		return
+	# Everyone sees the same roster since WP-4.6 kept the relay's `welcome` ids.
+	# In WP-4.4 a client's list was known to be incomplete, so it was not drawn
+	# at all; now it is the same list the host is reading names off.
 	for id in _peers:
 		var row := Label.new()
 		var who := tr("ui.lobby.player_n") % id
@@ -136,4 +130,9 @@ func _draw_roster() -> void:
 		room_left.text = tr("ui.lobby.seats_left") % free_seats
 		room_left.modulate = Color(1, 1, 1, 0.55)
 		roster.add_child(room_left)
+	if not is_host:
+		var waiting := Label.new()
+		waiting.text = tr("ui.lobby.waiting_for_host")
+		waiting.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		roster.add_child(waiting)
 	_fit_panel.call_deferred()

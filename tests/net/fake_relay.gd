@@ -41,6 +41,11 @@ var _port := 0
 var _peers: Dictionary = {}
 ## Sockets that have connected but not yet finished the handshake.
 var _pending: Array[WebSocketPeer] = []
+## Sockets told `hostgone`, waiting to be closed. [code]_closing_next[/code] is
+## this turn's batch; it is promoted at the end of [method poll] so a socket is
+## never closed on the turn its farewell was written — see [method _depart].
+var _closing: Array[WebSocketPeer] = []
+var _closing_next: Array[WebSocketPeer] = []
 
 
 ## Returns the base URL to hand [WebSocketTransport]. Port 0 means "any free
@@ -55,8 +60,12 @@ func start() -> String:
 func stop() -> void:
 	for peer in _peers.values():
 		(peer as WebSocketPeer).close()
+	for socket in _closing + _closing_next:
+		socket.close()
 	_peers.clear()
 	_pending.clear()
+	_closing.clear()
+	_closing_next.clear()
 	_server.stop()
 
 
@@ -108,6 +117,16 @@ func poll() -> void:
 		while socket.get_available_packet_count() > 0:
 			_route(id, socket.get_packet().get_string_from_utf8())
 
+	# One turn after `hostgone` went out, and not before. Closing in the same
+	# turn is what the first attempt at this did, and it fails identically to
+	# closing in the same breath: the client's next poll finds a closing socket
+	# and no packet, and reports the player's own connection as the problem.
+	for socket in _closing:
+		socket.close(1000, "host left")
+		socket.poll()
+	_closing = _closing_next
+	_closing_next = []
+
 
 # --- Internals -----------------------------------------------------------------
 
@@ -133,11 +152,26 @@ func _depart(peer_id: int) -> void:
 	_peers.erase(peer_id)
 	if was_host:
 		# ADR 0002: no authority, no session. Everyone is told and the room empties.
+		#
+		# [b]Tell them on this turn, close on the next.[/b]
+		# [method WebSocketPeer.send_text] only queues; [method WebSocketPeer.poll]
+		# puts the bytes on the wire, and closing in the same breath threw them
+		# away. Every client then saw an unexplained close and told its player
+		# that their own connection had dropped — so the commonest way a round
+		# ends was reported as the player's own fault, and nothing noticed until
+		# WP-4.6 asked which of the two sentences they got.
+		#
+		# A real server sends and closes on separate turns of its own loop, so
+		# this is the fake becoming more honest rather than more forgiving. It is
+		# also precisely the drift this class warns about in its own docs.
 		for other in peer_ids():
 			_send(other, {"t": "hostgone"})
-			(_peers[other] as WebSocketPeer).close(1000, "host left")
+			var socket: WebSocketPeer = _peers[other]
+			socket.poll()
+			_closing_next.append(socket)
 		_peers.clear()
 		return
+
 	for other in peer_ids():
 		_send(other, {"t": "leave", "id": peer_id})
 
