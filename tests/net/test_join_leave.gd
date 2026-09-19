@@ -115,20 +115,36 @@ func test_a_client_cannot_remove_another_player() -> void:
 	await _until(func() -> bool: return host.state.has_player(2))
 
 	attacker.submit_command(Commands.leave(1, Vector3.ZERO))
-	await _pump(40)
+	# The stamp turns this into "peer 2 leaves", which IS allowed — so the
+	# observable effect of the attack landing is the attacker removing itself.
+	# Waiting for that beats pumping a fixed number of turns: 40 turns is 80 ms,
+	# a round trip on loopback and nothing at all against Cloudflare, and a test
+	# that asserts "the bad thing did not happen" proves nothing until the frame
+	# has had its chance. `net-live` said so the first time it ran this.
+	await _until(func() -> bool: return not host.state.has_player(2))
 	assert_bool(host.state.has_player(1)).override_failure_message(
 		"a client talked the host into removing the host").is_true()
-	assert_bool(host.state.has_player(2)).override_failure_message(
-		"the stamp should have turned this into the attacker removing itself").is_false()
 
 
 func test_a_client_cannot_add_a_player_of_its_choosing() -> void:
+	# Same shape, same reason: wait for proof the frame was judged, then check
+	# the verdict. The stamp turns `join(5)` into `join(2)`, peer 2 is already a
+	# player, so the host refuses it and tells the sender — and that refusal is
+	# the signal this waits on.
 	var host := _join(true)
 	var attacker := _join(false)
 	await _until(func() -> bool: return host.known_peers().size() == 2)
+	host.submit_command(Commands.join(2))
+	await _until(func() -> bool: return host.state.has_player(2))
 
+	var refusals: Array[String] = []
+	attacker.command_rejected.connect(
+		func(_c: Dictionary, error: String) -> void: refusals.append(error))
 	attacker.submit_command(Commands.join(5))
-	await _pump(40)
+	await _until(func() -> bool: return not refusals.is_empty())
+	assert_str(refusals[0]).override_failure_message(
+		"the forged join was not refused for the reason the stamp implies"
+	).is_equal(CommandProcessor.E_ALREADY_JOINED)
 	assert_bool(host.state.has_player(5)).override_failure_message(
 		"a client invented a player").is_false()
 
@@ -243,11 +259,6 @@ func _turn() -> void:
 	for transport in _transports:
 		transport.poll()
 	OS.delay_msec(2)
-
-
-func _pump(turns: int) -> void:
-	for i in turns:
-		_turn()
 
 
 ## Waits on a condition rather than a turn count, so the suite survives being
