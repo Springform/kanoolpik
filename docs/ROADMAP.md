@@ -97,13 +97,17 @@ WP files: [`docs/roadmap/phase-4/`](roadmap/phase-4/). **[ADR 0011](adr/0011-web
 
 | WP | Title | Lane | Owns | Depends on |
 |---|---|---|---|---|
-| [4.3](roadmap/phase-4/WP-4.3-sim-harness.md) | Simulated multi-peer harness (N peers, one authority, in-process) | net/test | `src/net/sim_transport.gd`, `tests/net/` | — |
-| [4.1](roadmap/phase-4/WP-4.1-relay.md) | The relay: Cloudflare Worker, room codes, protocol doc | infra | `infra/relay/`, `docs/NETWORKING.md` | — |
-| [4.2](roadmap/phase-4/WP-4.2-websocket-transport.md) | `WebSocketTransport`: commands up, events down, snapshot on join | net | `src/net/websocket_transport.gd` | 4.3, 4.1 |
+| [4.3](roadmap/phase-4/WP-4.3-sim-harness.md) ✅ | Simulated multi-peer harness (N peers, one authority, in-process) | net/test | `src/net/sim_transport.gd`, `tests/net/` | — |
+| [4.1](roadmap/phase-4/WP-4.1-relay.md) ✅ | The relay: Cloudflare Worker, room codes, protocol doc | infra | `infra/relay/`, `docs/NETWORKING.md` | — |
+| [4.2](roadmap/phase-4/WP-4.2-websocket-transport.md) ✅ | `WebSocketTransport`: commands up, events down, snapshot on join | net | `src/net/websocket_transport.gd` | 4.3, 4.1 |
 | [4.4](roadmap/phase-4/WP-4.4-lobby.md) | Lobby: create/join by room code, player list, seed sync | flow/hud | `src/game/lobby/` | 4.2 |
 | [4.5](roadmap/phase-4/WP-4.5-remote-avatars.md) | Remote avatars, name tags, held items | player | `src/game/player/remote/` | 4.2 |
 | [4.6](roadmap/phase-4/WP-4.6-join-leave-reconnect.md) | Join/leave/reconnect, host-left, dropped items | net | `src/net/`, `src/autoload/` | 4.2, 4.4 |
 | [4.7](roadmap/phase-4/WP-4.7-multiplayer-hud.md) | Who did what, shared toasts, ping | hud | `src/game/hud/` | 4.2, 4.5 |
+
+**Status: 4.3, 4.1 and 4.2 are done, and the relay is deployed** at `wss://kanoolpik-relay.kennet-hoejmark.workers.dev`. `.github/workflows/net-live.yml` runs `tests/net/` against it — the only check that can catch `FakeRelay` drifting from the Worker.
+
+**The relay URL is baked into the build** (decided session 4), so WP-4.4 has no host field in its lobby and owns the constant. When it lands, `net-live` must read that constant instead of the repository variable `KANOOLPIK_RELAY_URL` — the host would otherwise be stated in three places.
 
 **Waves.** {4.3, 4.1} in parallel — neither needs the other and neither touches `src/game/`. Then 4.2 alone, with the harness as its oracle. Then {4.4, 4.5, 4.7} in parallel, and 4.6 after 4.4.
 
