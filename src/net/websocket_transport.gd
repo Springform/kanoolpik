@@ -60,6 +60,18 @@ const K_REJECT := "r" ## host → one peer: no, and why
 const K_SNAPSHOT := "s" ## host → one peer: here is the whole world
 
 const R_HOST_GONE := "host_left"
+## The relay closes a client's socket with this code when the host leaves
+## (`infra/relay/src/room.js`). In the 4000-4999 range the WebSocket spec
+## reserves for applications.
+##
+## [b]The `hostgone` frame says the same thing and usually arrives first.[/b]
+## Only usually: a queued message and the close behind it can land in one read,
+## and Godot discards buffered packets the moment a socket reaches
+## STATE_CLOSED — so the explanation loses that race and the player is told
+## their own connection dropped. A close code cannot lose it, because it is the
+## close. `net-live` found this against the deployed Worker; every loopback run
+## was green.
+const CLOSE_HOST_LEFT := 4000
 const R_ROOM_FULL := "room_full"
 const R_SOCKET_CLOSED := "connection_lost"
 const E_NOT_CONNECTED := "not_connected"
@@ -156,31 +168,20 @@ func poll() -> void:
 	if _closed:
 		return
 	_socket.poll()
-	# Drain before deciding anything, whatever the ready state (WP-4.6).
-	#
-	# [b]This is a guard with no test, and that is not an oversight.[/b] It was
-	# added believing it fixed the host-left message; it does not. Godot discards
-	# buffered packets when a socket reaches STATE_CLOSED, and it goes there
-	# from STATE_OPEN in a single poll — so by the time the close is visible the
-	# farewell is already gone, and no ordering here can recover it. What
-	# actually protects that message is the relay sending and closing on
-	# separate turns; `test_the_farewell_goes_out_before_the_socket_goes_down`
-	# is what pins it.
-	#
-	# The reordering stays because reacting to a close while unread bytes are
-	# sitting there is wrong regardless, and STATE_CLOSING is reachable on paths
-	# this game does not exercise today. It is one line of caution, labelled
-	# rather than dressed up as a fix.
+	# Drain before deciding anything, whatever the ready state (WP-4.6): reacting
+	# to a close while unread bytes are sitting there is wrong regardless of
+	# whether anything useful is in them.
 	while _socket.get_available_packet_count() > 0:
 		_receive(_socket.get_packet().get_string_from_utf8())
 		if _closed:
-			# `hostgone` has already ended us, with the better reason.
+			# `hostgone` has already ended us — the fast path.
 			return
 	match _socket.get_ready_state():
 		WebSocketPeer.STATE_CLOSED, WebSocketPeer.STATE_CLOSING:
-			# A close nobody explained. Our end of the wire, as far as we can
-			# tell from here.
-			_die(R_SOCKET_CLOSED)
+			# The frame did not reach us, so the close code has to answer. This
+			# is the path that actually runs against the deployed relay.
+			var code := _socket.get_close_code()
+			_die(R_HOST_GONE if code == CLOSE_HOST_LEFT else R_SOCKET_CLOSED)
 		_:
 			pass
 

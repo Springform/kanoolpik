@@ -1,7 +1,7 @@
 import { env, SELF } from "cloudflare:test";
 import { describe, it, expect } from "vitest";
 import { makeCode, isValidCode } from "../src/index.js";
-import { MAX_PEERS, HOST_ID } from "../src/room.js";
+import { MAX_PEERS, HOST_ID, CLOSE_HOST_LEFT } from "../src/room.js";
 
 /**
  * These open real WebSockets against the real Durable Object running in
@@ -215,6 +215,25 @@ describe("leaving", () => {
     host.ws.close();
     expect(await a.next()).toEqual({ t: "hostgone" });
     expect(await b.next()).toEqual({ t: "hostgone" });
+  });
+
+  it("says why on the close frame too, because the message can lose the race", async () => {
+    // A client that never reads the `hostgone` frame must still be able to tell
+    // "the host went home" from "your wifi died". The close code survives where
+    // a queued message does not: Godot drops buffered packets the moment the
+    // socket reaches CLOSED, and the two can arrive in one read.
+    const code = freshCode();
+    const host = await join(code);
+    const client = await join(code);
+    await host.next();
+
+    const closed = new Promise((resolve) =>
+      client.ws.addEventListener("close", (event) =>
+        resolve({ code: event.code, reason: event.reason })));
+    host.ws.close();
+    const seen = await closed;
+    expect(seen.code).toBe(CLOSE_HOST_LEFT);
+    expect(seen.reason).toBe("host left");
   });
 });
 

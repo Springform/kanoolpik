@@ -81,13 +81,22 @@ that the bad thing had not happened, so against a dead relay it would have
 passed while proving nothing. Both now wait on an observable effect.
 
 
-**The fake was also lying about the commonest way a round ends.** `FakeRelay` sent
-`hostgone` and closed the socket in the same breath — and
-[method WebSocketPeer.send_text] only queues, so the farewell was written into a
-buffer nobody emptied. Every client saw an unexplained close and told its player
-that their own connection had dropped. Nothing noticed until this WP asked which
-of the two sentences they got. The real Worker does not have the bug, which is
-exactly the drift `FakeRelay`'s own docs warn about.
+**The reason a round ended had to move onto the close frame.** `FakeRelay` sent
+`hostgone` and closed in the same breath, and the first diagnosis was that the
+fake was being unfaithful — it was "fixed" by deferring the close a turn. That
+was wrong twice over: `infra/relay/src/room.js` does exactly the same thing, so
+the fix made the fake *stop* resembling production, and it turned the test green
+while the deployed relay stayed broken. `net-live` said so on the next run.
+
+The real problem is not whose fault the flush is. **Godot discards buffered
+packets the moment a socket reaches `STATE_CLOSED`** — measured: OPEN with one
+packet to CLOSED with none, in a single poll. A message that races a close can
+always lose. So the Worker now closes a client with **code 4000**, the transport
+reads `get_close_code()`, and `hostgone` stays as a fast path that may or may not
+win. A close code cannot lose the race, because it is the close.
+
+`infra/relay/` has an 18th test for it, in real `workerd`. **The Worker must be
+redeployed for this to take effect** — the client change alone does nothing.
 
 **Godot discards buffered packets when a WebSocket reaches `STATE_CLOSED`**, and
 it goes there from `STATE_OPEN` in a single poll — measured, not assumed. So a

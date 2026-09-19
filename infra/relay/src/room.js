@@ -19,6 +19,22 @@ import { DurableObject } from "cloudflare:workers";
 export const MAX_PEERS = 6;
 export const HOST_ID = 1;
 
+/**
+ * Close code for "the host left", in the 4000-4999 range the WebSocket spec
+ * reserves for applications.
+ *
+ * The `hostgone` frame below says the same thing and usually arrives first —
+ * but only usually. A queued message and the close that follows it can reach a
+ * client in the same read, and Godot discards buffered packets the moment a
+ * socket reaches STATE_CLOSED, so the explanation loses that race and the
+ * player is told their own connection dropped. Measured, and caught by
+ * `net-live` running against this Worker rather than the in-process fake.
+ *
+ * A close code cannot lose the race: it IS the close. The frame stays as the
+ * fast path; this is what makes the answer reliable.
+ */
+export const CLOSE_HOST_LEFT = 4000;
+
 // Extends DurableObject so the Worker can call `isEmpty()` on it directly as
 // an RPC method — a plain class only answers fetch().
 export class Room extends DurableObject {
@@ -131,7 +147,7 @@ export class Room extends DurableObject {
     if (me.isHost) {
       for (const socket of others) {
         this.#send(socket, { t: "hostgone" });
-        try { socket.close(1000, "host left"); } catch { /* already gone */ }
+        try { socket.close(CLOSE_HOST_LEFT, "host left"); } catch { /* already gone */ }
       }
       return;
     }

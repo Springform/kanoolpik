@@ -51,7 +51,7 @@ relay.
 | `welcome` | `id`, `host` (bool), `peers` (ids already here) | immediately on connect |
 | `join` | `id` | somebody arrived |
 | `leave` | `id` | a client went away |
-| `hostgone` | — | the host went away; the relay then closes your socket — **on a later turn, never in the same breath.** Godot discards buffered packets the moment a socket reaches `STATE_CLOSED`, so a farewell sent and closed together is lost and the client tells its player their own connection dropped. `FakeRelay` had exactly this bug until WP-4.6 |
+| `hostgone` | — | the host went away; the relay then closes your socket, **with close code 4000** |
 | `m` | `from`, `d` | a payload, from the host or from a client |
 | `err` | `code`, `msg` | your last frame was refused (see below) |
 
@@ -65,6 +65,23 @@ relay.
 
 A client that sets `to` is ignored on that field and still reaches only the
 host. `to: 0` or omitted, from the host, means everyone.
+
+### Close codes
+
+| Code | Meaning |
+|---|---|
+| `4000` | the host left (ADR 0002: no authority, no session) |
+| anything else | an ordinary close — treat it as "the connection dropped" |
+
+**The reason is on the close frame, not only in the `hostgone` message.** The
+message says the same thing and usually arrives first, but only usually: a
+queued frame and the close behind it can reach a client in one read, and Godot
+discards buffered packets the moment a socket reaches `STATE_CLOSED`. The
+explanation then loses the race and the player is told their own wifi failed —
+which sends them to blame an innocent friend.
+
+This was found by `net-live` running against the deployed Worker. Every loopback
+run was green, because on loopback the client always got a poll in between.
 
 ### Errors
 

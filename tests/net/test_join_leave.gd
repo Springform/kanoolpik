@@ -176,39 +176,38 @@ func test_the_host_leaving_tells_everyone_rather_than_freezing_them() -> void:
 	).is_equal("ui.lobby.error.host_left")
 
 
-func test_the_farewell_goes_out_before_the_socket_goes_down() -> void:
-	# What actually protects the sentence the player reads, pinned.
+func test_the_reason_survives_the_farewell_being_lost() -> void:
+	# What actually protects the sentence the player reads.
 	#
-	# [b]Godot drops buffered packets when a WebSocket reaches STATE_CLOSED.[/b]
-	# Measured, not assumed: the guest's socket goes from OPEN with one packet
-	# straight to CLOSED with none, in one poll. So a farewell that has not been
-	# read by the time the close lands is gone, and no amount of care on the
-	# client can get it back.
+	# [b]Godot drops buffered packets when a WebSocket reaches STATE_CLOSED[/b] —
+	# measured, not assumed: the socket goes from OPEN with one packet straight
+	# to CLOSED with none, in one poll. So the `hostgone` frame can be lost, and
+	# against the deployed relay it was: `net-live` was red here while every
+	# loopback run was green.
 	#
-	# Everything therefore rests on the relay sending and closing on separate
-	# turns, which is what gives every client a poll in between. Closing in the
-	# same turn — which [FakeRelay] did until WP-4.6, and which no test noticed —
-	# tells five people their own connection dropped when in fact the host went
-	# home.
+	# The close code cannot be lost, because it is the close. This test throws
+	# the frame away on purpose and checks the answer is still right.
 	if _relay == null:
-		# Needs a relay this test can crank by hand; against a live one the two
-		# come whenever Cloudflare sends them.
-		return
+		return # needs a relay this test can crank by hand
 	var host: WebSocketTransport = await _open_room()
 	var guest: WebSocketTransport = await _add_guest()
 	var reasons: Array[String] = []
 	guest.disconnected.connect(func(reason: String) -> void: reasons.append(reason))
 
 	host.close()
-	# One turn of the relay alone: the departure is noticed and the farewell is
-	# written. The close is still a turn away.
 	_relay.poll()
 	OS.delay_msec(2)
+	# Drain the socket behind the transport's back, so whatever the relay said
+	# in a message is gone by the time the transport looks.
+	guest._socket.poll()
+	while guest._socket.get_available_packet_count() > 0:
+		guest._socket.get_packet()
 	guest.poll()
+
 	assert_array(reasons).override_failure_message(
 		"the guest never noticed the room had ended").is_not_empty()
 	assert_str(reasons[0]).override_failure_message(
-		"the farewell was lost, so the player is told their own wifi failed"
+		"with the frame gone, only the close code could answer — and it did not"
 	).is_equal(WebSocketTransport.R_HOST_GONE)
 
 
