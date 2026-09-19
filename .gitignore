@@ -15,3 +15,7 @@ Thumbs.db
 Godot_v*
 # Agent worktrees
 .claude/
+
+# Downloads og arkiver — hører ikke i repoet
+Claude outputs/
+*.zip
