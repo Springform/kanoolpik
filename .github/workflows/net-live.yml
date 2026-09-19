@@ -1,0 +1,116 @@
+name: net-live
+
+# The net suite against the DEPLOYED relay instead of FakeRelay.
+#
+# This is the only thing in the project that can catch FakeRelay having drifted
+# from the Worker. Everything else — 17 relay tests in workerd, the transport
+# suite on loopback — proves the two halves work. Nothing else proves they are
+# still the same protocol.
+#
+# It is a separate workflow, not a job in ci.yml, because a red run here means
+# something different: not "the code is broken" but "the code and the live
+# infrastructure disagree" — possibly because Cloudflare is having a bad day and
+# not because anyone committed anything. Mixing that into the gate on every PR
+# would teach us to ignore a red CI.
+#
+# The relay host lives in the repository variable KANOOLPIK_RELAY_URL
+# (Settings → Secrets and variables → Actions → Variables). Not a secret: the
+# address is visible to anyone who opens the game. It is a variable rather than a
+# literal here because .github/workflows/ cannot be written through the device
+# bridge, so a hardcoded host would make every relay change a manual paste job.
+#
+# WHEN WP-4.4 BAKES THE URL INTO THE BUILD, THIS BECOMES THE SECOND PLACE THE
+# HOST IS STATED. Fix it then by reading the GDScript constant here instead and
+# deleting the variable — the compatibility_date lesson, in a new costume.
+
+on:
+  workflow_dispatch:
+  # Weekly, so drift is found by a scheduled run nobody is waiting on rather
+  # than on the evening six people sit down to play.
+  schedule:
+    - cron: "17 6 * * 1"
+  # And on the changes that can actually introduce drift: one side of the
+  # protocol moving without the other.
+  pull_request:
+    paths:
+      - "src/net/**"
+      - "tests/net/**"
+      - "infra/relay/**"
+      - ".github/workflows/net-live.yml"
+
+env:
+  GODOT_VERSION: "4.7.1"
+
+concurrency:
+  group: net-live-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  net-live:
+    name: Transport suite vs. deployed relay
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fails in five seconds with a readable message when the relay is simply
+      # not there, instead of after a four-minute Godot download and a wall of
+      # socket timeouts that all look like test failures.
+      - name: Relay is answering
+        run: |
+          host="${{ vars.KANOOLPIK_RELAY_URL }}"
+          if [ -z "$host" ]; then
+            echo "::error::repository variable KANOOLPIK_RELAY_URL is not set"
+            exit 1
+          fi
+          # wss://host → https://host, for the one plain HTTP endpoint.
+          https="${host/#wss:/https:}"
+          https="${https/#ws:/http:}"
+          echo "probing ${https}/new"
+          body="$(curl -sS --fail-with-body --max-time 20 "${https}/new")" || {
+            echo "::error::${https}/new did not answer — the relay is down or the host is wrong"
+            exit 1
+          }
+          echo "$body"
+          echo "$body" | grep -qE '"code":"[BCDFGHJKMNPQRSTVWXYZ23456789]{6}"' || {
+            echo "::error::/new answered, but not with a room code — is this actually the relay?"
+            exit 1
+          }
+
+      - name: Cache Godot
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          # Same key as ci.yml's test job, deliberately: one download, two
+          # workflows.
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
+      - name: Download Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot && cd ~/godot
+          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q godot.zip && rm godot.zip
+          mv Godot_v${GODOT_VERSION}-stable_linux.x86_64 godot && chmod +x godot
+
+      - name: Import project
+        run: ~/godot/godot --headless --path . --import || true
+
+      # KANOOLPIK_RELAY_URL is what makes the suite skip FakeRelay entirely and
+      # scale its patience ×12 for real latency. Without it this step passes
+      # while touching nothing outside this runner — a green tick for a test
+      # that never left the building.
+      - name: Transport suite against the live relay
+        env:
+          GODOT_BIN: /home/runner/godot/godot
+          KANOOLPIK_RELAY_URL: ${{ vars.KANOOLPIK_RELAY_URL }}
+        run: bash tools/run_tests.sh res://tests/net/
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gdunit4-net-live-report
+          path: reports/
+          if-no-files-found: ignore
