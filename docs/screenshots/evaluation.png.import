@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ixkm7gg3g7r5"
-path="res://.godot/imported/island-terrain-eyelevel.png-ef5e9805fbc8fd80d2ae8572ddccb374.ctex"
+uid="uid://b4m01wd8w87ls"
+path="res://.godot/imported/evaluation.png-933bdf8b617e389d92a7eba20adff713.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://docs/screenshots/island-terrain-eyelevel.png"
-dest_files=["res://.godot/imported/island-terrain-eyelevel.png-ef5e9805fbc8fd80d2ae8572ddccb374.ctex"]
+source_file="res://docs/screenshots/evaluation.png"
+dest_files=["res://.godot/imported/evaluation.png-933bdf8b617e389d92a7eba20adff713.ctex"]
 
 [params]
 
