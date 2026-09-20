@@ -21,10 +21,12 @@ signal closed()
 const ROWS: Array = [
 	{"kind": "slider", "key": Settings.LOOK_SENSITIVITY, "label": "ui.settings.sensitivity", "format": "relative"},
 	{"kind": "slider", "key": Settings.LOOK_FOV, "label": "ui.settings.fov", "format": "degrees"},
-	# Head bob and the intro toggle are NOT here yet. Their keys exist in
-	# [Settings] so WP-5.2 and WP-5.4 have somewhere to write, but nothing reads
-	# them, and a switch that does nothing is worse than a missing switch — it
-	# is a bug report from somebody who flicked it and watched carefully.
+	# WP-5.2 made head bob a thing that happens, so the switch is here now. The
+	# intro toggle is still NOT: its key exists in [Settings] so WP-5.4 has
+	# somewhere to write, but nothing reads it, and a switch that does nothing
+	# is worse than a missing switch — it is a bug report from somebody who
+	# flicked it and watched carefully.
+	{"kind": "toggle", "key": Settings.LOOK_HEAD_BOB, "label": "ui.settings.head_bob"},
 	{"kind": "separator"},
 	{"kind": "slider", "key": Settings.AUDIO_SFX, "label": "ui.settings.sfx", "format": "percent"},
 	{"kind": "slider", "key": Settings.AUDIO_MUSIC, "label": "ui.settings.music", "format": "percent"},

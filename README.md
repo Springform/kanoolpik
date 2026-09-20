@@ -35,7 +35,7 @@ Six is the limit. The host leaving ends the round for everyone; anybody else lea
 | **R** | **Råb på en kammerat** — the series flies to you |
 | **C** | **Stedsans** — an arrow to the nearest home |
 | **E** (aiming at nothing) | **Autopilot** — put the held item where it belongs |
-| **Esc** | Pause — and release the mouse, which is the same key doing both |
+| **Esc** | Pause — the menu releases the mouse and takes it back when you resume |
 | **F1** | Test panel, in a build with test mode on |
 
 The four abilities have to be bought first. Points are **shared**: anybody in the room can spend them, which is deliberate and occasionally an argument.

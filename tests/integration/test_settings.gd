@@ -257,14 +257,18 @@ func test_every_row_has_a_translated_label() -> void:
 
 
 func test_the_panel_only_shows_settings_something_reads() -> void:
-	# Head bob and the intro exist as keys so WP-5.2 and WP-5.4 have somewhere
-	# to write. Until something reads them, a switch for them is a bug report
-	# from whoever flicked it and watched carefully.
+	# A switch for a setting nothing reads is a bug report from whoever flicked
+	# it and watched carefully. `fx.intro` is still that: the key exists so
+	# WP-5.4 has somewhere to write and nothing reads it yet.
+	#
+	# `look.head_bob` was in the same state until WP-5.2 made it do something,
+	# and this test going red is how that arrived — which is the whole point of
+	# it. The rule did not change; the world did.
 	var shown: Array[String] = []
 	for row: Dictionary in SettingsPanel.ROWS:
 		if row.has("key"):
 			shown.append(String(row["key"]))
-	assert_array(shown).not_contains([Settings.LOOK_HEAD_BOB])
+	assert_array(shown).contains([Settings.LOOK_HEAD_BOB])
 	assert_array(shown).not_contains([Settings.FX_INTRO])
 
 

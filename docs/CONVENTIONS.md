@@ -27,7 +27,7 @@
 - Never hand-write `uid="uid://..."` — open the scene in the editor once and let it save, or omit uids.
 - Features talk only via `GameEvents` signals and `GameSession` read-only access. Never `get_node("../../OtherFeature")`.
 - Node names in code are `PascalCase` (`$Mesh`, `$Slots`); use `@onready var` with typed declarations.
-- Input actions are declared in `project.godot` (`move_*`, `jump`, `sprint`, `interact`, `drop`, `ui_toggle_mouse`). New actions: list them in the WP; infra adds them.
+- Input actions are declared in `project.godot` (`move_*`, `jump`, `sprint`, `interact`, `drop`, `ui_skills`, `ability_*`). New actions: list them in the WP; infra adds them.
 
 ## Data (`data/`)
 

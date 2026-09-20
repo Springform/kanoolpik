@@ -12,13 +12,75 @@ extends CharacterBody3D
 ## because tests and the shots harness want a player that does not grab the
 ## mouse.
 
+## Somebody's foot hit the ground. Local to this node on purpose (WP-5.2): a
+## footstep fires two or three times a second and is not a fact about the world,
+## so it has no business on [GameEvents], which is the bus every peer's
+## presentation listens on. Audio picks it up from the player it belongs to.
+signal footstep(at: Vector3)
+
 ## Group the local player joins so late-created UI can find it (the spawn signal may already have fired).
 const LOCAL_GROUP := "local_player"
+
+## --- How it feels to walk (WP-5.2) -------------------------------------------
+##
+## Every one of these is per SECOND, and that is the whole point. The version
+## before this one stopped the player with `move_toward(velocity, 0, speed)` —
+## no delta — so the distance it took to stop depended on the frame rate, and
+## the web export's frame rate depends on whether the tab is in front. At any
+## rate the game actually runs at, that expression stops a walking player inside
+## one frame, which is why walking felt like a debug camera: full speed and zero
+## speed, nothing in between.
+
+## Metres per second per second, on the ground. Reaching [member walk_speed]
+## takes about a twelfth of a second — long enough to feel like a person
+## starting to walk, short enough that nobody calls it lag.
+const GROUND_ACCELERATION := 60.0
+## Slightly gentler than starting, so stopping reads as a step and a half rather
+## than as hitting a wall.
+const GROUND_FRICTION := 45.0
+## In the air you have some say and not much. Without this a jump is a rail;
+## with too much of it, the ground stops mattering.
+const AIR_ACCELERATION := 12.0
+
+## How long after walking off an edge a jump still counts.
+##
+## Named and stated because it is a lie the game tells on purpose: for this long
+## the player is airborne and the game pretends otherwise. Two or three frames'
+## worth at 60 fps — enough to cover the frame somebody was one pixel past the
+## rock they meant to jump from, and short enough that nobody can use it to
+## cross a gap they should not.
+const COYOTE_TIME := 0.12
+
+## Degrees added to the field of view at full sprint.
+##
+## Small, because a big one reads as a bug rather than as speed. Fast in and
+## slow out for the same reason a car's speedometer needle is: the change is the
+## signal, and it should arrive when the sprint does and fade after it.
+const SPRINT_FOV_KICK := 6.0
+const FOV_KICK_IN := 8.0
+const FOV_KICK_OUT := 3.0
+
+## Metres of ground covered per footstep. A stride, near enough — it is what
+## decides how often [signal footstep] fires and it is deliberately not tied to
+## the head bob, which the player can switch off.
+const STRIDE_LENGTH := 0.9
+## How far the camera drops and rises, and how many full bob cycles a metre of
+## walking is worth. Off by default: this is the one option that genuinely makes
+## some people feel ill, so it is opt-in rather than opt-out.
+const BOB_AMPLITUDE := 0.045
+const BOB_CYCLES_PER_METRE := 0.55
+## Below this the player is standing still as far as the bob is concerned, and
+## the camera settles back to level instead of trembling.
+const BOB_STILL_SPEED := 0.3
 
 @export var is_local := true
 @export var walk_speed := 4.5
 @export var sprint_speed := 7.5
-@export var jump_velocity := 4.8
+## Apex is v² / 2g — 1.03 m at 4.5 with Godot's default gravity. Chosen against
+## the island rather than for the number: you can get onto a rock or a cool box,
+## and you cannot get onto the roof of the shelter. See
+## [method jump_apex_height], which is what the test asserts on.
+@export var jump_velocity := 4.5
 @export var mouse_sensitivity := 0.0025
 @export var interact_distance := 3.0
 ## Falling below this (relative to ground level) counts as being in the lake.
@@ -29,6 +91,17 @@ var player_id: int = 1
 var spawn_position := Vector3.ZERO
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 var _pitch := 0.0
+## Seconds of [constant COYOTE_TIME] left. Counted down rather than up so "may
+## still jump" is one comparison.
+var _coyote := 0.0
+## Ground covered since the last footstep, and the bob's own phase in metres.
+var _stride := 0.0
+var _bob_distance := 0.0
+## The field of view the player chose, before any sprint kick.
+var _base_fov := 90.0
+## Where the camera sits when nothing is bobbing it.
+var _camera_rest_y := 0.0
+var _head_bob := false
 
 @onready var camera: Camera3D = $Camera3D
 @onready var ray: RayCast3D = $Camera3D/InteractRay
@@ -43,6 +116,7 @@ func _ready() -> void:
 	#
 	# The acceleration, head bob and FOV kick that WP-5.2 adds go here too; this
 	# is the hook, not the whole story.
+	_camera_rest_y = camera.position.y
 	if is_local:
 		_apply_settings()
 		Settings.changed().connect(_on_settings_changed)
@@ -60,13 +134,20 @@ func _ready() -> void:
 
 ## An empty key means "everything changed" — see [method Settings.reset].
 func _on_settings_changed(key: String) -> void:
-	if key.is_empty() or key == Settings.LOOK_SENSITIVITY or key == Settings.LOOK_FOV:
+	if key.is_empty() or key == Settings.LOOK_SENSITIVITY or key == Settings.LOOK_FOV \
+			or key == Settings.LOOK_HEAD_BOB:
 		_apply_settings()
 
 
 func _apply_settings() -> void:
 	mouse_sensitivity = Settings.get_float(Settings.LOOK_SENSITIVITY)
-	camera.fov = Settings.get_float(Settings.LOOK_FOV)
+	_base_fov = Settings.get_float(Settings.LOOK_FOV)
+	camera.fov = _base_fov
+	_head_bob = Settings.get_bool(Settings.LOOK_HEAD_BOB)
+	if not _head_bob:
+		# Switching it off mid-stride must put the camera back, not leave it
+		# wherever the sine happened to be.
+		camera.position.y = _camera_rest_y
 
 
 func _input(event: InputEvent) -> void:
@@ -76,8 +157,12 @@ func _input(event: InputEvent) -> void:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		_pitch = clampf(_pitch - event.relative.y * mouse_sensitivity, -1.4, 1.4)
 		camera.rotation.x = _pitch
-	if event.is_action_pressed("ui_toggle_mouse"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED else Input.MOUSE_MODE_CAPTURED
+	# There was an `ui_toggle_mouse` handler here, bound to Escape — the same key
+	# as `ui_cancel`, so one press released the mouse AND opened the pause menu,
+	# which releases the mouse itself. WP-1.6 noticed and called it harmless
+	# because the end state matched. It is the shape that keeps biting us: a
+	# second statement of a rule another file enforces. PauseMenu.open() and
+	# close() own the mouse now, and they are the only ones who do.
 	if event.is_action_pressed("interact"):
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -90,22 +175,89 @@ func _input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	if not GameSession.is_running():
 		return
-	if not is_on_floor():
-		velocity.y -= _gravity * delta
-	elif Input.is_action_just_pressed("jump"):
-		velocity.y = jump_velocity
 	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-	var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
-	var speed := sprint_speed if Input.is_action_pressed("sprint") else walk_speed
-	if direction:
-		velocity.x = direction.x * speed
-		velocity.z = direction.z * speed
-	else:
-		velocity.x = move_toward(velocity.x, 0, speed)
-		velocity.z = move_toward(velocity.z, 0, speed)
-	move_and_slide()
+	var wish := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+	var sprinting := Input.is_action_pressed("sprint")
+	step_motion(delta, wish, sprinting, Input.is_action_just_pressed("jump"))
+	_step_camera(delta, sprinting)
 	if global_position.y < GameSession.ground_y() - water_depth:
 		respawn()
+
+
+## One tick of movement, given what the player asked for.
+##
+## Split out of [method _physics_process] so a test can drive it at 30 fps and
+## at 144 fps and compare the distance covered — which is the acceptance
+## criterion, not a nicety. Nothing in here reads [Input].
+func step_motion(delta: float, wish: Vector3, sprinting: bool, jump_pressed: bool) -> void:
+	var grounded := is_on_floor()
+	if grounded:
+		_coyote = COYOTE_TIME
+	else:
+		_coyote = maxf(_coyote - delta, 0.0)
+		velocity.y -= _gravity * delta
+	if jump_pressed and _coyote > 0.0:
+		velocity.y = jump_velocity
+		# No "spend the window" line here. One press is one jump because
+		# is_action_just_pressed is true for exactly one physics frame; zeroing
+		# _coyote as well would be a second statement of that, and this project
+		# has found four of those the hard way.
+	var speed := sprint_speed if sprinting else walk_speed
+	velocity = next_horizontal_velocity(velocity, wish, speed, grounded, delta)
+	var before := global_position
+	move_and_slide()
+	if grounded:
+		_advance_stride(global_position - before)
+
+
+## The horizontal half of a tick, as arithmetic.
+##
+## Static and pure so "the same distance per second at any frame rate" can be
+## checked by integrating it rather than by running a physics server. The y
+## component is passed through untouched — gravity and jumping are the caller's.
+static func next_horizontal_velocity(
+		current: Vector3, wish: Vector3, speed: float, grounded: bool, delta: float) -> Vector3:
+	var flat := Vector3(current.x, 0.0, current.z)
+	var rate := (GROUND_ACCELERATION if grounded else AIR_ACCELERATION) if wish.length_squared() > 0.0 \
+		else (GROUND_FRICTION if grounded else 0.0)
+	var target := wish * speed
+	var next := flat.move_toward(target, rate * delta)
+	return Vector3(next.x, current.y, next.z)
+
+
+## Ground covered since the last footstep, and the sound when it adds up to one.
+func _advance_stride(moved: Vector3) -> void:
+	var distance := Vector2(moved.x, moved.z).length()
+	_bob_distance += distance
+	_stride += distance
+	while _stride >= STRIDE_LENGTH:
+		_stride -= STRIDE_LENGTH
+		footstep.emit(global_position)
+
+
+## The sprint kick and the head bob. Camera only: nothing here moves the body,
+## and the interaction ray hangs off the camera's rotation rather than its
+## height, so a bobbing head does not change what the crosshair can reach.
+func _step_camera(delta: float, sprinting: bool) -> void:
+	var speed := Vector2(velocity.x, velocity.z).length()
+	var wanted := _base_fov + (SPRINT_FOV_KICK if sprinting and speed > walk_speed * 0.5 else 0.0)
+	var rate := FOV_KICK_IN if wanted > camera.fov else FOV_KICK_OUT
+	camera.fov = lerpf(camera.fov, wanted, clampf(rate * delta, 0.0, 1.0))
+	if not _head_bob:
+		return
+	if speed < BOB_STILL_SPEED:
+		camera.position.y = move_toward(camera.position.y, _camera_rest_y, BOB_AMPLITUDE * 4.0 * delta)
+		return
+	camera.position.y = _camera_rest_y + sin(_bob_distance * BOB_CYCLES_PER_METRE * TAU) * BOB_AMPLITUDE
+
+
+## How high a jump gets, from the numbers rather than from a playtest: v² / 2g.
+static func jump_apex_height(velocity_up: float, gravity: float) -> float:
+	return (velocity_up * velocity_up) / (2.0 * gravity)
+
+
+func gravity() -> float:
+	return _gravity
 
 
 ## Put the player back on dry land. Carried items come along — losing them to a
