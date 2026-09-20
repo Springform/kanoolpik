@@ -85,6 +85,13 @@ text = ""
 horizontal_alignment = 1
 visible = false
 
+[node name="Party" type="Label" parent="Root/TopRight/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = ""
+horizontal_alignment = 1
+visible = false
+
 [node name="BottomLeft" type="PanelContainer" parent="Root"]
 layout_mode = 1
 anchors_preset = 2

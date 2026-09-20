@@ -218,6 +218,28 @@ func _run() -> void:
 		await _stand_at(Vector3(0, 0, 14), Vector3(0, 1.0, 0))
 		await _shot("remote-far")
 
+	if _wants("multihud"):
+		# WP-4.7's acceptance criterion: six people's worth of events must not
+		# bury the player's own feedback, and "does not bury" is something you
+		# look at rather than assert. A full queue, one of them yours, plus the
+		# party line under the clock.
+		# The party line recomputes itself once a second from the transport, and
+		# this harness has no relay — so it would hide itself again between
+		# setting it and taking the picture. Stopping _process freezes the HUD
+		# as it is, which is what a still wants anyway.
+		main.hud.set_process(false)
+		main.hud.room_label.visible = true
+		main.hud.room_label.text = tr("ui.hud.room_code") % RoomCode.spaced("BCDFGH")
+		main.hud.party_label.visible = true
+		main.hud.party_label.text = "%s · %s" % [tr("ui.hud.party") % 4, tr("ui.hud.ping") % 38]
+		main.hud.show_toast(tr("ui.multi.placed") % [PlayerNames.label(3), tr("item.paddle_1")],
+			30.0, HUD.COLOR_OTHER, false)
+		main.hud.show_toast(tr("ui.multi.unlocked") % [PlayerNames.label(2), tr("ability.insight")],
+			30.0, HUD.COLOR_OTHER, false)
+		main.hud.show_toast(tr(VerdictStyle.toast_key(PlacementRules.Verdict.WRONG_CATEGORY)),
+			30.0, VerdictStyle.color_for(PlacementRules.Verdict.WRONG_CATEGORY))
+		await _shot("hud-multiplayer")
+
 	if _wants("lobby"):
 		# The two multiplayer screens (WP-4.4), drawn over the booted island but
 		# with no relay anywhere near them: LobbyScreen is a view, so the host's

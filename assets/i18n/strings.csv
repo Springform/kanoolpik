@@ -322,3 +322,10 @@ ui.lobby.error.host_left,Værten forlod runden.,The host left the round.
 ui.lobby.error.lost,Forbindelsen blev afbrudt.,The connection dropped.
 ui.hud.room_code,Kode: %s,Code: %s
 ui.remote.player,Spiller %d,Player %d
+ui.hud.party,%d i kanoen,%d in the canoe
+ui.hud.ping,%d ms,%d ms
+ui.multi.placed,%s pakkede %s,%s packed %s
+ui.multi.container_complete,%s blev færdig med %s,%s finished %s
+ui.multi.unlocked,%s købte %s,%s bought %s
+ui.multi.joined,%s kom til,%s joined
+ui.multi.left,%s smuttede,%s left

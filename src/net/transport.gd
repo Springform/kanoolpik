@@ -71,6 +71,15 @@ func submit_command(_command: Dictionary) -> void:
 	push_error("Transport.submit_command not implemented")
 
 
+## Round trip to the relay in milliseconds, or -1 when there is nothing to
+## measure — single player, or a socket that has not answered yet (WP-4.7).
+##
+## The HUD shows it so "is it me or is it the connection" is answerable by
+## looking rather than by arguing about it over the table.
+func latency_ms() -> int:
+	return -1
+
+
 ## Tell the room where we are. An empty [param presence] means "nothing of mine
 ## changed" — which the host still needs to hear, because it is also the tick on
 ## which it forwards everyone else's (see [method WebSocketTransport.send_presence]).

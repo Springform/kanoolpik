@@ -24,6 +24,10 @@ const COLOR_SLOT_EMPTY := Color(1, 1, 1, 0.25)
 const COLOR_SLOT_FULL := Color(0.9, 0.85, 0.6, 1)
 const COLOR_INFO := Color(0.96, 0.96, 0.94)
 const COLOR_ERROR := Color(1.0, 0.6, 0.4)
+## Somebody else's news, dimmed. It is worth reading and it is not about you.
+const COLOR_OTHER := Color(0.78, 0.84, 0.92)
+## How often the party line recomputes. Slow on purpose — see [member _party_countdown].
+const PARTY_REFRESH_SECONDS := 1.0
 
 @onready var progress_label: Label = $Root/TopLeft/VBox/Progress
 @onready var progress_bar: ProgressBar = $Root/TopLeft/VBox/ProgressBar
@@ -31,6 +35,7 @@ const COLOR_ERROR := Color(1.0, 0.6, 0.4)
 @onready var points_label: Label = $Root/TopLeft/VBox/Points
 @onready var time_label: Label = $Root/TopRight/VBox/Time
 @onready var room_label: Label = $Root/TopRight/VBox/Room
+@onready var party_label: Label = $Root/TopRight/VBox/Party
 @onready var carrying_label: Label = $Root/BottomLeft/VBox/Carrying
 @onready var slots_box: HBoxContainer = $Root/BottomLeft/VBox/Slots
 @onready var held_label: Label = $Root/BottomLeft/VBox/Held
@@ -44,6 +49,17 @@ var skill_menu: SkillMenu
 
 var _player: Player
 var _last_progress: Dictionary = {}
+## Who placed the last item (WP-4.7).
+##
+## [signal GameEvents.container_completed] carries a container and no actor —
+## the core has no opinion about who deserves the credit, and it is right not
+## to. But the placement that completed it arrives first, from the same command,
+## so the HUD knows. Remembered here rather than guessed later.
+var _last_placer := 0
+## Seconds until the party line is recomputed. The latency number moves on its
+## own, and recomputing it every frame would make it flicker between two values
+## for no reason a person cares about.
+var _party_countdown := 0.0
 
 
 func _ready() -> void:
@@ -67,6 +83,13 @@ func _ready() -> void:
 	prompt_label.text = ""
 	held_label.text = ""
 	_refresh_room_code()
+	# The transport, not GameEvents: arriving and leaving are facts about the
+	# room, and the room is the transport's business (WP-4.6 put the signals on
+	# the seam so a listener does not have to ask which transport it has).
+	if GameSession.transport != null:
+		GameSession.transport.peer_joined.connect(_on_peer_joined)
+		GameSession.transport.peer_left.connect(_on_peer_left)
+	refresh_party()
 	# Read rather than wait for an event: a resumed save has already awarded its
 	# points, and no points_awarded is coming for them.
 	_refresh_points()
@@ -75,9 +98,27 @@ func _ready() -> void:
 		_refresh_carrying()
 
 
-func _process(_delta: float) -> void:
+## The transport outlives this HUD — `start_multiplayer` tears the scene down
+## without stopping the session, exactly so the socket survives — so what is
+## connected to it has to be let go by hand. A HUD that outlived its own level
+## and kept toasting would be the wave-1 lesson in a new place.
+func _exit_tree() -> void:
+	var transport := GameSession.transport
+	if transport == null:
+		return
+	if transport.peer_joined.is_connected(_on_peer_joined):
+		transport.peer_joined.disconnect(_on_peer_joined)
+	if transport.peer_left.is_connected(_on_peer_left):
+		transport.peer_left.disconnect(_on_peer_left)
+
+
+func _process(delta: float) -> void:
 	if GameSession.state != null:
 		time_label.text = format_time(GameSession.state.elapsed_ticks / Evaluation.TICKS_PER_SECOND)
+	_party_countdown -= delta
+	if _party_countdown <= 0.0:
+		_party_countdown = PARTY_REFRESH_SECONDS
+		refresh_party()
 	# Nothing is being aimed at while the panel is up, and the crosshair would
 	# show through its translucent background.
 	var shopping := skill_menu != null and skill_menu.is_open()
@@ -101,15 +142,19 @@ func ability_layer() -> Control:
 	return _ability_layer
 
 
-## Show a toast for [param seconds]. Oldest toast is dropped beyond MAX_TOASTS.
-func show_toast(text: String, seconds: float = TOAST_SECONDS, color: Color = COLOR_INFO) -> void:
+## Show a toast for [param seconds]. Beyond MAX_TOASTS one is dropped to make
+## room — see [method _evict_one].
+##
+## [param mine] false marks it as somebody else's news (WP-4.7), which decides
+## what gets dropped when six people are busy at once.
+func show_toast(text: String, seconds: float = TOAST_SECONDS, color: Color = COLOR_INFO,
+		mine: bool = true) -> void:
 	while toasts_box.get_child_count() >= MAX_TOASTS:
-		var oldest := toasts_box.get_child(0)
-		toasts_box.remove_child(oldest)
-		oldest.queue_free()
+		_evict_one()
 	var label := Label.new()
 	label.text = text
 	label.modulate = color
+	label.set_meta("mine", mine)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 26)
 	toasts_box.add_child(label)
@@ -117,6 +162,26 @@ func show_toast(text: String, seconds: float = TOAST_SECONDS, color: Color = COL
 	tween.tween_interval(maxf(0.0, seconds - TOAST_FADE))
 	tween.tween_property(label, "modulate:a", 0.0, TOAST_FADE)
 	tween.tween_callback(label.queue_free)
+
+
+## Make room for one more toast.
+##
+## [b]The queue is three deep and six people can fill it in a second.[/b] Plain
+## oldest-first eviction means that in a busy room your own "wrong box" lands
+## and is gone before you look up — your feedback pushed off the screen by news
+## about somebody else's bottle crate. So somebody else's oldest goes first, and
+## your own is only dropped when all three are yours, which is the case where
+## dropping it is right.
+func _evict_one() -> void:
+	var victim: Node = null
+	for child: Node in toasts_box.get_children():
+		if not bool(child.get_meta("mine", true)):
+			victim = child
+			break
+	if victim == null:
+		victim = toasts_box.get_child(0)
+	toasts_box.remove_child(victim)
+	victim.queue_free()
 
 
 func toast_count() -> int:
@@ -210,12 +275,34 @@ func _on_progress(p: Dictionary) -> void:
 	containers_label.text = tr("ui.hud.containers") % [p["containers_completed"], p["containers_total"]]
 
 
-func _on_item_placed(_item_id: String, _player_id: int, _cid: String, _slot: int, verdict: int) -> void:
-	show_toast(tr(VerdictStyle.toast_key(verdict)), TOAST_SECONDS, VerdictStyle.color_for(verdict))
+## [b]Your own placement reads exactly as it did before.[/b] Somebody else's is
+## a different sentence — it names them and the thing, because "Rigtigt!" about
+## a box you did not touch is meaningless.
+##
+## A mate putting something in the wrong box says nothing at all. The verdict is
+## feedback, feedback is for the person who can act on it, and six people making
+## mistakes would be a stream of red nobody can do anything about.
+func _on_item_placed(item_id: String, player_id: int, _cid: String, _slot: int, verdict: int) -> void:
+	_last_placer = player_id
+	var who := PlayerNames.of(player_id)
+	if who.is_empty() or PlayerNames.is_me(player_id):
+		show_toast(tr(VerdictStyle.toast_key(verdict)), TOAST_SECONDS, VerdictStyle.color_for(verdict))
+		return
+	if verdict != PlacementRules.Verdict.CORRECT:
+		return
+	show_toast(tr("ui.multi.placed") % [who, tr(GameSession.catalog.get_item(item_id).name_key)],
+		TOAST_SECONDS, COLOR_OTHER, false)
 
 
+## Completing a container is news for the whole canoe whoever did it, so this
+## one is always shown — it just says who when there is a who to say.
 func _on_container_completed(cid: String) -> void:
-	show_toast(tr("ui.container_complete") % tr(GameSession.catalog.get_container(cid).name_key), 3.0, VerdictStyle.COLOR_COMPLETE)
+	var name_text := tr(GameSession.catalog.get_container(cid).name_key)
+	var who := PlayerNames.of(_last_placer)
+	if who.is_empty() or PlayerNames.is_me(_last_placer):
+		show_toast(tr("ui.container_complete") % name_text, 3.0, VerdictStyle.COLOR_COMPLETE)
+		return
+	show_toast(tr("ui.multi.container_complete") % [who, name_text], 3.0, COLOR_OTHER, false)
 
 
 func _on_island_clean() -> void:
@@ -237,6 +324,43 @@ func _refresh_room_code() -> void:
 	room_label.text = tr("ui.hud.room_code") % RoomCode.spaced(code) if not code.is_empty() else ""
 
 
+## How many are in the canoe, and how the connection is (WP-4.7).
+##
+## Hidden in single player rather than showing "1 i kanoen", which would be a
+## sad thing to read. The latency is appended only once there is a measurement:
+## a "-1 ms" while the first ping is in flight looks like a fault and is not one.
+func refresh_party() -> void:
+	if party_label == null:
+		return
+	var transport := GameSession.transport
+	if not PlayerNames.others_present():
+		party_label.visible = false
+		return
+	var text := tr("ui.hud.party") % PlayerNames.party_size()
+	var ms := transport.latency_ms()
+	if ms >= 0:
+		text += " · " + tr("ui.hud.ping") % ms
+	party_label.visible = true
+	party_label.text = text
+
+
+## Somebody arrived or left. Worth a line — in a game whose whole point is that
+## six people are tidying the same island, the number of people doing it is not
+## a detail. Marked as somebody else's news, so it is never what pushes your own
+## feedback off the screen.
+func _on_peer_joined(peer_id: int) -> void:
+	refresh_party()
+	if not PlayerNames.is_me(peer_id):
+		show_toast(tr("ui.multi.joined") % PlayerNames.label(peer_id),
+			TOAST_SECONDS, COLOR_OTHER, false)
+
+
+func _on_peer_left(peer_id: int) -> void:
+	refresh_party()
+	show_toast(tr("ui.multi.left") % PlayerNames.label(peer_id),
+		TOAST_SECONDS, COLOR_OTHER, false)
+
+
 func _on_respawned(player_id: int) -> void:
 	if _player == null or player_id == _player.player_id:
 		show_toast(tr("ui.hud.fell_in_water"), 2.5, COLOR_ERROR)
@@ -252,11 +376,18 @@ func _on_points_awarded(_container_id: String, _points: int, total_available: in
 
 ## The counter also drops when a point is spent — and it is the event that says
 ## so, not the click, so a mate's purchase moves it too.
-func _on_ability_unlocked(ability_id: String, _player_id: int, points_left: int) -> void:
+## Naming the buyer matters more here than anywhere else: the points are shared,
+## so anybody can spend them without asking, and the toast is what starts the
+## conversation about it.
+func _on_ability_unlocked(ability_id: String, player_id: int, points_left: int) -> void:
 	points_label.text = tr("ui.skills.points") % points_left
 	var meta: Dictionary = Progression.ABILITIES.get(ability_id, {})
 	var name_key: String = meta.get("name_key", ability_id)
-	show_toast(tr("ui.ability.unlocked") % tr(name_key), TOAST_SECONDS, VerdictStyle.COLOR_COMPLETE)
+	var who := PlayerNames.of(player_id)
+	if who.is_empty() or PlayerNames.is_me(player_id):
+		show_toast(tr("ui.ability.unlocked") % tr(name_key), TOAST_SECONDS, VerdictStyle.COLOR_COMPLETE)
+		return
+	show_toast(tr("ui.multi.unlocked") % [who, tr(name_key)], TOAST_SECONDS, COLOR_OTHER, false)
 
 
 func _on_purchase_refused(_ability_id: String, error_id: String) -> void:

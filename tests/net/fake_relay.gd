@@ -158,6 +158,17 @@ func _depart(peer_id: int) -> void:
 ## them. There is no client-to-client path — the thing that stops a peer
 ## impersonating the authority by talking straight to its neighbours.
 func _route(from_id: int, raw: String) -> void:
+	if raw == "ping":
+		# The Worker registers this with `setWebSocketAutoResponse`, so
+		# Cloudflare answers it at the edge and the Durable Object is never
+		# woken (`infra/relay/src/room.js`). Read there before it was copied
+		# here — the fake exists to resemble production, and the last time that
+		# rule was skipped a red test went green while the deployed relay
+		# stayed broken.
+		var socket: WebSocketPeer = _peers.get(from_id)
+		if socket != null and socket.get_ready_state() == WebSocketPeer.STATE_OPEN:
+			socket.send_text("pong")
+		return
 	var json := JSON.new()
 	if json.parse(raw) != OK:
 		_refuse(from_id, "bad_json", "frame was not JSON")
