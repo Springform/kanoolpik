@@ -51,12 +51,33 @@ const TAG_HEIGHT := 1.15
 const TAG_FONT_SIZE := 64
 const TAG_PIXEL_SIZE := 0.0006
 
-## The armful, drawn as one small block per item over the shoulder. Not the real
-## models: six avatars each rendering a paddle is a lot of triangles to say
-## something a block says, and at this distance nobody can tell them apart
+## The armful, drawn as one small block per item held in front of the chest. Not
+## the real models: six avatars each rendering a paddle is a lot of triangles to
+## say something a block says, and at this distance nobody can tell them apart
 ## anyway. The count is what people read.
 const CARRY_BLOCK := 0.16
-const CARRY_ORIGIN := Vector3(0.0, 0.55, 0.0)
+
+## How far in front of the body axis the blocks sit.
+##
+## [b]This is the same mistake as the floating capsule, from the other end.[/b]
+## The first version stacked the armful straight up the node origin at y 0.55 —
+## and the capsule is [i]centred[/i] on that origin with radius
+## [constant BODY_RADIUS], so the blocks were inside the body. The stack only
+## cleared the top of the shoulder at the third block, which is exactly what a
+## playtest reported: "things are inside the player, and you cannot see an
+## armful until it is more than three items". A feature that works only for a
+## big armful does not work.
+##
+## So the offset is an arithmetic rather than a number somebody liked the look
+## of: a block's centre has to be a body radius plus half a block away from the
+## axis before any of it is outside, and the last term is the gap that keeps it
+## from z-fighting the capsule's silhouette.
+const CARRY_CLEARANCE := BODY_RADIUS + CARRY_BLOCK * 0.5 + 0.06
+
+## Just below the body centre, so a full armful still ends well under the name
+## tag. The x and z of this are zero on purpose: the sides are where the blocks
+## go, and [method block_position] puts them there.
+const CARRY_ORIGIN := Vector3(0.0, -0.10, 0.0)
 
 ## Metres per second the avatar closes the gap to the last position it was told
 ## about. Transforms arrive [constant PresenceSender.RATE_HZ] times a second and
@@ -194,8 +215,36 @@ func _refresh_armful() -> void:
 		var def := GameSession.catalog.get_item(held[i]) if GameSession.catalog != null else null
 		material.albedo_color = ItemPalette.color_for(def.category) if def != null else Color.WHITE
 		block.material_override = material
-		block.position = CARRY_ORIGIN + Vector3(0.0, CARRY_BLOCK * 1.15 * float(i), 0.0)
+		block.position = block_position(i)
 		_armful.add_child(block)
+
+
+## Where the [param index]th block of an armful sits, in the avatar's own space.
+##
+## Static and pure so the one thing that went wrong here — a block ending up
+## inside the body — can be checked by arithmetic instead of by a screenshot.
+##
+## [b]Blocks alternate left and right, and stack in pairs.[/b] A single offset
+## in one direction only solves half the problem: an armful held in front is
+## hidden by the body from behind, and one held on the left is hidden from the
+## right. Hugged against both sides it is outside the silhouette from in front
+## and from behind, and from the side the near column is. Stacking in pairs also
+## keeps a full armful — capacity is by size, so eight small things is legal —
+## from becoming a 1.4 m mast through the name tag.
+static func block_position(index: int) -> Vector3:
+	var step := CARRY_BLOCK * 1.15
+	var side := -1.0 if index % 2 == 0 else 1.0
+	var row := index / 2
+	return CARRY_ORIGIN + Vector3(side * CARRY_CLEARANCE, step * float(row), 0.0)
+
+
+## True when a block at [param index] is clear of the body capsule — the rule
+## the playtest found broken. Horizontal distance only: the capsule is a
+## vertical cylinder over the height an armful occupies, so height does not
+## enter into it.
+static func block_is_outside_body(index: int) -> bool:
+	var at := block_position(index)
+	return Vector2(at.x, at.z).length() >= BODY_RADIUS + CARRY_BLOCK * 0.5
 
 
 ## A stable colour per peer, so "the green one keeps putting bottles in the

@@ -106,3 +106,22 @@ mistake as WP-4.6's flattened `y`, twice in one day.
 2. An explicit `disconnect` in `Player._exit_tree`. Godot drops a freed object's
    connections itself. Deleted, and the test replaced with one that pins
    something the project owns: three levels in a row leave no listeners behind.
+
+## And one of those tests was itself wrong (found 2026-09-20)
+
+`test_a_test_run_leaves_no_settings_behind` asserted that `user://settings.cfg`
+**does not exist**. That is not the claim. The file exists on any machine where
+the game has been played — including the build machine, because the screenshot
+harness is a real windowed run and therefore persists exactly like the game
+does. The next full suite after a screenshot pass went red with a message about
+a test run having written the file, and no test run had.
+
+What the test owns is that a suite does not **touch** it. It now reads the
+file's bytes before and after and asserts they are identical — bytes rather
+than a modification time, which has one-second resolution and would miss a
+write in the same second as the file it replaced.
+
+Worth stating plainly, because it is the second time in this WP: **a guard or an
+assertion that restates a rule in slightly the wrong words is worse than none.**
+"Does not exist" and "was not written by us" look like the same sentence and are
+not.
