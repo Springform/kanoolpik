@@ -218,6 +218,22 @@ func _run() -> void:
 		await _stand_at(Vector3(0, 0, 14), Vector3(0, 1.0, 0))
 		await _shot("remote-far")
 
+	if _wants("intro"):
+		# WP-5.4. The only question a screenshot can answer here is the one that
+		# matters: does a canvas_item shader reading hint_screen_texture render
+		# at all under GL Compatibility? A blurred island says yes; a sharp one
+		# or a black rectangle says the intro has to be built some other way.
+		# Three moments from the storyboard rather than seven seconds of video.
+		var wake := WakeUp.new()
+		main.add_child(wake)
+		wake.set_process(false)
+		for moment: float in [0.45, 1.4, 3.3]:
+			wake.elapsed = moment
+			wake._apply(moment)
+			await _shot("intro-%0.2f" % moment)
+		wake.finish()
+		await get_tree().process_frame
+
 	if _wants("settings"):
 		# WP-5.1. The panel is built from a list rather than typed into a scene,
 		# so its height is whatever the rows add up to — which is the shape that

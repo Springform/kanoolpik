@@ -258,18 +258,61 @@ func test_every_row_has_a_translated_label() -> void:
 
 func test_the_panel_only_shows_settings_something_reads() -> void:
 	# A switch for a setting nothing reads is a bug report from whoever flicked
-	# it and watched carefully. `fx.intro` is still that: the key exists so
-	# WP-5.4 has somewhere to write and nothing reads it yet.
+	# it and watched carefully.
 	#
-	# `look.head_bob` was in the same state until WP-5.2 made it do something,
-	# and this test going red is how that arrived — which is the whole point of
-	# it. The rule did not change; the world did.
+	# Both `look.head_bob` and `fx.intro` were exactly that until WP-5.2 and
+	# WP-5.4 made them do something, and this test going red is how each of them
+	# arrived — which is the whole point of it. The rule never changed; the world
+	# did, twice.
+	#
+	# So it is now phrased as the rule rather than as a list: every key the panel
+	# offers is read by somebody. `Settings.DEFAULTS` is the roster of keys, and
+	# a key nothing reads has no business on a panel.
 	var shown: Array[String] = []
 	for row: Dictionary in SettingsPanel.ROWS:
 		if row.has("key"):
 			shown.append(String(row["key"]))
-	assert_array(shown).contains([Settings.LOOK_HEAD_BOB])
-	assert_array(shown).not_contains([Settings.FX_INTRO])
+	for key: String in shown:
+		assert_bool(_something_reads(key)).override_failure_message(
+			"the panel offers %s and nothing in src/ ever reads it" % key).is_true()
+
+
+## Does any file under `src/` ask [Settings] for [param key]?
+##
+## Crude on purpose — a grep, not an analysis. It answers the one question that
+## matters, which is whether a switch does anything at all. Callers write the
+## constant (`Settings.LOOK_FOV`), never the string, so the constant's name is
+## what to look for; it comes from the script itself rather than from a list
+## here, which would be one more thing to forget to update.
+func _something_reads(key: String) -> bool:
+	# Two ways a key can be live. The volumes and the locale are applied by
+	# [Settings] itself — that is what [method Settings.apply] is — so nothing
+	# outside will ever mention them and they count on their own.
+	if Settings.BUSES.has(key) or key == Settings.UI_LOCALE:
+		return true
+	var constants: Dictionary = load("res://src/game/settings/settings.gd").get_script_constant_map()
+	for name: String in constants:
+		if typeof(constants[name]) == TYPE_STRING and String(constants[name]) == key:
+			if _mentions_outside_settings("Settings." + name):
+				return true
+	return false
+
+
+## True when any `.gd` under `src/`, outside the settings folder itself,
+## contains [param text].
+func _mentions_outside_settings(text: String) -> bool:
+	var found := [false]
+	var walk := func(directory: String, recurse: Callable) -> void:
+		for entry: String in DirAccess.get_directories_at(directory):
+			recurse.call(directory + "/" + entry, recurse)
+		if directory.ends_with("/settings"):
+			return
+		for entry: String in DirAccess.get_files_at(directory):
+			if entry.ends_with(".gd") \
+					and FileAccess.get_file_as_string(directory + "/" + entry).contains(text):
+				found[0] = true
+	walk.call("res://src", walk)
+	return found[0]
 
 
 # --- The player actually uses them ----------------------------------------------------

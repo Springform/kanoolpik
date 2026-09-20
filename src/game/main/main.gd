@@ -52,6 +52,9 @@ var lobby_screen: LobbyScreen
 ## [method _tear_down] because a panel that is rebuilt per screen is a panel
 ## whose state has to be rebuilt too.
 var settings_panel: SettingsPanel
+## The waking-up overlay (WP-5.4). Null when the player has turned it off, and
+## null again the moment it ends — it frees itself.
+var intro: WakeUp
 
 
 func _ready() -> void:
@@ -200,6 +203,11 @@ func _build_playing_scene() -> void:
 		test_panel.name = "TestPanel"
 		add_child(test_panel)
 	GameEvents.island_clean.connect(_on_island_clean)
+	# WP-5.4, and the only line this work package adds outside src/game/fx/.
+	# It goes last, after everything a round needs exists, because the intro is
+	# drawn over a world that is already running and must never be the thing
+	# that starts one. Returns null when the player has switched it off.
+	intro = WakeUp.install(self)
 
 
 ## Show the settings panel over whatever is on screen. It never pauses or
@@ -322,12 +330,13 @@ func _tear_down(stop_session: bool = true) -> void:
 	get_tree().paused = false
 	# Abilities first: they hold connections to GameEvents, and one that outlives
 	# a restart animates the next shout twice.
-	for node: Node in _abilities + [test_panel, evaluation, pause_menu, hud, player,
+	for node: Node in _abilities + [intro, test_panel, evaluation, pause_menu, hud, player,
 			title_screen, lobby_screen, lobby, backdrop, island]:
 		if is_instance_valid(node):
 			remove_child(node)
 			node.free()
 	_abilities.clear()
+	intro = null
 	island = null
 	player = null
 	test_panel = null
