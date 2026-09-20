@@ -58,6 +58,9 @@ const K_COMMAND := "c" ## client → host: please apply this
 const K_APPLY := "a" ## host → peers: apply this, and here is my hash
 const K_REJECT := "r" ## host → one peer: no, and why
 const K_SNAPSHOT := "s" ## host → one peer: here is the whole world
+## client → host: this is where I am. host → peers: this is where everyone is.
+## The only kind that is not a command and never reaches [CommandProcessor].
+const K_PRESENCE := "p"
 
 const R_HOST_GONE := "host_left"
 ## The relay closes a client's socket with this code when the host leaves
@@ -86,6 +89,7 @@ var processor: CommandProcessor
 
 var _socket := WebSocketPeer.new()
 var _url: String
+var _room: String
 var _peer_id := 0
 var _is_host: bool
 var _joined := false
@@ -100,14 +104,23 @@ var _known_peers: Array[int] = []
 ## Commands submitted before the relay answered `welcome`. Sent in order once it
 ## does; dropping them instead would lose the first thing an eager player does.
 var _outbox: Array[Dictionary] = []
+## Host only: peer id -> the last presence that peer sent, waiting to go out in
+## the next fan-out. A second frame from the same peer overwrites the first,
+## because a transform from 50 ms ago is not worth a byte.
+var _presence_pending: Dictionary = {}
+## How many presence frames this transport has put on the wire. The acceptance
+## criterion "a standing-still player generates no transform traffic" is a
+## statement about a number, so the number is here to be asserted on.
+var presence_sent := 0
 
 
-func _init(base_url: String, room_code: String, as_host: bool,
+func _init(base_url: String, p_room: String, as_host: bool,
 		p_processor: CommandProcessor, p_state: WorldState) -> void:
 	_is_host = as_host
 	processor = p_processor
 	state = p_state
-	_url = "%s/room/%s" % [base_url.rstrip("/"), room_code.to_upper()]
+	_room = p_room.to_upper()
+	_url = "%s/room/%s" % [base_url.rstrip("/"), _room]
 	_socket.inbound_buffer_size = MAX_FRAME
 	_socket.outbound_buffer_size = MAX_FRAME
 	var err := _socket.connect_to_url(_url)
@@ -138,6 +151,10 @@ func known_peers() -> Array[int]:
 	return _known_peers.duplicate()
 
 
+func room_code() -> String:
+	return _room
+
+
 ## Fire-and-forget, as the seam promises. On the host this applies immediately
 ## (it is the authority); on a client it goes to the host and comes back.
 func submit_command(command: Dictionary) -> void:
@@ -151,6 +168,48 @@ func submit_command(command: Dictionary) -> void:
 		_host_decides(_peer_id, command)
 		return
 	_send({"k": K_COMMAND, "c": CommandCodec.to_wire(command)})
+
+
+## Where we are, and — on the host — where everybody is.
+##
+## [b]Why the host aggregates instead of the relay forwarding.[/b] A client may
+## only reach the host (`infra/relay/src/room.js`): that restriction is what
+## stops a peer impersonating the authority, and it is not negotiable. The naive
+## consequence is that every client transform is billed twice — once going up,
+## once coming back down through the host — and ADR 0011's sum
+## ([i]"six players at 20 Hz → 120 incoming messages/s → ~4.6 hours/day"[/i])
+## quietly assumed one.
+##
+## So the host does not forward frames, it merges them: five uplinks and [b]one[/b]
+## fan-out carrying all six positions, which is six incoming messages per tick —
+## exactly the number the ADR costed. Forwarding each one would have been eleven,
+## and the free plan would have run out before dinner.
+##
+## An empty [param presence] means "I have not moved". It is still a tick worth
+## having on the host, because that is when everyone else's goes out; if nobody
+## in the room has moved, nothing is sent at all, which is the acceptance
+## criterion.
+func send_presence(presence: Dictionary) -> void:
+	if _closed or not _joined:
+		return
+	if not _is_host:
+		if presence.is_empty():
+			return
+		_put({"k": K_PRESENCE, "p": {str(_peer_id): presence}})
+		return
+	if not presence.is_empty():
+		_presence_pending[str(_peer_id)] = presence
+	if _presence_pending.is_empty():
+		return
+	_put({"k": K_PRESENCE, "p": _presence_pending})
+	_presence_pending = {}
+
+
+## [method _send] plus the counter. Only presence goes through it: commands are
+## a handful a minute and nobody is counting them.
+func _put(payload: Dictionary) -> void:
+	presence_sent += 1
+	_send(payload)
 
 
 ## Called once per fixed step. Two jobs: pump the socket, and — on the host
@@ -219,6 +278,10 @@ func _receive(text: String) -> void:
 		"leave":
 			var gone := int(frame.get("id", 0))
 			_known_peers.erase(gone)
+			# Their last transform must not go out in the next fan-out: an
+			# avatar that arrives after the peer_left that was meant to remove
+			# it is a ghost standing still on the beach forever.
+			_presence_pending.erase(str(gone))
 			peer_left.emit(gone)
 		"hostgone":
 			_die(R_HOST_GONE)
@@ -275,6 +338,39 @@ func _payload(from: int, raw: Variant) -> void:
 			if not _is_host:
 				state = WorldState.from_dict(d.get("s", {}))
 				state_replaced.emit(state)
+		K_PRESENCE:
+			_presence(from, d.get("p"))
+
+
+## Somebody moved.
+##
+## [b]The same stamp as rule 2, for the same reason.[/b] A client's frame is
+## whatever it chose to type, so on the host the ids inside it are thrown away
+## and replaced with the relay's [param from] — otherwise peer 4 could put peer
+## 2's avatar in the lake. On a client the ids are the host's, and the host is
+## the authority, so they are taken as given.
+##
+## Nothing here touches [member state]. A presence frame that arrived
+## mid-command changes no hash and desyncs nobody, which is the whole point of
+## keeping transforms off the command path.
+func _presence(from: int, raw: Variant) -> void:
+	if not raw is Dictionary:
+		return
+	var by_peer: Dictionary = raw
+	if _is_host:
+		# One peer, one position, and it is theirs. Whatever key they wrote.
+		for value: Variant in by_peer.values():
+			if value is Dictionary:
+				_presence_pending[str(from)] = value
+				presence_received.emit(from, value)
+			break
+		return
+	for key: Variant in by_peer:
+		var id := int(String(key))
+		var value: Variant = by_peer[key]
+		# Our own position coming back around the loop is not news.
+		if id > 0 and id != _peer_id and value is Dictionary:
+			presence_received.emit(id, value)
 
 
 ## A client asked for something. The host is the only judge.

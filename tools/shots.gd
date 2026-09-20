@@ -185,6 +185,39 @@ func _run() -> void:
 			Vector3(here.x, GameSession.ground_y(), here.z - 1.2)))
 		await _shot("drop-on-a-slope", 20)
 
+	if _wants("roomcode"):
+		# The code next to the clock, so a third friend can be told it mid-round.
+		# Set on the label directly: the shots harness has no relay, and what is
+		# being looked at is whether it fits beside the clock and reads at a
+		# glance — not where the string came from.
+		main.hud.room_label.visible = true
+		main.hud.room_label.text = tr("ui.hud.room_code") % RoomCode.spaced("BCDFGH")
+		await _shot("hud-room-code")
+
+	if _wants("remote"):
+		# WP-4.5's acceptance criterion is "name tags read at the distances
+		# people actually stand at", and that is not a property a test can
+		# check. Five avatars, built the way the real thing builds them, at
+		# three, eight and twenty metres — the near one, the across-the-camp
+		# one, and the other side of the island.
+		var remote := RemotePlayers.install(main, main.island)
+		for i in range(2, 7):
+			var angle := TAU * float(i - 2) / 5.0
+			var spot := Vector3(cos(angle) * 6.0, 0.0, sin(angle) * 6.0)
+			# Where a PLAYER would be, not where the ground is: the position that
+			# travels is a body centre, so feet-on-grass is half a body up.
+			spot.y = main.island.height_at(spot.x, spot.z) + RemoteAvatar.BODY_HEIGHT * 0.5
+			remote._on_presence(i, Presence.to_wire(spot, -angle))
+		await get_tree().process_frame
+		# One of them holding something, so the armful is in the picture.
+		GameSession.submit(Commands.join(2))
+		GameSession.submit(Commands.pick_up(2, "tent_pole_1"))
+		GameSession.submit(Commands.pick_up(2, "tent_peg_1"))
+		await _stand_at(Vector3(0, 0, 3), Vector3(6, 1.0, 0))
+		await _shot("remote-near")
+		await _stand_at(Vector3(0, 0, 14), Vector3(0, 1.0, 0))
+		await _shot("remote-far")
+
 	if _wants("lobby"):
 		# The two multiplayer screens (WP-4.4), drawn over the booted island but
 		# with no relay anywhere near them: LobbyScreen is a view, so the host's

@@ -325,6 +325,38 @@ func test_a_client_ends_up_with_exactly_the_hosts_world() -> void:
 		JSON.stringify(host.state.to_dict()))
 
 
+# --- The code stays readable once the lobby is gone ------------------------------------------
+
+func test_the_room_code_survives_into_the_round() -> void:
+	# Joining a running round already works — the host sends a snapshot and a
+	# `join`, and test_an_arrival_after_the_start_is_put_into_the_world_too
+	# proves it. What was missing was somewhere to read the six characters off
+	# after the lobby screen is gone, so the capability existed and nobody could
+	# reach it.
+	var room := await _hosted_room()
+	_lobby.start_game()
+	assert_str(GameSession.transport.room_code()).override_failure_message(
+		"the round has no idea which room it is in").is_equal(room)
+
+	var hud: HUD = auto_free(load("res://src/game/hud/hud.tscn").instantiate())
+	add_child(hud)
+	await get_tree().process_frame
+	assert_bool(hud.room_label.visible).is_true()
+	assert_bool(hud.room_label.text.contains(RoomCode.spaced(room))).override_failure_message(
+		"the HUD shows '%s', which is not the code" % hud.room_label.text).is_true()
+
+
+func test_single_player_shows_no_room_code() -> void:
+	# "" rather than a colon with nothing after it.
+	GameSession.start_level("island_01", 1234)
+	assert_str(GameSession.transport.room_code()).is_empty()
+	var hud: HUD = auto_free(load("res://src/game/hud/hud.tscn").instantiate())
+	add_child(hud)
+	await get_tree().process_frame
+	assert_bool(hud.room_label.visible).override_failure_message(
+		"a solo round is advertising a room nobody can join").is_false()
+
+
 # --- What the screen says ------------------------------------------------------------------
 
 func test_a_refused_join_does_not_claim_you_are_in() -> void:

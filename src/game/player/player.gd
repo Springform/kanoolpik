@@ -3,8 +3,14 @@ extends CharacterBody3D
 ## First-person controller + interaction raycast for the LOCAL player.
 ##
 ## Owns nothing about game rules: it only turns input into [Commands] submitted
-## through [GameSession]. Remote players (phase 4) reuse this scene with
-## [member is_local] = false and no input processing.
+## through [GameSession].
+##
+## [b]Remote players do not reuse this scene[/b] — [RemoteAvatar] draws them
+## instead (WP-4.5). This is a body that simulates itself from input, and a
+## remote player's position is a fact that arrives on the wire; running both
+## would give two answers to where somebody is standing. [member is_local] stays
+## because tests and the shots harness want a player that does not grab the
+## mouse.
 
 ## Group the local player joins so late-created UI can find it (the spawn signal may already have fired).
 const LOCAL_GROUP := "local_player"

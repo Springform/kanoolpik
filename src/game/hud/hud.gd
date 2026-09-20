@@ -29,7 +29,8 @@ const COLOR_ERROR := Color(1.0, 0.6, 0.4)
 @onready var progress_bar: ProgressBar = $Root/TopLeft/VBox/ProgressBar
 @onready var containers_label: Label = $Root/TopLeft/VBox/Containers
 @onready var points_label: Label = $Root/TopLeft/VBox/Points
-@onready var time_label: Label = $Root/TopRight/Time
+@onready var time_label: Label = $Root/TopRight/VBox/Time
+@onready var room_label: Label = $Root/TopRight/VBox/Room
 @onready var carrying_label: Label = $Root/BottomLeft/VBox/Carrying
 @onready var slots_box: HBoxContainer = $Root/BottomLeft/VBox/Slots
 @onready var held_label: Label = $Root/BottomLeft/VBox/Held
@@ -65,6 +66,7 @@ func _ready() -> void:
 		_player = existing
 	prompt_label.text = ""
 	held_label.text = ""
+	_refresh_room_code()
 	# Read rather than wait for an event: a resumed save has already awarded its
 	# points, and no points_awarded is coming for them.
 	_refresh_points()
@@ -218,6 +220,21 @@ func _on_container_completed(cid: String) -> void:
 
 func _on_island_clean() -> void:
 	show_toast(tr("ui.island_clean"), 10.0, VerdictStyle.COLOR_COMPLETE)
+
+
+## The room code, next to the clock, for as long as the round lasts.
+##
+## Joining a round that has already started works (WP-4.6) — the host sends a
+## snapshot and a `join`, and there is a test for it. What was missing was
+## somewhere to read the six characters off once the lobby screen was gone, so
+## the capability existed and nobody could reach it.
+##
+## Empty in single player: [method Transport.room_code] returns "" when there is
+## no room, and the label hides rather than showing a colon with nothing after it.
+func _refresh_room_code() -> void:
+	var code := GameSession.transport.room_code() if GameSession.transport != null else ""
+	room_label.visible = not code.is_empty()
+	room_label.text = tr("ui.hud.room_code") % RoomCode.spaced(code) if not code.is_empty() else ""
 
 
 func _on_respawned(player_id: int) -> void:

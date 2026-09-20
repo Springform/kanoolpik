@@ -32,6 +32,12 @@ Measured against Cloudflare's published free plan: 100,000 requests/day, 13,000 
 
 Commands are negligible next to transforms: a busy player issues a few per second, not twenty. **The transform rate is the only thing that decides whether this stays free**, which is why WP-4.5 owns it as a named constant and why "only send when it changed" is in its acceptance criteria rather than left as an optimisation.
 
+### The sum above assumes the host merges (added by WP-4.5)
+
+"Six players → six incoming messages a tick" is only true if the host sends **one** frame carrying the whole room. A client may not reach another client — that restriction is what stops a peer impersonating the authority — so a transform has to come back down through the host, and forwarding each one separately makes it eleven incoming messages a tick rather than six. That is nearly double the bill for the same picture.
+
+So `WebSocketTransport.send_presence` collects what arrived since the last tick and fans it out as one frame. The numbers in the table hold; they would not have. WP-4.5 also settled the rate at **10 Hz**, because `RemoteAvatar` interpolates between frames and the second ten cost half the daily budget to hide a gap nobody can see.
+
 ## Alternatives considered
 **WebRTC as originally decided.** Cheaper in requests and lower latency once connected. Rejected for the testing story above, and because the NAT failure mode costs either money or a friend.
 
