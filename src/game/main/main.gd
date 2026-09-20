@@ -30,8 +30,10 @@ const LEVEL_DEFAULT_SEED := -1
 
 var state := State.TITLE
 var island: Island
-## Phase-3 ability nodes for the running scene, tracked so [method _tear_down]
-## can free them — they subscribe to GameEvents and must not outlive a restart.
+## Nodes the running scene installs that subscribe to [GameEvents] or to the
+## transport, tracked so [method _tear_down] can free them — one that outlives a
+## restart reacts to the next level's events. Mostly phase-3 abilities, plus the
+## collectible spawner and phase 4's presence pair.
 var _abilities: Array[Node] = []
 var player: Player
 var hud: HUD
@@ -175,6 +177,11 @@ func _build_playing_scene() -> void:
 	if GameSession.transport != null:
 		GameSession.transport.disconnected.connect(_on_connection_lost, CONNECT_DEFERRED)
 	_install_abilities()
+	# WP-4.5. Installed unconditionally: in single player the seam's
+	# send_presence does nothing and presence_received never fires, so this is
+	# one node doing nothing rather than a branch that can be wrong.
+	_abilities.append(PresenceSender.install(self, player))
+	_abilities.append(RemotePlayers.install(self, island))
 	if TestMode.is_enabled():
 		test_panel = TestPanel.new()
 		test_panel.name = "TestPanel"

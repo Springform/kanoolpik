@@ -47,9 +47,37 @@ func known_peers() -> Array[int]:
 	return [local_player_id()]
 
 
+## The room this transport is in, or "" when there is no room — which is what
+## single player is. The HUD shows it so a friend arriving late has something to
+## be told; joining a running round already works (WP-4.6), it just needed the
+## six characters to still be readable once the lobby is gone.
+func room_code() -> String:
+	return ""
+
+
+## Somebody else moved. [param presence] is presentation only — a position and
+## a facing — and is never applied to [WorldState] by anybody (WP-4.5).
+##
+## It is a separate channel from [signal command_applied] on purpose. A
+## transform is not a command: it needs no judging, no ordering and no hash,
+## it is worthless a tenth of a second later, and routing twenty of them a
+## second through [CommandProcessor] would put the one thing that must stay
+## deterministic at the mercy of the one thing that cannot be.
+signal presence_received(peer_id: int, presence: Dictionary)
+
+
 ## Fire-and-forget. Results arrive via signals.
 func submit_command(_command: Dictionary) -> void:
 	push_error("Transport.submit_command not implemented")
+
+
+## Tell the room where we are. An empty [param presence] means "nothing of mine
+## changed" — which the host still needs to hear, because it is also the tick on
+## which it forwards everyone else's (see [method WebSocketTransport.send_presence]).
+##
+## Single player has nobody to tell, so the seam's answer is to do nothing.
+func send_presence(_presence: Dictionary) -> void:
+	pass
 
 
 ## Called by the session once per fixed physics step.

@@ -320,3 +320,5 @@ ui.lobby.error.busy,Vent lige - der er allerede en forespørgsel i gang.,Hold on
 ui.lobby.error.full,Kanoen er fuld. Der er plads til seks.,The canoe is full. There is room for six.
 ui.lobby.error.host_left,Værten forlod runden.,The host left the round.
 ui.lobby.error.lost,Forbindelsen blev afbrudt.,The connection dropped.
+ui.hud.room_code,Kode: %s,Code: %s
+ui.remote.player,Spiller %d,Player %d
