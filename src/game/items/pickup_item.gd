@@ -32,6 +32,10 @@ var def: ItemDef
 var visual: Node3D
 
 
+## The terrain this item rests on. Set by [Island] when it spawns one; null in
+## a test that builds an item on its own, which then uses core positions as-is.
+var island: Island
+
 func setup(p_def: ItemDef) -> void:
 	def = p_def
 	item_id = p_def.id
@@ -105,7 +109,9 @@ func _on_picked_up(id: String, _player_id: int) -> void:
 
 func _on_dropped(id: String, _player_id: int, position: Vector3) -> void:
 	if id == item_id:
-		global_position = position
+		# Through the island, so a dropped item lands on the hill you are
+		# standing on rather than at the level's flat ground_y, which is under it.
+		global_position = island.ground_position(position) if island != null else position
 		set_in_world(true)
 
 

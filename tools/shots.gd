@@ -164,6 +164,27 @@ func _run() -> void:
 			call_mate[0].shout()
 		await _shot("summon", 40)
 
+	if _wants("drop"):
+		# The bug that looked like an item being deleted: dropped items kept the
+		# core's flat ground_y and sank into the hill you were standing on. Stand
+		# on a slope, drop one, and look at whether it is there.
+		var slope := Vector3.ZERO
+		for i in 48:
+			var angle := TAU * float(i) / 48.0
+			var x: float = cos(angle) * 9.0
+			var z: float = sin(angle) * 9.0
+			if main.island.height_at(x, z) > main.island.height_at(slope.x, slope.z):
+				slope = Vector3(x, 0.0, z)
+		await _stand_at(slope, slope + Vector3(0, -1.0, -2.5))
+		var pid := GameSession.local_player_id()
+		var loose := GameSession.state.items_of_kind(WorldState.Kind.GROUND)
+		GameSession.submit(Commands.pick_up(pid, loose[0]))
+		await get_tree().process_frame
+		var here := main.player.global_position
+		GameSession.submit(Commands.drop(pid, loose[0],
+			Vector3(here.x, GameSession.ground_y(), here.z - 1.2)))
+		await _shot("drop-on-a-slope", 20)
+
 	if _wants("lobby"):
 		# The two multiplayer screens (WP-4.4), drawn over the booted island but
 		# with no relay anywhere near them: LobbyScreen is a view, so the host's

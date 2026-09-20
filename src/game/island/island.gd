@@ -21,6 +21,10 @@ const MAX_TERRAIN_VERTICES := 20000
 ## the terrain shape must respect (see [method slope_degrees_at]).
 const MAX_WALKABLE_SLOPE_DEG := 40.0
 
+## How far above the terrain a loose item rests, so it sits on the ground
+## instead of half inside it.
+const ITEM_LIFT := 0.15
+
 @onready var items_root: Node3D = $Items
 @onready var containers_root: Node3D = $Containers
 
@@ -342,6 +346,22 @@ func _spawn_containers() -> void:
 		containers_root.add_child(node)
 
 
+## Turn a core ground position into a world position.
+##
+## [b]The core stores a flat y[/b] — `WorldState.ground_y` — because positions
+## are presentation and the terrain is none of the core's business. Every place
+## that puts a loose item into the world therefore has to lift it onto the
+## actual ground, and this is where that is said.
+##
+## It used to be said in two places and forgotten in a third: spawning lifted,
+## the summon animator lifted, and [method PickupItem._on_dropped] did not. So
+## anything dropped with Q kept the flat y and sank into whatever hill you were
+## standing on — invisible, and with its collider under the ground, unpickable.
+## Found by playing, not by a test.
+func ground_position(position: Vector3) -> Vector3:
+	return Vector3(position.x, height_at(position.x, position.z) + ITEM_LIFT, position.z)
+
+
 func _spawn_items() -> void:
 	for id in GameSession.catalog.item_ids():
 		var node: PickupItem = PICKUP_ITEM.instantiate()
@@ -349,7 +369,6 @@ func _spawn_items() -> void:
 		node.name = "Item_" + id
 		# Placed and carried items have no meaningful ground position; PickupItem
 		# hides them on _ready, so only the position of loose items matters.
-		var pos: Vector3 = GameSession.state.location(id)["position"]
-		pos.y = height_at(pos.x, pos.z) + 0.15
-		node.position = pos
+		node.island = self
+		node.position = ground_position(GameSession.state.location(id)["position"])
 		items_root.add_child(node)

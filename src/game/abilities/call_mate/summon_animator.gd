@@ -15,7 +15,9 @@ extends Node
 
 ## Matches the lift [Island] gives an item when it first spawns one, so a
 ## summoned paddle sits on the grass exactly like a scattered one.
-const LANDING_LIFT := 0.15
+## Kept as the fallback for a harness with no island. The lift itself is
+## [constant Island.ITEM_LIFT] — one number, one place.
+const LANDING_LIFT := Island.ITEM_LIFT
 
 ## item_id -> { node: PickupItem, from: Vector3, to: Vector3, spin_from: float, elapsed: float }
 var _flights: Dictionary = {}
@@ -92,7 +94,7 @@ func landing_point(position: Vector3) -> Vector3:
 	var island := _island_node()
 	if island == null:
 		return position + Vector3(0.0, LANDING_LIFT, 0.0)
-	return Vector3(position.x, island.height_at(position.x, position.z) + LANDING_LIFT, position.z)
+	return island.ground_position(position)
 
 
 ## The [PickupItem] drawing [param item_id], or null when no scene shows it.
