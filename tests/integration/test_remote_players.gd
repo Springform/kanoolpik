@@ -311,8 +311,38 @@ func test_an_avatar_shows_what_its_owner_is_carrying() -> void:
 	assert_int(remote.avatar_for(2).get_node("Armful").get_child_count()
 		).override_failure_message("the armful is not drawn").is_equal(1)
 
+	# Drawn is not the same as visible. The first version drew it perfectly,
+	# inside the capsule — see the test below.
 	remote.free()
 	GameSession.stop_level()
+
+
+func test_the_first_block_of_an_armful_is_outside_the_body() -> void:
+	# A playtest found the armful invisible until somebody held more than three
+	# things: the blocks stacked straight up the node origin, and the capsule is
+	# CENTRED on that origin, so the stack only cleared the shoulder at the
+	# third block. The count is what people read, and one item reads as none.
+	#
+	# The rule is geometric, so it is checked as geometry rather than by
+	# counting children — a block that exists and cannot be seen is exactly what
+	# shipped last time.
+	for i in 8:
+		assert_bool(RemoteAvatar.block_is_outside_body(i)).override_failure_message(
+			"block %d sits %.2f m from the body axis; the capsule is %.2f m"
+			% [i, Vector2(RemoteAvatar.block_position(i).x, RemoteAvatar.block_position(i).z).length(),
+				RemoteAvatar.BODY_RADIUS]
+		).is_true()
+
+
+func test_an_armful_is_a_bundle_and_not_a_mast() -> void:
+	# Capacity is by item size, so eight small things is a legal armful. In one
+	# column that is a 1.4 m tower through the name tag; the columns are what
+	# keep it under the tag whoever is carrying what.
+	var top := RemoteAvatar.block_position(7).y + RemoteAvatar.CARRY_BLOCK * 0.5
+	assert_float(top).override_failure_message(
+		"a full armful reaches %.2f m, and the name tag is at %.2f m"
+		% [top, RemoteAvatar.TAG_HEIGHT]
+	).is_less(RemoteAvatar.TAG_HEIGHT)
 
 
 # --- The rate ----------------------------------------------------------------------

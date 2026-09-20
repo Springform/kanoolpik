@@ -81,3 +81,35 @@ then walks across the island to its owner.
 point. It now *could* use their last known position — `RemotePlayers` has it —
 but that is a rule about where items land, which makes it the core's business
 and not a transform's.
+
+## Found by playing it (2026-09-20)
+
+**The armful was inside the body.** The blocks stacked straight up the node
+origin at `y 0.55`, and the capsule is *centred* on that origin with radius
+`BODY_RADIUS` — so the stack only cleared the top of the shoulder at the third
+block. Reported exactly that way: *"ting er inden i spilleren, og først >3
+genstande kan ses."* Carrying capacity starts at **three**, so for most of a
+round the feature did nothing at all.
+
+It is the floating-capsule mistake from the other end. Both come from treating
+the position on the wire as a pair of feet: standing the capsule *on* it
+floated the avatar, and stacking the armful *up* from it buried the armful.
+
+**The fix is an arithmetic, not a number that looked right.** A block's centre
+has to be a body radius plus half a block from the axis before any of it is
+outside, and `CARRY_CLEARANCE` says so. Blocks now hug both sides and stack in
+pairs:
+
+- **One offset in one direction only solves half the problem.** In front of the
+  chest is hidden from behind; on the left is hidden from the right. Both sides
+  is outside the silhouette from in front and from behind, and from the side the
+  near column is.
+- **Pairs, not a column.** Capacity grows with the party's points, so an armful
+  is not always three; a single column of eight is a 1.4 m mast through the name
+  tag.
+
+**And the test was watching the wrong thing.** The old one asserted the armful
+had one child — which it did, perfectly, inside the capsule. Drawn is not
+visible. Two tests now pin the geometry instead: every block up to a full
+armful is outside the body, and a full armful stays under the name tag. Both
+fail on the shipped constants, which is the only reason to believe them.
