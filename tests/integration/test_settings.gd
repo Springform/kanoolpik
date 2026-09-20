@@ -90,19 +90,27 @@ func test_a_value_outside_its_range_is_pulled_back_in() -> void:
 func test_a_test_run_leaves_no_settings_behind() -> void:
 	# The guarantee this whole store depends on, and the only one that cannot be
 	# seen from inside a single suite. These are statics with a file behind
-	# them, so a slider moved in ANY suite used to write the player\'s real
+	# them, so a slider moved in ANY suite used to write the player's real
 	# settings.cfg — and the next run of the whole suite then started in
 	# whatever language that file said. One failed language test left it on
-	# English and test_hud\'s Danish-glyph assertions failed in a different
+	# English and test_hud's Danish-glyph assertions failed in a different
 	# suite, on the next run, for no visible reason.
+	#
+	# The first version of this test asserted the real file did not EXIST, and
+	# that is a different claim. The file legitimately exists on any machine
+	# where the game has been played — and on this one, because the screenshot
+	# harness is a real windowed run and therefore persists like the game does.
+	# So it went red for the right reason and the wrong claim. What this test
+	# owns is that a test run does not TOUCH it.
 	Settings.use_default_store()
 	var real_file := Settings.path
+	var before := _file_bytes(real_file)
 
 	Settings.set_value(Settings.LOOK_FOV, 101.0)
 	Settings.set_value(Settings.UI_LOCALE, "en")
 
-	assert_bool(FileAccess.file_exists(real_file)).override_failure_message(
-		"a test run wrote %s — the next run will start from it" % real_file).is_false()
+	assert_array(_file_bytes(real_file)).override_failure_message(
+		"a test run wrote %s — the next run will start from it" % real_file).is_equal(before)
 	# And it still behaved: in memory, everything works as it always did.
 	assert_float(Settings.get_float(Settings.LOOK_FOV)).is_equal_approx(101.0, 0.01)
 
@@ -318,3 +326,13 @@ func _open_panel() -> SettingsPanel:
 func _delete_settings_file() -> void:
 	if FileAccess.file_exists(Settings.path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(Settings.path))
+
+
+## The file's contents, or an empty array when it is not there. Compared rather
+## than hashed so a failure message could show what changed; and by content
+## rather than by modification time, which has one-second resolution and would
+## miss a write in the same second as the file it overwrote.
+func _file_bytes(at: String) -> PackedByteArray:
+	if not FileAccess.file_exists(at):
+		return PackedByteArray()
+	return FileAccess.get_file_as_bytes(at)
