@@ -1,6 +1,14 @@
 # WP-1.7 — Controller feel
 
-**Phase:** 1 · **Lane:** player · **Size:** S · **Status:** unclaimed
+**Phase:** 1 · **Lane:** player · **Size:** S · **Status:** ⊘ superseded (2026-09-20)
+
+> **Do not pick this up.** It is split into [WP-5.1 — Settings that stick](../phase-5/WP-5.1-settings.md)
+> and [WP-5.2 — How it feels to walk](../phase-5/WP-5.2-feel.md), and those two are current.
+>
+> It sat unclaimed through three phases because it was two unrelated jobs in one file: a
+> preferences store nothing else depended on, and a movement rewrite that could not start until
+> the store existed. Neither is hard on its own. Kept here so the roadmap's history reads
+> straight; everything below is the original text.
 
 ## Goal
 Walking around the island feels good: acceleration/deceleration curves instead of instant velocity, optional head bob (off by default, per the reference game's comfort option), FOV and sensitivity exported and read from a `Settings` resource (`user://settings.cfg`), coyote-time jump, sprint FOV kick, footstep events on the bus for audio later.

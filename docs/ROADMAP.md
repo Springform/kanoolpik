@@ -34,7 +34,7 @@ Bootable gray-box vertical slice; pure core with 74 tests; data-driven content; 
 | [1.4](roadmap/phase-1/WP-1.4-hud-v1.md) ✅ | HUD v1 (Danish): progress, carrying, prompts, toasts | hud | `src/game/hud/` | — |
 | [1.5](roadmap/phase-1/WP-1.5-evaluation-screen.md) ✅ | End-of-level evaluation screen + restart | hud/flow | `src/game/hud/evaluation/`, `src/game/main/` | 1.4 |
 | [1.6](roadmap/phase-1/WP-1.6-title-and-flow.md) ✅ | Title screen, seed entry, pause, restart | flow | `src/game/main/`, `src/game/title/` | — |
-| [1.7](roadmap/phase-1/WP-1.7-controller-feel.md) | Controller feel: acceleration, head bob toggle, FOV, sensitivity | player | `src/game/player/` | — |
+| [1.7](roadmap/phase-1/WP-1.7-controller-feel.md) ⊘ | Controller feel — **superseded by [5.1](roadmap/phase-5/WP-5.1-settings.md) + [5.2](roadmap/phase-5/WP-5.2-feel.md)**; it was two jobs in one file | player | `src/game/player/` | — |
 | [1.8](roadmap/phase-1/WP-1.8-save-load.md) ✅ | Save/load via WorldState snapshot (core + autoload) | core/infra | `src/core/save_game.gd`, `src/autoload/` | — |
 
 Parallel-safe sets: {1.1, 1.2, 1.4, 1.6, 1.7, 1.8} can all start at once. 1.3 after 1.2; 1.5 after 1.4.
@@ -87,7 +87,7 @@ WP files: [`docs/roadmap/phase-3/`](roadmap/phase-3/). **WP-3.0 blocks everythin
 
 **Waves.** 3.0 alone first. Then {3.1, 3.2, 3.4} in parallel — disjoint folders, no shared files. Then {3.3, 3.6, 3.7}. 3.8 after a human plays; 3.9 after a design session.
 
-**Scheduling constraint:** WP-3.6 and the parked [WP-1.7](roadmap/phase-1/WP-1.7-controller-feel.md) both own `src/game/player/player.gd`. Run one or the other, never both — the phase-2 lesson was that agent conflicts are semantic, and two agents rewriting the same interact path is the textual kind on top.
+**Scheduling constraint:** WP-3.6 and [WP-5.2](roadmap/phase-5/WP-5.2-feel.md) (which inherited this from the parked WP-1.7) both own `src/game/player/player.gd`. Run one or the other, never both — the phase-2 lesson was that agent conflicts are semantic, and two agents rewriting the same interact path is the textual kind on top.
 
 ## Phase 4 — Multiplayer (≤ 6, host-authoritative)
 
@@ -121,7 +121,27 @@ WP files: [`docs/roadmap/phase-4/`](roadmap/phase-4/). **[ADR 0011](adr/0011-web
 
 ## Phase 5 — Polish & release to friends
 
-Settings (sensitivity, FOV, language toggle, audio), accessibility (colour-blind-safe verdict colours, subtitles for cues), hangover-blur intro shader, itch.io mirror, PWA icon, README screenshots, first playtest with the actual canoe crew and a bug-fix week.
+*Exit criterion: a link you would send to somebody without explaining anything first.*
+
+WP files: [`docs/roadmap/phase-5/`](roadmap/phase-5/). Phase 4 closed the last mechanical gap, so everything here is about the distance between "it works" and "it is a game somebody else can pick up".
+
+| WP | What | Lane | Owns | Depends |
+|---|---|---|---|---|
+| [5.1](roadmap/phase-5/WP-5.1-settings.md) | Settings that stick: sensitivity, FOV, head bob, three volumes, language, in `user://settings.cfg` | settings | `src/game/settings/` | — |
+| [5.2](roadmap/phase-5/WP-5.2-feel.md) | How it feels to walk: acceleration, coyote time, sprint FOV kick, head bob | player | `src/game/player/player.gd` | 5.1 |
+| [5.3](roadmap/phase-5/WP-5.3-cues-you-can-read.md) | Cues you can read: captions for audio-only information, toasts that differ without colour | a11y | `src/game/hud/` | — |
+| [5.4](roadmap/phase-5/WP-5.4-the-morning-after.md) | The morning after: the hangover intro, skippable and switchable off | fx | `src/game/fx/` | 5.1 |
+| [5.5](roadmap/phase-5/WP-5.5-ship-it.md) | Ship it: PWA install, real icon, itch.io mirror, a version you can read in-game | infra | `export_presets.cfg`, deploy workflow | — |
+| [5.6](roadmap/phase-5/WP-5.6-the-front-page.md) | The front page: the README still says WebRTC. Current screenshots, how to open a room | docs | `README.md`, `docs/screenshots/` | — |
+| [5.7](roadmap/phase-5/WP-5.7-what-the-crew-found.md) | What the crew found — the place playtest findings become work | — | — | a playtest |
+
+**WP-5.1 and 5.2 together supersede [WP-1.7](roadmap/phase-1/WP-1.7-controller-feel.md)**, which sat unclaimed through three phases because it was two unrelated jobs in one file: a settings store and a movement rewrite. Split, they are both small.
+
+**Waves.** {5.1, 5.3, 5.5, 5.6} in parallel — four lanes, no shared files, and none of them needs another to exist. Then {5.2, 5.4}, both of which read `Settings`. 5.7 last, and only after people have played.
+
+**The one thing here that can break the deployment:** WP-5.5 turns on the PWA export. `progressive_web_app/ensure_cross_origin_isolation_headers` must stay **off** — ADR 0007 chose a single-threaded GL Compatibility export precisely so no COOP/COEP headers are needed, which is what lets plain GitHub Pages serve it. The failure mode is a build that works locally and shows a blank canvas on the real URL.
+
+**Nothing in this phase may touch `src/core/`.** If something here seems to need a core change, it is a core WP and it is somebody else's.
 
 ## Phase 6 — Stretch
 
