@@ -329,3 +329,4 @@ ui.multi.container_complete,%s blev færdig med %s,%s finished %s
 ui.multi.unlocked,%s købte %s,%s bought %s
 ui.multi.joined,%s kom til,%s joined
 ui.multi.left,%s smuttede,%s left
+ui.title.rejoin,Forbindelsen blev afbrudt. Tryk Join for at komme tilbage i runden.,The connection dropped. Press Join to get back into the round.

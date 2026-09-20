@@ -83,6 +83,10 @@ func _on_presence(peer_id: int, raw: Dictionary) -> void:
 	var presence := Presence.from_wire(raw)
 	if presence.is_empty():
 		return
+	# The session keeps the latest so a leaver's armful falls where they were
+	# standing rather than at the spawn point. This node is the only thing that
+	# decodes a transform, so it is the only thing that can tell it.
+	GameSession.remember_peer_position(peer_id, presence["position"])
 	var avatar: RemoteAvatar = _avatars.get(peer_id)
 	if avatar == null:
 		if world == null:

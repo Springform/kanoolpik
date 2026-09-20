@@ -259,9 +259,21 @@ func _on_connection_lost(reason: String) -> void:
 	if state != State.PLAYING:
 		return
 	var key := LobbyController.reason_key(reason)
+	# Read before the tear-down: `to_title` stops the session, and the transport
+	# that knows which room we were in goes with it.
+	#
+	# Only when it was OUR connection that died. If the host left there is no
+	# room to go back to — the relay would make us the first socket in a new one
+	# and we would be hosting an empty island under a code nobody is coming to.
+	# (WP-4.4 catches that and refuses it, but offering it is still a lie.)
+	var room := ""
+	if reason != WebSocketTransport.R_HOST_GONE and GameSession.transport != null:
+		room = GameSession.transport.room_code()
 	to_title()
-	if title_screen != null:
-		title_screen.show_notice(key)
+	if title_screen == null:
+		return
+	title_screen.show_notice("ui.title.rejoin" if not room.is_empty() else key)
+	title_screen.prefill_room(room)
 
 
 func _on_island_clean() -> void:
