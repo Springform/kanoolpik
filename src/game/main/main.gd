@@ -47,9 +47,18 @@ var test_panel: TestPanel
 ## "Start alene" never constructs either, so no socket exists to leak.
 var lobby: LobbyController
 var lobby_screen: LobbyScreen
+## The settings panel (WP-5.1). Built once, for the life of the game: it is
+## opened from the title screen AND from the pause menu, and it survives
+## [method _tear_down] because a panel that is rebuilt per screen is a panel
+## whose state has to be rebuilt too.
+var settings_panel: SettingsPanel
 
 
 func _ready() -> void:
+	# Before any screen exists: the locale decides what the title screen says,
+	# and the bus volumes decide how loud it opens. WP-5.1.
+	Settings.apply_all()
+	settings_panel = SettingsPanel.install(self)
 	if skip_title:
 		start_game(level_seed)
 	else:
@@ -75,6 +84,7 @@ func to_title() -> void:
 	# locked emitting this very signal.
 	title_screen.start_requested.connect(start_game, CONNECT_DEFERRED)
 	title_screen.continue_requested.connect(continue_game, CONNECT_DEFERRED)
+	title_screen.settings_requested.connect(open_settings)
 	title_screen.host_requested.connect(to_lobby.bind(""), CONNECT_DEFERRED)
 	title_screen.join_requested.connect(to_lobby, CONNECT_DEFERRED)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -167,6 +177,9 @@ func _build_playing_scene() -> void:
 	add_child(hud)
 	pause_menu = PAUSE_MENU.instantiate()
 	add_child(pause_menu)
+	# Not deferred: opening settings frees nothing, and the pause menu stays up
+	# underneath with the tree still paused.
+	pause_menu.settings_requested.connect(open_settings)
 	pause_menu.restart_requested.connect(restart_same_island, CONNECT_DEFERRED)
 	pause_menu.title_requested.connect(to_title, CONNECT_DEFERRED)
 	evaluation = EVALUATION.instantiate()
@@ -187,6 +200,15 @@ func _build_playing_scene() -> void:
 		test_panel.name = "TestPanel"
 		add_child(test_panel)
 	GameEvents.island_clean.connect(_on_island_clean)
+
+
+## Show the settings panel over whatever is on screen. It never pauses or
+## unpauses anything itself — opened from the pause menu the tree is already
+## paused and must stay that way; opened from the title there is nothing
+## running to pause.
+func open_settings() -> void:
+	if settings_panel != null:
+		settings_panel.open()
 
 
 ## Phase-3 abilities. Each one checks [Progression] itself and does nothing until

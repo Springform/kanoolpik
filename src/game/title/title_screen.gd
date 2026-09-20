@@ -14,6 +14,9 @@ signal continue_requested()
 signal host_requested()
 ## Emitted when the player typed a room code and wants in.
 signal join_requested(code: String)
+## Emitted when the player wants the settings panel (WP-5.1). [Main] owns the
+## panel, because it is also opened from [PauseMenu] and one of them has to.
+signal settings_requested()
 
 const LEVEL_DEFAULT_SEED := -1
 const LOCALES: Array[String] = ["da", "en"]
@@ -27,6 +30,7 @@ const LOCALES: Array[String] = ["da", "en"]
 @onready var language_button: Button = $Root/Panel/VBox/Language
 @onready var panel: PanelContainer = $Root/Panel
 @onready var notice_label: Label = $Root/Panel/VBox/Notice
+@onready var settings_button: Button = $Root/Panel/VBox/Settings
 @onready var host_button: Button = $Root/Panel/VBox/Host
 @onready var room_input: LineEdit = $Root/Panel/VBox/JoinRow/RoomInput
 @onready var join_button: Button = $Root/Panel/VBox/JoinRow/Join
@@ -54,6 +58,7 @@ func _ready() -> void:
 	# is simply the same character said quietly. Uppercase it as they type
 	# rather than refusing it later.
 	room_input.text_changed.connect(_on_room_text_changed)
+	settings_button.pressed.connect(settings_requested.emit)
 	language_button.pressed.connect(toggle_language)
 	if TestMode.is_available():
 		test_mode_button = Button.new()
@@ -119,9 +124,12 @@ func chosen_seed() -> int:
 	return int(text) if text.is_valid_int() else LEVEL_DEFAULT_SEED
 
 
+## Through [Settings] rather than straight at [TranslationServer] (WP-5.1), so
+## this toggle and the one in the settings panel cannot disagree — and so the
+## choice is still there next time. It used to reset on every reload.
 func toggle_language() -> void:
 	var next: String = LOCALES[(LOCALES.find(TranslationServer.get_locale()) + 1) % LOCALES.size()]
-	TranslationServer.set_locale(next)
+	Settings.set_value(Settings.UI_LOCALE, next)
 	apply_texts()
 
 
@@ -132,6 +140,7 @@ func apply_texts() -> void:
 	seed_input.placeholder_text = tr("ui.title.seed_hint")
 	continue_button.text = tr("ui.title.continue")
 	start_button.text = tr("ui.title.start")
+	settings_button.text = tr("ui.title.settings")
 	host_button.text = tr("ui.title.host")
 	join_button.text = tr("ui.title.join")
 	room_input.placeholder_text = tr("ui.title.room_hint")

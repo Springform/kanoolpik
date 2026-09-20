@@ -104,6 +104,11 @@ max_length = 7
 layout_mode = 2
 text = "Join"
 
+[node name="Settings" type="Button" parent="Root/Panel/VBox"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Indstillinger"
+
 [node name="Language" type="Button" parent="Root/Panel/VBox"]
 layout_mode = 2
 text = "Sprog"

@@ -417,6 +417,11 @@ func test_a_notice_survives_the_language_toggle() -> void:
 	assert_bool(screen.notice_label.visible).is_true()
 	assert_str(screen.notice_label.text).is_not_empty()
 	assert_str(screen.notice_label.text).is_not_equal(danish)
+	# Settings is now what decides the locale (WP-5.1), so putting the
+	# TranslationServer back is only half of it — a stale value in the store
+	# gets re-applied the next time anything calls Settings.apply_all(), which
+	# Main does on every boot. Forgetting is what actually restores it.
+	Settings.forget()
 	TranslationServer.set_locale("da")
 
 
