@@ -193,6 +193,17 @@ func _on_item_summoned(_item_id: String, player_id: int, position: Vector3) -> v
 	_shout_player.play()
 	if player_id == GameSession.local_player_id():
 		toast(tr("ui.ability.called"), false)
+		return
+	# WP-5.3: the shout was audible to everybody and visible to nobody but the
+	# shouter. Mute the tab — or simply be somebody who cannot hear it — and a
+	# mate hauling a whole series across the camp happened in silence and in
+	# secret. The dedupe above is why this belongs here and not in the HUD: one
+	# summon publishes an event per item, and the burst is counted in this file.
+	var who := PlayerNames.of(player_id)
+	if not who.is_empty():
+		var hud := hud_node()
+		if hud != null:
+			hud.show_toast(tr("ui.multi.called") % who, HUD.TOAST_SECONDS, HUD.COLOR_OTHER, false)
 
 
 func _on_command_rejected(command: Dictionary, error: String) -> void:

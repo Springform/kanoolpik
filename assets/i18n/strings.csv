@@ -325,6 +325,7 @@ ui.remote.player,Spiller %d,Player %d
 ui.hud.party,%d i kanoen,%d in the canoe
 ui.hud.ping,%d ms,%d ms
 ui.multi.placed,%s pakkede %s,%s packed %s
+ui.multi.called,%s råber på en kammerat,%s shouts for a mate
 ui.multi.container_complete,%s blev færdig med %s,%s finished %s
 ui.multi.unlocked,%s købte %s,%s bought %s
 ui.multi.joined,%s kom til,%s joined
@@ -342,3 +343,4 @@ ui.settings.reset,Nulstil,Reset
 ui.settings.close,Luk,Close
 ui.title.settings,Indstillinger,Settings
 ui.pause.settings,Indstillinger,Settings
+ui.cue.streak,%d i træk,%d in a row

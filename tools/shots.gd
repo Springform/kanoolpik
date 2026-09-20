@@ -251,6 +251,12 @@ func _run() -> void:
 			30.0, HUD.COLOR_OTHER, false)
 		main.hud.show_toast(tr(VerdictStyle.toast_key(PlacementRules.Verdict.WRONG_CATEGORY)),
 			30.0, VerdictStyle.color_for(PlacementRules.Verdict.WRONG_CATEGORY))
+		# WP-5.3: a run of four, which until now existed only as the pitch of a
+		# chime. Set on the counter the HUD actually reads, so the picture is of
+		# the real thing rather than of a label with a number typed into it.
+		for i in 4:
+			main.hud.streak().advance(float(i) * 0.3)
+		main.hud.refresh_streak()
 		await _shot("hud-multiplayer")
 
 	if _wants("lobby"):

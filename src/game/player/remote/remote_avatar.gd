@@ -247,11 +247,37 @@ static func block_is_outside_body(index: int) -> bool:
 	return Vector2(at.x, at.z).length() >= BODY_RADIUS + CARRY_BLOCK * 0.5
 
 
-## A stable colour per peer, so "the green one keeps putting bottles in the
-## kitchen box" is a thing six people can say to each other. Peer ids are 1-6
-## and handed out by the relay, so the spread is fixed rather than random.
+## Six colours, chosen rather than computed (WP-5.3), so that "the green one
+## keeps putting bottles in the kitchen box" is a thing six people can say to
+## each other.
+##
+## [b]The version before this one was [code]Color.from_hsv(id * 0.16, ...)[/code]
+## and peers 1 and 2 were the same colour to a third of colour-blind men.[/b]
+## Measured, not guessed: simulating protanopia and comparing in CIE Lab, the
+## closest pair of the computed six was ΔE 1.9 — a distance nobody can see.
+## Walking the wheel in even steps is exactly the way to land on a pair that
+## collapses, because the wheel is not perceptually even to begin with.
+##
+## These are six of the eight in the Okabe–Ito colour-universal palette, which
+## was designed for this and has been used for it since 2008. The reddish purple
+## and the black are the two left out. The closest pair of these six, under
+## normal vision, protanopia, deuteranopia and tritanopia, is ΔE 13.8 — and
+## `test_cues.gd` asserts it rather than trusting this paragraph.
+##
+## Still saturated, because the island is full of pastel placeholder boxes and a
+## washed-out capsule among them is scenery. A person has to read as a person
+## from across the camp.
+const PEER_COLOURS: Array[Color] = [
+	Color(0.902, 0.624, 0.000), # orange
+	Color(0.337, 0.706, 0.914), # sky blue
+	Color(0.000, 0.620, 0.451), # bluish green
+	Color(0.941, 0.894, 0.259), # yellow
+	Color(0.000, 0.447, 0.698), # blue
+	Color(0.835, 0.369, 0.000), # vermillion
+]
+
+
+## A stable colour per peer. Relay peer ids are 1-6; the wrap is there so an id
+## outside that range is somebody's colour rather than a crash.
 static func colour_for(id: int) -> Color:
-	# Saturated, because the island is already full of pastel placeholder boxes
-	# and a washed-out capsule among them is scenery. A person has to read as a
-	# person from across the camp.
-	return Color.from_hsv(fposmod(float(id) * 0.16, 1.0), 0.8, 0.9)
+	return PEER_COLOURS[posmod(id - 1, PEER_COLOURS.size())]

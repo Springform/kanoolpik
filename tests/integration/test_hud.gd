@@ -53,16 +53,16 @@ func test_empty_hands_text() -> void:
 
 func test_wrong_placement_toasts_the_verdict_in_verdict_colour() -> void:
 	_place("food_bread", "canoe", 0)
-	assert_array(hud.toast_texts()).contains([tr("ui.verdict.wrong_category")])
+	assert_bool(hud.said(tr("ui.verdict.wrong_category"))).override_failure_message("the player was never told: %s" % [tr("ui.verdict.wrong_category")]).is_true()
 	var toast: Label = hud.toasts_box.get_child(hud.toast_count() - 1)
 	assert_object(toast.modulate).is_equal(VerdictStyle.COLOR_WRONG)
 
 
 func test_rejected_command_toasts_a_translated_message_not_the_error_id() -> void:
 	GameSession.submit(Commands.drop(pid, "can_tuborg_1", Vector3.ZERO))
-	var texts := hud.toast_texts()
-	assert_array(texts).contains([tr("ui.error.item_not_carried_by_player")])
-	assert_array(texts).not_contains([CommandProcessor.E_NOT_CARRIED])
+	assert_bool(hud.said(tr("ui.error.item_not_carried_by_player"))).override_failure_message(
+		"the player was never told: %s" % [tr("ui.error.item_not_carried_by_player")]).is_true()
+	assert_array(hud.toast_texts()).not_contains([CommandProcessor.E_NOT_CARRIED])
 
 
 func test_hands_full_has_its_own_message() -> void:
@@ -88,7 +88,7 @@ func test_toast_disappears_after_its_lifetime() -> void:
 func test_container_completed_toast_names_the_container() -> void:
 	for i in range(1, 6):
 		_place("firewood_%d" % i, "fire_pit", i - 1)
-	assert_array(hud.toast_texts()).contains([tr("ui.container_complete") % tr("container.fire_pit")])
+	assert_bool(hud.said(tr("ui.container_complete") % tr("container.fire_pit"))).override_failure_message("the player was never told: %s" % [tr("ui.container_complete") % tr("container.fire_pit")]).is_true()
 
 
 func test_format_time() -> void:

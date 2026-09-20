@@ -15,9 +15,11 @@ extends StaticBody3D
 
 const FLASH_SECONDS := 0.35
 const COMPLETE_PULSE_SECONDS := 0.6
-## Correct chimes within this window step up in pitch (a little melody when you're on a roll).
-const CHIME_COMBO_WINDOW := 2.0
-const CHIME_MAX_STEPS := 7
+## Correct chimes step up in pitch when you are on a roll. **The count is not
+## kept here any more** (WP-5.3): it was per container, so putting a bottle in
+## the crate and then a peg in the tent bag was two runs of one — and the pitch
+## was the only place in the game that knew about a run at all. [HUD] counts it
+## now, for the player rather than for the box, and shows the number.
 ## Slots sit just above whatever is drawn, so the interaction ray reaches them
 ## before the body collider. [SlotLayout] works out where.
 
@@ -37,8 +39,6 @@ var visual: Node3D
 @onready var sfx_clean: AudioStreamPlayer3D = $SfxClean
 
 var _slots: Array[SlotNode] = []
-var _last_chime_time := -100.0
-var _chime_steps := 0
 var _received_last_item := false
 
 
@@ -227,12 +227,10 @@ func _pulse_all_slots() -> void:
 	tween.tween_property(mesh, "scale", Vector3.ONE, COMPLETE_PULSE_SECONDS).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 
 
+## Ask the HUD what the run is worth. A container with no HUD in the tree — the
+## shots harness, most tests — chimes at its own pitch and says nothing, which
+## is the honest answer rather than a second counter kept here in case.
 func _play_chime() -> void:
-	var now := Time.get_ticks_msec() / 1000.0
-	if now - _last_chime_time <= CHIME_COMBO_WINDOW:
-		_chime_steps = mini(_chime_steps + 1, CHIME_MAX_STEPS)
-	else:
-		_chime_steps = 0
-	_last_chime_time = now
-	sfx_correct.pitch_scale = pow(2.0, _chime_steps / 12.0) # semitone steps
+	var hud := get_tree().get_first_node_in_group(HUD.GROUP) as HUD if is_inside_tree() else null
+	sfx_correct.pitch_scale = hud.streak().pitch_scale() if hud != null else 1.0
 	sfx_correct.play()

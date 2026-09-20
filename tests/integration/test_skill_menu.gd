@@ -252,7 +252,7 @@ func test_a_bought_ability_reads_as_owned_and_the_point_is_spent() -> void:
 	assert_bool(menu.buy_button("insight").visible).is_false()
 	assert_str(menu.points_label.text).is_equal(tr("ui.skills.points") % 0)
 	assert_str(hud.points_label.text).is_equal(tr("ui.skills.points") % 0)
-	assert_array(hud.toast_texts()).contains([tr("ui.ability.unlocked") % tr("ability.insight")])
+	assert_bool(hud.said(tr("ui.ability.unlocked") % tr("ability.insight"))).override_failure_message("the player was never told: %s" % [tr("ui.ability.unlocked") % tr("ability.insight")]).is_true()
 
 
 func test_an_unaffordable_ability_cannot_be_bought_and_says_why() -> void:
@@ -265,7 +265,7 @@ func test_an_unaffordable_ability_cannot_be_bought_and_says_why() -> void:
 	assert_int(_events_of_type("ability_unlocked").size()).is_equal(0)
 	assert_bool(GameSession.progression.has("auto_place")).is_false()
 	assert_str(menu.row_status("auto_place")).is_equal(tr("ui.skills.cannot_afford"))
-	assert_array(hud.toast_texts()).contains([tr("ui.error.not_enough_points")])
+	assert_bool(hud.said(tr("ui.error.not_enough_points"))).override_failure_message("the player was never told: %s" % [tr("ui.error.not_enough_points")]).is_true()
 
 
 func test_buying_the_same_ability_twice_is_refused() -> void:
@@ -274,7 +274,7 @@ func test_buying_the_same_ability_twice_is_refused() -> void:
 	menu.buy_button("insight").pressed.emit()
 	menu.buy("insight")
 	assert_array(_refusals).is_equal([CommandProcessor.E_ALREADY_UNLOCKED])
-	assert_array(hud.toast_texts()).contains([tr("ui.error.already_unlocked")])
+	assert_bool(hud.said(tr("ui.error.already_unlocked"))).override_failure_message("the player was never told: %s" % [tr("ui.error.already_unlocked")]).is_true()
 
 
 # --- The panel reacts to the bus, not to the click ----------------------------------
@@ -295,7 +295,7 @@ func test_the_panel_updates_from_a_received_unlock_for_another_player() -> void:
 	assert_bool(menu.buy_button("insight").visible).is_false()
 	assert_str(menu.points_label.text).is_equal(tr("ui.skills.points") % 0)
 	assert_str(hud.points_label.text).is_equal(tr("ui.skills.points") % 0)
-	assert_array(hud.toast_texts()).contains([tr("ui.ability.unlocked") % tr("ability.insight")])
+	assert_bool(hud.said(tr("ui.ability.unlocked") % tr("ability.insight"))).override_failure_message("the player was never told: %s" % [tr("ui.ability.unlocked") % tr("ability.insight")]).is_true()
 
 
 func test_without_the_event_the_click_alone_changes_nothing_on_screen() -> void:
@@ -318,7 +318,7 @@ func test_a_refused_unlock_leaves_the_panel_untouched() -> void:
 	assert_bool(GameSession.progression.has("insight")).is_false()
 	assert_str(menu.row_status("insight")).is_equal(tr("ui.skills.cannot_afford"))
 	assert_str(menu.points_label.text).is_equal(tr("ui.skills.points") % 0)
-	assert_array(hud.toast_texts()).contains([tr("ui.error.not_enough_points")])
+	assert_bool(hud.said(tr("ui.error.not_enough_points"))).override_failure_message("the player was never told: %s" % [tr("ui.error.not_enough_points")]).is_true()
 
 
 # --- HUD counter --------------------------------------------------------------------
