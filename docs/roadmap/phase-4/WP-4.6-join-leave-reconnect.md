@@ -1,6 +1,6 @@
 # WP-4.6 — Joining, leaving, reconnecting, and the host walking off
 
-**Phase:** 4 · **Lane:** net · **Size:** M · **Status:** mostly done (session 5) — reconnect is not · **Depends on:** WP-4.2, WP-4.4
+**Phase:** 4 · **Lane:** net · **Size:** M · **Status:** done (session 6) · **Depends on:** WP-4.2, WP-4.4
 
 ## Goal
 The session survives real life: someone's wifi drops, someone closes a tab, someone's laptop sleeps. And when the host leaves, everyone is told plainly instead of watching a frozen island.
@@ -46,23 +46,50 @@ peers are not players. What this actually touched:
 
 ## Acceptance criteria
 - [x] A client disconnecting drops its carried items where it stood, on every peer.
-- [ ] **Reconnecting into a running room converges to the host's state exactly.** Not done — see below.
+- [x] **Reconnecting into a running room converges to the host's state exactly** — it is a fresh `join` and a fresh snapshot, which is what joining mid-round already was. See below for why there is no grace period.
 - [x] The host leaving tells everyone, in Danish, and returns them to the title screen rather than a frozen world.
 - [x] A dropped socket is distinguished from a deliberate quit.
 - [x] Every case above is a test in the core first, then over a real socket.
 
-## What is NOT done: reconnect
+## Reconnect, and why it needed no number
 
-A peer whose socket drops gets a new one by opening the room code again, which
-is a fresh `join` and a fresh snapshot — correct, but it is the player doing it
-by hand, from the title screen. There is no automatic retry, no "reconnecting…"
-state, and no grace period before the host removes them.
-
-That is a deliberate stop, not an oversight. Automatic reconnection needs a
-decision the project has not made: **how long a dropped player keeps their
+The stop here was deliberate: automatic reconnection seemed to need a decision
+nobody had earned the right to make — **how long a dropped player keeps their
 place.** Remove them at once and a ten-second tunnel costs somebody their
-armful; hold their seat and a room of six can be full of ghosts. The answer is a
-number somebody has to play with, and nobody has played this in multiplayer yet.
+armful; hold their seat and a room of six fills with ghosts.
+
+**KA answered it by asking a different question.** Joining a round that is
+already running works, and nothing personal is lost when you go: progression
+lives in the replicated `WorldState` (ADR 0010), so a returning player comes back
+with the party's points, abilities and capacity. There is no seat worth holding.
+Drop them straight away and let them walk back in.
+
+That left exactly two things, and neither is a number:
+
+**1. The armful lands where they were standing.** `GameSession._on_peer_left`
+used to pass `player_spawn(0)`, because the core has never carried positions and
+had nothing better to offer. WP-4.5 replicates transforms, so `RemotePlayers`
+writes the latest one to `GameSession.remember_peer_position()` and the `leave`
+command carries it. Positions are still not world state: this is one dictionary,
+presentation-fed, read by one command and cleared with the round.
+
+The body centre is handed over unflattened on purpose —
+`WorldState.clamp_to_island` already drops every position to `ground_y`, and
+saying it twice is how two places start to differ. (A first attempt did say it
+twice; the mutation that should have killed the test survived, which is what
+pointed at the duplication.)
+
+**2. The way back in is one click.** A connection that dies under a running
+round now returns to the title with the room code already in the field and the
+Join button focused, under a notice that says what to press. Only when it was
+*our* connection that died: if the host left there is no room to go back to, and
+the relay would make us the first socket in a new one — hosting an empty island
+under a code nobody is coming to. WP-4.4 refuses that, but offering it is still
+a lie.
+
+What is still not there, deliberately: no automatic retry and no "reconnecting…"
+state. A person pressing a focused button is a clearer contract than a client
+that silently decides how many times to try.
 
 ## Three findings
 

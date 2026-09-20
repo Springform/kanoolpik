@@ -89,6 +89,24 @@ func show_notice(reason_key: String) -> void:
 	_fit_panel.call_deferred()
 
 
+## Put a code in the join field and aim the player at the button.
+##
+## [b]The way back in, after being dropped.[/b] Joining a running round already
+## works (WP-4.6) and nothing personal is lost when you go — progression lives
+## in the replicated world, so you come back with the party's points and
+## abilities. What stood between a dropped player and the round was that they
+## had just been thrown away from the six characters they needed to type.
+##
+## So reconnect is not a grace period and not a number: it is this field, filled
+## in, with the button focused. [Main] calls it when a connection died under a
+## round that is probably still going on without us.
+func prefill_room(code: String) -> void:
+	if code.is_empty():
+		return
+	room_input.text = RoomCode.normalize(code)
+	join_button.grab_focus()
+
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready():
 		apply_texts()

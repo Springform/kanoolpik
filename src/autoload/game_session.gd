@@ -126,6 +126,9 @@ func _begin(p_level_id: String, p_level: Dictionary, p_catalog: Catalog,
 
 func stop_level() -> void:
 	_running = false
+	# Positions belong to the round that is ending. Keeping them would hand the
+	# next one a peer id standing somewhere on an island that no longer exists.
+	_peer_positions.clear()
 
 
 ## False once the level is over (or before one starts): nothing may act on the
@@ -228,19 +231,48 @@ func _on_peer_joined(peer_id: int) -> void:
 	transport.submit_command(Commands.join(peer_id))
 
 
-## Somebody left. Their armful lands where they were standing.
+## Where each peer was last seen standing.
 ##
-## [b]Except we do not know where that is.[/b] Positions are presentation and
-## the core has never carried them; WP-4.5 replicates transforms and should pass
-## the real one here. Until then the level's first spawn point is used: wrong,
-## but wrong somewhere a person walks past on the way to the canoes, rather than
-## at the origin, which on this island is the middle of nowhere.
+## [b]Fed by presentation, used for exactly one thing.[/b] Positions are not
+## world state and never will be — the core is deterministic because it does not
+## carry them. But when somebody drops out, their armful has to land somewhere,
+## and "where they were standing" is a better answer than "the spawn point".
+## [RemotePlayers] already decodes every transform that arrives (WP-4.5), so it
+## writes the latest one here and this turns it into the one command that cares.
+##
+## Not read for anything else, and not part of [method WorldState.to_dict]: a
+## peer who never moved has no entry, and the spawn point is still the fallback.
+var _peer_positions: Dictionary = {}
+
+
+## Remember where [param peer_id] is, for [method _on_peer_left]. Called by
+## presentation; safe to call at any rate, since it only ever overwrites.
+func remember_peer_position(peer_id: int, position: Vector3) -> void:
+	_peer_positions[peer_id] = position
+
+
+## Somebody left. Their armful lands in a ring where they were standing.
+##
+## The remembered transform is a body centre, about 0.9 m up (see
+## [constant RemoteAvatar.BODY_HEIGHT]), and it is handed over as it is. Not
+## because the height is wanted — world-state positions are flat, the terrain is
+## presentation's business — but because
+## [method WorldState.clamp_to_island] already flattens every drop to
+## [member WorldState.ground_y]. Flattening it a second time here would be the
+## same fact stated in two places, which is how the two of them start to differ.
+##
+## Without a remembered position this falls back to the level's first spawn
+## point: wrong, but wrong somewhere a person walks past on the way to the
+## canoes rather than at the origin, which on this island is the middle of
+## nowhere.
 func _on_peer_left(peer_id: int) -> void:
 	if not _running or transport == null or not transport.is_authority():
 		return
 	if state == null or not state.has_player(peer_id):
 		return
-	transport.submit_command(Commands.leave(peer_id, player_spawn(0)))
+	var at: Vector3 = _peer_positions.get(peer_id, player_spawn(0))
+	_peer_positions.erase(peer_id)
+	transport.submit_command(Commands.leave(peer_id, at))
 
 
 func _on_state_replaced(new_state: WorldState) -> void:

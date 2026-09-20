@@ -255,6 +255,13 @@ func _run() -> void:
 		# assuming the game crashed.
 		title.show_notice("ui.lobby.error.host_left")
 		await _shot("title-host-left")
+		# The way back in after being dropped: the code you were just thrown
+		# away from, already in the field, with the button focused. What is being
+		# looked at is whether the notice and the filled field read as one
+		# instruction rather than as a complaint and a coincidence.
+		title.show_notice("ui.title.rejoin")
+		title.prefill_room("BCDFGH")
+		await _shot("title-rejoin")
 		main.remove_child(title)
 		title.free()
 
