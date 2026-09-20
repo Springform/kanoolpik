@@ -330,3 +330,15 @@ ui.multi.unlocked,%s købte %s,%s bought %s
 ui.multi.joined,%s kom til,%s joined
 ui.multi.left,%s smuttede,%s left
 ui.title.rejoin,Forbindelsen blev afbrudt. Tryk Join for at komme tilbage i runden.,The connection dropped. Press Join to get back into the round.
+ui.settings.title,Indstillinger,Settings
+ui.settings.sensitivity,Musefølsomhed,Mouse sensitivity
+ui.settings.fov,Synsfelt,Field of view
+ui.settings.head_bob,Hovedvip,Head bob
+ui.settings.sfx,Lydeffekter,Sound effects
+ui.settings.music,Musik,Music
+ui.settings.ambience,Stemning,Ambience
+ui.settings.language,Sprog,Language
+ui.settings.reset,Nulstil,Reset
+ui.settings.close,Luk,Close
+ui.title.settings,Indstillinger,Settings
+ui.pause.settings,Indstillinger,Settings

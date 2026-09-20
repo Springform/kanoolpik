@@ -37,6 +37,15 @@ var _pitch := 0.0
 
 func _ready() -> void:
 	camera.current = is_local
+	# WP-5.1: the two the player can change. Read here and re-read on change, so
+	# dragging a slider moves the camera while it is being dragged — which is
+	# the only way anybody finds the sensitivity that suits them.
+	#
+	# The acceleration, head bob and FOV kick that WP-5.2 adds go here too; this
+	# is the hook, not the whole story.
+	if is_local:
+		_apply_settings()
+		Settings.changed().connect(_on_settings_changed)
 	ray.target_position = Vector3(0, 0, -interact_distance)
 	set_process_input(is_local)
 	set_physics_process(is_local)
@@ -47,6 +56,17 @@ func _ready() -> void:
 		add_to_group(LOCAL_GROUP)
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		GameEvents.local_player_spawned.emit(self)
+
+
+## An empty key means "everything changed" — see [method Settings.reset].
+func _on_settings_changed(key: String) -> void:
+	if key.is_empty() or key == Settings.LOOK_SENSITIVITY or key == Settings.LOOK_FOV:
+		_apply_settings()
+
+
+func _apply_settings() -> void:
+	mouse_sensitivity = Settings.get_float(Settings.LOOK_SENSITIVITY)
+	camera.fov = Settings.get_float(Settings.LOOK_FOV)
 
 
 func _input(event: InputEvent) -> void:

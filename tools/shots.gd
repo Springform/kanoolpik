@@ -218,6 +218,19 @@ func _run() -> void:
 		await _stand_at(Vector3(0, 0, 14), Vector3(0, 1.0, 0))
 		await _shot("remote-far")
 
+	if _wants("settings"):
+		# WP-5.1. The panel is built from a list rather than typed into a scene,
+		# so its height is whatever the rows add up to — which is the shape that
+		# outgrew its own background twice before. What is being looked at is
+		# whether the rows line up, whether the value column is wide enough for
+		# "1.0×" and "110°", and whether the panel still fits.
+		main.settings_panel.open()
+		await _shot("settings")
+		TranslationServer.set_locale("en")
+		await _shot("settings-en")
+		TranslationServer.set_locale("da")
+		main.settings_panel.close()
+
 	if _wants("multihud"):
 		# WP-4.7's acceptance criterion: six people's worth of events must not
 		# bury the player's own feedback, and "does not bury" is something you

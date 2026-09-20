@@ -38,6 +38,11 @@ func after_test() -> void:
 		menu.close()
 	GameSession.stop_level()
 	GameSession.autosave_enabled = true
+	# Settings is now what decides the locale (WP-5.1), so putting the
+	# TranslationServer back is only half of it — a stale value in the store
+	# gets re-applied the next time anything calls Settings.apply_all(), which
+	# Main does on every boot. Forgetting is what actually restores it.
+	Settings.forget()
 	TranslationServer.set_locale(_locale)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	SaveGame.erase(SAVE_SLOT)
