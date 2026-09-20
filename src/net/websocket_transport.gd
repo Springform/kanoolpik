@@ -84,6 +84,21 @@ const E_NOT_CONNECTED := "not_connected"
 ## working locally and failing on the lake.
 const MAX_FRAME := 1048576
 
+## Seconds between round-trip measurements (WP-4.7).
+##
+## [b]This one is nearly free, and it is the relay's design that makes it so.[/b]
+## `room.js` registers `setWebSocketAutoResponse("ping" -> "pong")`, which
+## Cloudflare answers at the edge: the Durable Object is never woken, so an idle
+## room of six friends arguing about where the paddles go costs no GB-s. It is
+## also the thing that keeps a socket behind a proxy from being closed for
+## idling, so the ping earns its place twice.
+##
+## Three seconds rather than one because a number that jitters every second is
+## read as a problem even when it is not.
+const PING_SECONDS := 3.0
+const PING_TEXT := "ping"
+const PONG_TEXT := "pong"
+
 var state: WorldState
 var processor: CommandProcessor
 
@@ -108,6 +123,15 @@ var _outbox: Array[Dictionary] = []
 ## the next fan-out. A second frame from the same peer overwrites the first,
 ## because a transform from 50 ms ago is not worth a byte.
 var _presence_pending: Dictionary = {}
+## Round trip to the relay, or -1 until the first pong comes back.
+var _latency_ms := -1
+## When the outstanding ping was sent, in ticks; 0 when none is outstanding.
+## Only one is ever in flight, so a slow answer stretches the interval instead
+## of piling up pings behind it.
+var _ping_sent_at := 0
+## When the last answer came back, so the interval is measured between round
+## trips rather than between sends.
+var _last_pong_at := 0
 ## How many presence frames this transport has put on the wire. The acceptance
 ## criterion "a standing-still player generates no transform traffic" is a
 ## statement about a number, so the number is here to be asserted on.
@@ -235,6 +259,7 @@ func poll() -> void:
 		if _closed:
 			# `hostgone` has already ended us — the fast path.
 			return
+	_maybe_ping()
 	match _socket.get_ready_state():
 		WebSocketPeer.STATE_CLOSED, WebSocketPeer.STATE_CLOSING:
 			# The frame did not reach us, so the close code has to answer. This
@@ -251,9 +276,39 @@ func close() -> void:
 	_socket.close()
 
 
+func latency_ms() -> int:
+	return _latency_ms
+
+
+## One ping at a time, at most one every [constant PING_SECONDS].
+##
+## Measured from [method Time.get_ticks_msec] rather than accumulated deltas:
+## this runs from [method poll], which a lobby drives at its own rate and a
+## level drives at the physics rate, and a clock that depends on who is calling
+## it is not a clock.
+func _maybe_ping() -> void:
+	if not _joined or _closed or _socket.get_ready_state() != WebSocketPeer.STATE_OPEN:
+		return
+	if _ping_sent_at != 0:
+		return
+	var now := Time.get_ticks_msec()
+	if _latency_ms >= 0 and now - _last_pong_at < int(PING_SECONDS * 1000.0):
+		return
+	_ping_sent_at = now
+	_socket.send_text(PING_TEXT)
+
+
 # --- Receiving -----------------------------------------------------------------
 
 func _receive(text: String) -> void:
+	if text == PONG_TEXT:
+		# Answered by Cloudflare at the edge, not by the room (see PING_SECONDS).
+		# Not JSON, so it has to be caught before the parser calls it a bad frame.
+		if _ping_sent_at != 0:
+			_last_pong_at = Time.get_ticks_msec()
+			_latency_ms = _last_pong_at - _ping_sent_at
+			_ping_sent_at = 0
+		return
 	var json := JSON.new()
 	# Quietly: an engine error from a hostile frame would fail the whole test
 	# run, which is a denial of service with extra steps. Same reasoning as
