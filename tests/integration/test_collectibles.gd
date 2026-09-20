@@ -331,7 +331,7 @@ func test_finding_all_four_says_so_once_more() -> void:
 	_find_all()
 	assert_array(_found_events).contains_exactly(IDS)
 	assert_array(GameSession.progression.found_collectibles()).contains_exactly(IDS)
-	assert_array(hud.toast_texts()).contains([tr("ui.collectible.found_all")])
+	assert_bool(hud.said(tr("ui.collectible.found_all"))).override_failure_message("the player was never told: %s" % [tr("ui.collectible.found_all")]).is_true()
 	assert_array(spawner.remaining_ids()).is_empty()
 	for node in spawner.nodes():
 		assert_bool(node.visible).is_false()
@@ -343,7 +343,7 @@ func test_a_toast_is_written_in_the_players_language() -> void:
 	var expected := tr("ui.collectible.found") % tr("collectible.headlamp")
 	assert_str(expected).is_not_equal("ui.collectible.found") # the row really exists
 	assert_str(expected).contains(tr("collectible.headlamp"))
-	assert_array(hud.toast_texts()).contains([expected])
+	assert_bool(hud.said(expected)).override_failure_message("the player was never told: %s" % [expected]).is_true()
 
 
 # --- The trolley, and the one place capacity is computed ------------------------------

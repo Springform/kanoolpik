@@ -149,11 +149,11 @@ func test_the_toggle_turns_the_sense_on_and_then_off_again() -> void:
 
 	ability.toggle()
 	assert_bool(ability.is_enabled()).is_true()
-	assert_array(hud.toast_texts()).contains([tr("ui.ability.map_sense_on")])
+	assert_bool(hud.said(tr("ui.ability.map_sense_on"))).override_failure_message("the player was never told: %s" % [tr("ui.ability.map_sense_on")]).is_true()
 
 	ability.toggle()
 	assert_bool(ability.is_enabled()).is_false()
-	assert_array(hud.toast_texts()).contains([tr("ui.ability.map_sense_off")])
+	assert_bool(hud.said(tr("ui.ability.map_sense_off"))).override_failure_message("the player was never told: %s" % [tr("ui.ability.map_sense_off")]).is_true()
 
 
 func test_it_is_a_toggle_and_not_a_hold() -> void:

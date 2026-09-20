@@ -91,13 +91,34 @@ func test_taking_out_of_completed_container_reverts_gold() -> void:
 
 
 func test_chime_pitch_steps_up_on_combo_and_caps() -> void:
+	# WP-5.3 moved the count out of the container and into the HUD, because it
+	# was per container — bottle in the crate, peg in the tent bag, two runs of
+	# one — and because the pitch was the only place in the whole game that knew
+	# a run was happening. So this now pins the link rather than the counter:
+	# the container plays what the player is on.
+	var hud: HUD = auto_free(load("res://src/game/hud/hud.tscn").instantiate())
+	add_child(hud)
+	await get_tree().process_frame
 	var bag := _container("pant_bag")
 	for i in range(1, 7):
 		_place("can_tuborg_%d" % i, "pant_bag", i - 1)
 	for i in range(1, 5):
 		_place("can_carlsberg_%d" % i, "pant_bag", 5 + i)
-	# 10 correct placements within the window → capped at CHIME_MAX_STEPS semitones.
-	assert_float(bag.sfx_correct.pitch_scale).is_equal_approx(pow(2.0, ContainerNode.CHIME_MAX_STEPS / 12.0), 0.001)
+	assert_int(hud.streak().steps).override_failure_message(
+		"ten in a row did not cap the run").is_equal(PlacementStreak.MAX_STEPS)
+	assert_float(bag.sfx_correct.pitch_scale).override_failure_message(
+		"the chime is playing %.3f and the run is worth %.3f"
+		% [bag.sfx_correct.pitch_scale, hud.streak().pitch_scale()]
+	).is_equal_approx(hud.streak().pitch_scale(), 0.001)
+
+
+func test_a_container_with_no_hud_chimes_at_its_own_pitch() -> void:
+	# The shots harness and most of these tests have no HUD. The honest answer
+	# is the base pitch, not a second counter kept here in case.
+	var bag := _container("pant_bag")
+	_place("can_tuborg_1", "pant_bag", 0)
+	_place("can_tuborg_2", "pant_bag", 1)
+	assert_float(bag.sfx_correct.pitch_scale).is_equal_approx(1.0, 0.001)
 
 
 func test_other_containers_ignore_events() -> void:

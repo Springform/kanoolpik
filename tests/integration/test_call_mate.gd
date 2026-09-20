@@ -181,7 +181,7 @@ func test_locked_the_shout_moves_nothing() -> void:
 		"the ability is not bought and the island moved anyway").is_equal(before)
 	assert_bool(GameSession.progression.can_summon(SERIES)).override_failure_message(
 		"a locked shout spent the series").is_true()
-	assert_array(hud.toast_texts()).contains([tr("ui.error.ability_locked")])
+	assert_bool(hud.said(tr("ui.error.ability_locked"))).override_failure_message("the player was never told: %s" % [tr("ui.error.ability_locked")]).is_true()
 
 
 # --- Unlocked ----------------------------------------------------------------
@@ -239,9 +239,9 @@ func test_a_second_shout_for_the_same_series_is_refused_and_moves_nothing() -> v
 	ability.shout()
 	assert_dict(_ground_positions()).override_failure_message(
 		"the series was summoned twice").is_equal(after_first)
-	assert_array(hud.toast_texts()).override_failure_message(
+	assert_bool(hud.said(tr("ui.error.series_already_summoned"))).override_failure_message(
 		"the player was not told why nothing happened"
-	).contains([tr("ui.error.series_already_summoned")])
+	).is_true()
 
 
 func test_a_series_with_nothing_left_lying_about_costs_nothing() -> void:
@@ -258,7 +258,7 @@ func test_a_series_with_nothing_left_lying_about_costs_nothing() -> void:
 	assert_dict(_ground_positions()).override_failure_message(
 		"the setup failed: something is still lying about").is_empty()
 	ability.shout()
-	assert_array(hud.toast_texts()).contains([tr("ui.error.nothing_to_summon")])
+	assert_bool(hud.said(tr("ui.error.nothing_to_summon"))).override_failure_message("the player was never told: %s" % [tr("ui.error.nothing_to_summon")]).is_true()
 	assert_bool(GameSession.progression.can_summon(SERIES)).override_failure_message(
 		"a shout that fetched nothing still spent the series").is_true()
 
@@ -269,7 +269,7 @@ func test_an_item_that_belongs_to_no_series_says_so_instead_of_shouting() -> voi
 	assert_str(loner).is_not_empty()
 	GameSession.submit(Commands.pick_up(pid, loner))
 	assert_bool(ability.shout()).is_false()
-	assert_array(hud.toast_texts()).contains([tr("ui.ability.no_series")])
+	assert_bool(hud.said(tr("ui.ability.no_series"))).override_failure_message("the player was never told: %s" % [tr("ui.ability.no_series")]).is_true()
 
 
 func test_shouting_with_empty_hands_says_nothing_at_all() -> void:

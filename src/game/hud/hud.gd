@@ -16,6 +16,15 @@ extends CanvasLayer
 
 const SKILL_MENU := preload("res://src/game/hud/skills/skill_menu.tscn")
 
+## Group the HUD joins so anything that needs it can find it in one call, the
+## way [constant Player.LOCAL_GROUP] already works.
+##
+## The four ability WPs each walk the whole tree recursively looking for a HUD.
+## That is four copies of one lookup and it predates this; nothing here changes
+## them, but whoever next opens one of those files should delete its `_find_hud`
+## and use this.
+const GROUP := "hud"
+
 const MAX_TOASTS := 3
 const TOAST_SECONDS := 2.2
 const TOAST_FADE := 0.4
@@ -26,6 +35,27 @@ const COLOR_INFO := Color(0.96, 0.96, 0.94)
 const COLOR_ERROR := Color(1.0, 0.6, 0.4)
 ## Somebody else's news, dimmed. It is worth reading and it is not about you.
 const COLOR_OTHER := Color(0.78, 0.84, 0.92)
+
+## What a toast says besides its colour (WP-5.3).
+##
+## [b]"Dimmed blue-grey" and "warm orange" is exactly the pair that stops being
+## a pair for some people[/b] — and for everybody once a phone is in sunlight.
+## So every toast that is not plain good news carries a mark, and the mark is
+## what makes your own mistake and somebody else's bottle crate two different
+## things with the colour taken away. Checked by rendering the HUD in greyscale,
+## not by reasoning about it.
+##
+## The caller still passes a colour, because a colour is how a caller says what
+## it means; this table is where that meaning becomes a second channel instead
+## of staying a hue. Latin-1 only — Godot's default font draws ✕ and ▶ as
+## nothing at all, which is the failure mode this WP exists to avoid.
+const MARK_ERROR := VerdictStyle.MARK_WRONG # ×
+const MARK_OTHER := "»"
+const MARKS: Dictionary = {
+	COLOR_ERROR: MARK_ERROR,
+	VerdictStyle.COLOR_WRONG: MARK_ERROR,
+	COLOR_OTHER: MARK_OTHER,
+}
 ## How often the party line recomputes. Slow on purpose — see [member _party_countdown].
 const PARTY_REFRESH_SECONDS := 1.0
 
@@ -60,9 +90,25 @@ var _last_placer := 0
 ## own, and recomputing it every frame would make it flicker between two values
 ## for no reason a person cares about.
 var _party_countdown := 0.0
+## Correct placements in a row (WP-5.3). The chime has climbed a semitone per
+## step since WP-2.6 and nothing ever said so on screen; now this is the one
+## place that counts, and [ContainerNode] asks it what pitch to play.
+var _streak := PlacementStreak.new()
+var _streak_label: Label
 
 
 func _ready() -> void:
+	_streak_label = Label.new()
+	_streak_label.name = "Streak"
+	_streak_label.add_theme_font_size_override("font_size", 22)
+	_streak_label.modulate = VerdictStyle.COLOR_COMPLETE
+	_streak_label.text = ""
+	add_to_group(GROUP)
+	# Beside what you are carrying, not in the toast queue: a streak is state,
+	# toasts are events, and a label in `toasts_box` would be counted as a toast
+	# and evicted by the next one. Built in code rather than added to hud.tscn —
+	# a .tscn is the one thing two agents cannot merge.
+	held_label.get_parent().add_child(_streak_label)
 	skill_menu = SKILL_MENU.instantiate()
 	# Last child of Root: the panel draws over everything else the HUD shows.
 	$Root.add_child(skill_menu)
@@ -115,6 +161,10 @@ func _exit_tree() -> void:
 func _process(delta: float) -> void:
 	if GameSession.state != null:
 		time_label.text = format_time(GameSession.state.elapsed_ticks / Evaluation.TICKS_PER_SECOND)
+	# A run can end by nobody doing anything, and silence fires no event.
+	if _streak.expired(_now()):
+		_streak.broken()
+		refresh_streak()
 	_party_countdown -= delta
 	if _party_countdown <= 0.0:
 		_party_countdown = PARTY_REFRESH_SECONDS
@@ -152,7 +202,7 @@ func show_toast(text: String, seconds: float = TOAST_SECONDS, color: Color = COL
 	while toasts_box.get_child_count() >= MAX_TOASTS:
 		_evict_one()
 	var label := Label.new()
-	label.text = text
+	label.text = mark_for(color, mine) + text
 	label.modulate = color
 	label.set_meta("mine", mine)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -162,6 +212,41 @@ func show_toast(text: String, seconds: float = TOAST_SECONDS, color: Color = COL
 	tween.tween_interval(maxf(0.0, seconds - TOAST_FADE))
 	tween.tween_property(label, "modulate:a", 0.0, TOAST_FADE)
 	tween.tween_callback(label.queue_free)
+
+
+## The chime's pitch, and the number the player can see, from one counter.
+##
+## [ContainerNode] calls this. It used to keep the count itself, per container,
+## which made "bottle in the crate, peg in the tent bag" two runs of one — and
+## meant the only trace of a run anywhere was the pitch of a sound.
+func streak() -> PlacementStreak:
+	return _streak
+
+
+func _now() -> float:
+	return Time.get_ticks_msec() / 1000.0
+
+
+func refresh_streak() -> void:
+	if _streak_label == null:
+		return
+	_streak_label.text = tr("ui.cue.streak") % _streak.run_length() if _streak.worth_showing() else ""
+	# The panel's height is a number in hud.tscn, and a fourth row is one row
+	# more than that number. Without this the streak draws on the grass under
+	# the panel art — the WP-4.4 bug, in the other corner.
+	PanelFit.grow_upwards(carrying_label.get_parent().get_parent() as Control)
+
+
+## The prefix a toast wears, so its meaning survives greyscale (WP-5.3).
+##
+## [param mine] decides before the colour does: an error somebody else made is
+## still somebody else's news, and WP-4.7's rule is that a mate's mistake is not
+## reported at all — but if one ever is, it must not read as yours.
+static func mark_for(color: Color, mine: bool) -> String:
+	if not mine:
+		return MARK_OTHER + " "
+	var mark := String(MARKS.get(color, ""))
+	return mark + " " if not mark.is_empty() else ""
 
 
 ## Make room for one more toast.
@@ -186,6 +271,20 @@ func _evict_one() -> void:
 
 func toast_count() -> int:
 	return toasts_box.get_child_count()
+
+
+## Was the player told this, whatever mark the toast wears?
+##
+## [method toast_texts] returns what is on screen, marks and all (WP-5.3), and
+## that is right — a toast's mark is part of what it says. But most callers care
+## that the player was told something, not how it was flagged, and a test that
+## spells the mark out is a test that has to be edited every time the marks
+## change. This is for those.
+func said(text: String) -> bool:
+	for shown: String in toast_texts():
+		if shown.ends_with(text):
+			return true
+	return false
 
 
 func toast_texts() -> Array[String]:
@@ -286,6 +385,14 @@ func _on_item_placed(item_id: String, player_id: int, _cid: String, _slot: int, 
 	_last_placer = player_id
 	var who := PlayerNames.of(player_id)
 	if who.is_empty() or PlayerNames.is_me(player_id):
+		# The run is yours, not the container's and not the room's. Counted
+		# before the toast so the chime that follows in the same frame asks for
+		# a pitch that matches the number now on screen.
+		if VerdictStyle.is_good(verdict):
+			_streak.advance(_now())
+		else:
+			_streak.broken()
+		refresh_streak()
 		show_toast(tr(VerdictStyle.toast_key(verdict)), TOAST_SECONDS, VerdictStyle.color_for(verdict))
 		return
 	if verdict != PlacementRules.Verdict.CORRECT:

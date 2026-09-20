@@ -41,3 +41,21 @@ static func centre(panel: Control) -> void:
 	panel.offset_right = wanted.x * 0.5
 	panel.offset_top = -wanted.y * 0.5
 	panel.offset_bottom = wanted.y * 0.5
+
+
+## Make a panel anchored to the BOTTOM of the screen as tall as its contents,
+## growing upwards (WP-5.3).
+##
+## Same bug, different corner. The HUD's bottom-left panel has its height typed
+## into `hud.tscn` as `offset_top = -120`, and adding a fourth row — a streak
+## counter — put that row on the grass below the panel art, with every string
+## assertion green. Exactly what this file was written for.
+##
+## Only [member Control.offset_top] is touched: the left edge, the width and the
+## bottom margin are the scene's business and are already right.
+static func grow_upwards(panel: Control) -> void:
+	if panel == null or not panel.is_inside_tree():
+		return
+	var wanted := panel.get_combined_minimum_size().y
+	var room := panel.get_viewport_rect().size.y - MARGIN * 2.0
+	panel.offset_top = -minf(wanted, maxf(room, 1.0))

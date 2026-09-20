@@ -193,9 +193,9 @@ func test_six_peoples_news_does_not_bury_your_own() -> void:
 	_hud.show_toast("theirs 4", 5.0, HUD.COLOR_OTHER, false)
 
 	assert_int(_hud.toast_count()).is_equal(HUD.MAX_TOASTS)
-	assert_array(_hud.toast_texts()).override_failure_message(
+	assert_bool(_hud.said("mine")).override_failure_message(
 		"your own feedback was pushed off the screen by somebody else's news: %s"
-		% [_hud.toast_texts()]).contains(["mine"])
+		% [_hud.toast_texts()]).is_true()
 
 
 func test_your_own_toasts_still_make_way_for_each_other() -> void:
@@ -207,7 +207,8 @@ func test_your_own_toasts_still_make_way_for_each_other() -> void:
 
 	assert_int(_hud.toast_count()).is_equal(HUD.MAX_TOASTS)
 	assert_array(_hud.toast_texts()).not_contains(["mine 0"])
-	assert_array(_hud.toast_texts()).contains(["mine 3"])
+	assert_bool(_hud.said("mine 3")).override_failure_message(
+		"your own newest toast was evicted instead of your oldest").is_true()
 
 
 # --- The connection ---------------------------------------------------------------------

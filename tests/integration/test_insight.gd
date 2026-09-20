@@ -154,7 +154,7 @@ func test_a_series_less_item_says_so_and_glows_nothing() -> void:
 	ability.activate()
 	assert_array(ability.highlighted_ids()).is_empty()
 	assert_int(island.find_children("*", "InsightHighlight", true, false).size()).is_equal(0)
-	assert_array(hud.toast_texts()).contains([tr("ui.ability.no_series")])
+	assert_bool(hud.said(tr("ui.ability.no_series"))).override_failure_message("the player was never told: %s" % [tr("ui.ability.no_series")]).is_true()
 
 
 func test_empty_hands_glow_nothing_and_say_nothing() -> void:
