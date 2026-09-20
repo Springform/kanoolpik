@@ -21,12 +21,13 @@ signal closed()
 const ROWS: Array = [
 	{"kind": "slider", "key": Settings.LOOK_SENSITIVITY, "label": "ui.settings.sensitivity", "format": "relative"},
 	{"kind": "slider", "key": Settings.LOOK_FOV, "label": "ui.settings.fov", "format": "degrees"},
-	# WP-5.2 made head bob a thing that happens, so the switch is here now. The
-	# intro toggle is still NOT: its key exists in [Settings] so WP-5.4 has
-	# somewhere to write, but nothing reads it, and a switch that does nothing
-	# is worse than a missing switch — it is a bug report from somebody who
-	# flicked it and watched carefully.
+	# WP-5.2 made head bob a thing that happens and WP-5.4 did the same for the
+	# intro, so both switches are here now. The rule they arrived under stands
+	# for whatever comes next: a switch that does nothing is worse than a
+	# missing switch — it is a bug report from somebody who flicked it and
+	# watched carefully. `test_settings.gd` enforces it rather than trusting it.
 	{"kind": "toggle", "key": Settings.LOOK_HEAD_BOB, "label": "ui.settings.head_bob"},
+	{"kind": "toggle", "key": Settings.FX_INTRO, "label": "ui.settings.intro"},
 	{"kind": "separator"},
 	{"kind": "slider", "key": Settings.AUDIO_SFX, "label": "ui.settings.sfx", "format": "percent"},
 	{"kind": "slider", "key": Settings.AUDIO_MUSIC, "label": "ui.settings.music", "format": "percent"},

@@ -344,3 +344,5 @@ ui.settings.close,Luk,Close
 ui.title.settings,Indstillinger,Settings
 ui.pause.settings,Indstillinger,Settings
 ui.cue.streak,%d i træk,%d in a row
+ui.intro.skip,Tryk på en tast for at springe over,Press any key to skip
+ui.settings.intro,Opvågning ved start,Wake-up intro
